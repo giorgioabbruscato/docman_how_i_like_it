@@ -15,6 +15,9 @@
     <ProjectReference Include="..\Platform\HrPortal.Configuration\HrPortal.Configuration.csproj" />
     <ProjectReference Include="..\Modules\HrPortal.Departments\HrPortal.Departments.csproj" />
     <ProjectReference Include="..\Modules\HrPortal.Employees\HrPortal.Employees.csproj" />
+    <ProjectReference Include="..\Modules\HrPortal.Leave\HrPortal.Leave.csproj" />
+    <ProjectReference Include="..\Modules\HrPortal.Attendance\HrPortal.Attendance.csproj" />
+    <ProjectReference Include="..\Modules\HrPortal.Documents\HrPortal.Documents.csproj" />
   </ItemGroup>
 
   <ItemGroup>

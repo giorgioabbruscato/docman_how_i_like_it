@@ -29,11 +29,24 @@
       "name": "HR Portal Web",
       "enabled": true,
       "publicClient": true,
-      "directAccessGrantsEnabled": true,
+      "directAccessGrantsEnabled": false,
       "standardFlowEnabled": true,
       "protocol": "openid-connect",
       "redirectUris": ["http://localhost:5173/*", "http://localhost/*"],
-      "webOrigins": ["http://localhost:5173", "http://localhost"]
+      "webOrigins": ["http://localhost:5173", "http://localhost"],
+      "protocolMappers": [
+        {
+          "name": "hrportal-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "hrportal-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [

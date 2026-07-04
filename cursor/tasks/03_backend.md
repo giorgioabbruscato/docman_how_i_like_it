@@ -1,6 +1,6 @@
 # TASK 03 — BACKEND MODULES
 
-> Status: **IN PROGRESS**
+> Status: **COMPLETED**
 
 Business domain modules following Clean Architecture.
 
@@ -28,8 +28,8 @@ Use `HrPortal.Employees` as the canonical template. Copy structure exactly.
 - [x] Application service + DTOs + validators
 - [x] Repository + EF configuration
 - [x] Controller with policy-based auth
-- [ ] Unit tests for domain + service
-- [ ] Integration tests for all endpoints
+- [x] Unit tests for domain + service
+- [x] Integration tests for all endpoints
 
 ### Departments — COMPLETED
 
@@ -38,76 +38,42 @@ Use `HrPortal.Employees` as the canonical template. Copy structure exactly.
 - [x] Repository + EF configuration
 - [x] `IDepartmentLookup` for cross-module queries
 - [x] Controller with policy-based auth
-- [ ] Unit tests
-- [ ] Integration tests
+- [x] Unit tests
+- [x] Integration tests
 
-### LeaveManagement — PLANNED
+### LeaveManagement — COMPLETED
 
-**Domain:** `LeaveRequest` entity
-- Fields: EmployeeId, StartDate, EndDate, Type, Status, Reason
-- States: Pending → Approved/Rejected/Cancelled
-- Business rules: no overlapping requests, max days per year
+- [x] Domain: `LeaveRequest` entity with state machine
+- [x] Business rules: no overlapping requests, max 25 annual days/year
+- [x] Application service + DTOs + validators
+- [x] Repository + EF configuration (schema `leave`)
+- [x] Controller with policy-based auth
+- [x] Unit + integration tests
 
-**Endpoints:**
-```
-GET    /api/v1/leave-requests
-GET    /api/v1/leave-requests/{id}
-POST   /api/v1/leave-requests
-PUT    /api/v1/leave-requests/{id}/approve
-PUT    /api/v1/leave-requests/{id}/reject
-DELETE /api/v1/leave-requests/{id}
-```
+### Attendance — COMPLETED
 
-### Attendance — PLANNED
+- [x] Domain: `AttendanceRecord` entity
+- [x] Business rules: one record per employee per day
+- [x] Application service + DTOs + validators
+- [x] Repository + EF configuration (schema `attendance`)
+- [x] Controller with policy-based auth
+- [x] Unit + integration tests
 
-**Domain:** `AttendanceRecord` entity
-- Fields: EmployeeId, Date, CheckIn, CheckOut, Status
-- Business rules: one record per employee per day
+### Documents — COMPLETED
 
-**Endpoints:**
-```
-GET    /api/v1/attendance
-POST   /api/v1/attendance/check-in
-POST   /api/v1/attendance/check-out
-GET    /api/v1/attendance/reports
-```
-
-### Documents — PLANNED
-
-**Domain:** `Document` entity
-- Fields: EmployeeId, FileName, ContentType, Size, StoragePath
-- Uses `IStorageProvider` for file operations
-- Business rules: max file size, allowed MIME types
-
-**Endpoints:**
-```
-GET    /api/v1/documents
-GET    /api/v1/documents/{id}
-POST   /api/v1/documents          (multipart upload)
-GET    /api/v1/documents/{id}/download
-DELETE /api/v1/documents/{id}
-```
-
-## Adding a new module — step by step
-
-1. Create `src/Modules/HrPortal.{Module}/` with Domain, Application, Infrastructure
-2. Define entity in Domain with factory methods
-3. Create DTOs and validators in Application
-4. Create service interface + implementation
-5. Create repository interface + EF implementation
-6. Add EF configuration with schema name
-7. Create `{Module}ServiceCollectionExtensions.cs`
-8. Register in `Program.cs`
-9. Add controller in `HrPortal.Api/Controllers/V1/`
-10. Add migration
-11. Write unit + integration tests
-12. Update `/cursor/memory/domain_model.md` and `/cursor/memory/api_contracts.md`
+- [x] Domain: `Document` entity
+- [x] Uses `IStorageProvider` for file operations
+- [x] Business rules: max 10 MB, allowed MIME types
+- [x] Application service + DTOs + validators
+- [x] Repository + EF configuration (schema `documents`)
+- [x] Controller with multipart upload + download
+- [x] Unit + integration tests
 
 ## Acceptance criteria
 
-- [ ] All implemented modules pass quality checks (`evals/01_backend_quality_checks.md`)
-- [ ] `dotnet test` passes
-- [ ] Cross-module lookups use public interfaces only
+- [x] All implemented modules pass quality checks (`evals/01_backend_quality_checks.md`)
+- [x] `dotnet test` passes
+- [x] Cross-module lookups use public interfaces only (`IDepartmentLookup`, `IEmployeeLookup`)
 
 ## Next task
 

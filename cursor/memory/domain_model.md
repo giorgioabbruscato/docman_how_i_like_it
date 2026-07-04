@@ -70,6 +70,8 @@ Interface requiring `TenantId` — enables EF global query filters.
 - Deactivation is soft delete (IsActive = false)
 - DepartmentId validated via `IDepartmentLookup`
 
+**Cross-module interface:** `IEmployeeLookup.ExistsAndIsActiveAsync(employeeId)`
+
 ---
 
 ### Department — IMPLEMENTED
@@ -93,13 +95,13 @@ Interface requiring `TenantId` — enables EF global query filters.
 - Supports hierarchical structure via ParentDepartmentId
 - Deactivation is soft delete
 
-**Cross-module interface:** `IDepartmentLookup.ExistsAsync(departmentId)`
+**Cross-module interface:** `IDepartmentLookup.ExistsAndIsActiveAsync(departmentId)`
 
 ---
 
-### LeaveRequest — PLANNED
+### LeaveRequest — IMPLEMENTED
 
-**Location:** `HrPortal.Leave.Domain` (to be created)  
+**Location:** `HrPortal.Leave.Domain`  
 **Schema:** `leave`
 
 | Field | Type | Description |
@@ -123,11 +125,13 @@ Interface requiring `TenantId` — enables EF global query filters.
 - Only Pending requests can be approved/rejected
 - Employee can cancel own Pending requests
 
+- Max 25 annual leave days per employee per year (Annual type only)
+
 ---
 
-### AttendanceRecord — PLANNED
+### AttendanceRecord — IMPLEMENTED
 
-**Location:** `HrPortal.Attendance.Domain` (to be created)  
+**Location:** `HrPortal.Attendance.Domain`  
 **Schema:** `attendance`
 
 | Field | Type | Description |
@@ -148,9 +152,9 @@ Interface requiring `TenantId` — enables EF global query filters.
 
 ---
 
-### Document — PLANNED
+### Document — IMPLEMENTED
 
-**Location:** `HrPortal.Documents.Domain` (to be created)  
+**Location:** `HrPortal.Documents.Domain`  
 **Schema:** `documents`
 
 | Field | Type | Description |
@@ -181,9 +185,9 @@ Tenant (platform)
   │
   ├── Employee (employees) ──→ Department (departments)
   │       │
-  │       ├── LeaveRequest (leave)      [planned]
-  │       ├── AttendanceRecord (attendance) [planned]
-  │       └── Document (documents)      [planned]
+  │       ├── LeaveRequest (leave)
+  │       ├── AttendanceRecord (attendance)
+  │       └── Document (documents)
   │
   └── Department (departments)
         └── ParentDepartmentId → Department (self-ref)
@@ -193,5 +197,5 @@ Tenant (platform)
 
 | Interface | Module | Method |
 |-----------|--------|--------|
-| `IDepartmentLookup` | Departments | `ExistsAsync(Guid departmentId)` |
-| `IEmployeeLookup` | Employees | `ExistsAsync(Guid employeeId)` [planned]
+| `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync(Guid departmentId)` |
+| `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync(Guid employeeId)` |

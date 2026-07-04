@@ -24,9 +24,9 @@ React frontend with typed API clients, auth, and business pages.
 - [x] Auth store (`stores/auth-store.ts`)
 - [x] Token injection via API client interceptor
 - [x] 401 → auto logout
-- [ ] Keycloak JS adapter integration
-- [ ] Login/logout pages
-- [ ] Protected route wrapper component
+- [x] Keycloak JS adapter integration
+- [x] Login/logout pages
+- [x] Protected route wrapper component
 
 ## TASK 06.3 — API clients
 

@@ -1,16 +1,32 @@
 import { Link, Outlet } from 'react-router-dom';
+import { keycloak } from '@/lib/keycloak';
+import { hasAnyRole, MANAGER_OR_ABOVE_ROLES } from '@/lib/auth-roles';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Building2, Users } from 'lucide-react';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/departments', label: 'Departments', icon: Building2 },
-  { to: '/employees', label: 'Employees', icon: Users },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+  { to: '/departments', label: 'Departments', icon: Building2, roles: null },
+  {
+    to: '/employees',
+    label: 'Employees',
+    icon: Users,
+    roles: [...MANAGER_OR_ABOVE_ROLES],
+  },
 ];
 
 export function AppLayout() {
   const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    void keycloak.logout({ redirectUri: `${window.location.origin}/login` });
+  };
+
+  const visibleNavItems = navItems.filter(
+    (item) => !item.roles || hasAnyRole(user?.roles ?? [], ...item.roles),
+  );
 
   return (
     <div className="min-h-screen flex">
@@ -20,7 +36,7 @@ export function AppLayout() {
           <p className="text-sm text-muted-foreground">Multi-tenant platform</p>
         </div>
         <nav className="space-y-1">
-          {navItems.map(({ to, label, icon: Icon }) => (
+          {visibleNavItems.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
@@ -41,8 +57,13 @@ export function AppLayout() {
           <div className="flex items-center gap-3">
             {user ? (
               <>
-                <span className="text-sm">{user.name}</span>
-                <Button variant="outline" size="sm" onClick={logout}>
+                <div className="text-right">
+                  <p className="text-sm">{user.name}</p>
+                  {user.roles.length > 0 && (
+                    <p className="text-xs text-muted-foreground">{user.roles.join(', ')}</p>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>
               </>

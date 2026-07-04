@@ -60,8 +60,8 @@ dotnet ef database update --project src/HrPortal.Api
 
 | Module | Domain | Service | Repository | Tests | Status |
 |--------|--------|---------|------------|-------|--------|
-| Employees | ✅ | ✅ | ✅ | ⚠️ partial | Reference impl |
-| Departments | ✅ | ✅ | ✅ | ❌ | Needs tests |
-| Leave | ❌ | ❌ | ❌ | ❌ | Planned |
-| Attendance | ❌ | ❌ | ❌ | ❌ | Planned |
-| Documents | ❌ | ❌ | ❌ | ❌ | Planned |
+| Employees | ✅ | ✅ | ✅ | ✅ | Reference impl |
+| Departments | ✅ | ✅ | ✅ | ✅ | Complete |
+| Leave | ✅ | ✅ | ✅ | ✅ | Complete |
+| Attendance | ✅ | ✅ | ✅ | ✅ | Complete |
+| Documents | ✅ | ✅ | ✅ | ✅ | Complete |

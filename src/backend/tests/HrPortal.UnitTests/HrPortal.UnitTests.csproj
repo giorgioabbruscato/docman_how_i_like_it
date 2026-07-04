@@ -7,7 +7,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\HrPortal.Employees\HrPortal.Employees.csproj" />
+    <ProjectReference Include="..\..\src\Modules\HrPortal.Departments\HrPortal.Departments.csproj" />
+    <ProjectReference Include="..\..\src\Modules\HrPortal.Leave\HrPortal.Leave.csproj" />
+    <ProjectReference Include="..\..\src\Modules\HrPortal.Attendance\HrPortal.Attendance.csproj" />
+    <ProjectReference Include="..\..\src\Modules\HrPortal.Documents\HrPortal.Documents.csproj" />
     <ProjectReference Include="..\..\src\Platform\HrPortal.Storage\HrPortal.Storage.csproj" />
+    <ProjectReference Include="..\..\src\Platform\HrPortal.Audit\HrPortal.Audit.csproj" />
+    <ProjectReference Include="..\..\src\Platform\HrPortal.Tenancy\HrPortal.Tenancy.csproj" />
+    <ProjectReference Include="..\..\src\Platform\HrPortal.Identity\HrPortal.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Platform\HrPortal.SharedKernel\HrPortal.SharedKernel.csproj" />
   </ItemGroup>
 
   <ItemGroup>

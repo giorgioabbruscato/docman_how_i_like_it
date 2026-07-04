@@ -1,0 +1,187 @@
+using HrPortal.Audit.Application;
+using HrPortal.Documents.Application.Dtos;
+using HrPortal.Documents.Domain;
+using HrPortal.Employees.Application;
+using HrPortal.Identity;
+using HrPortal.SharedKernel.Exceptions;
+using HrPortal.SharedKernel.Persistence;
+using HrPortal.SharedKernel.Results;
+using HrPortal.Storage;
+using HrPortal.Tenancy;
+using Microsoft.Extensions.Logging;
+
+namespace HrPortal.Documents.Application;
+
+public interface IDocumentService
+{
+    Task<Result<IReadOnlyList<DocumentDto>>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<Result<DocumentDto>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result<DocumentDto>> UploadAsync(
+        UploadDocumentRequest request,
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        long sizeBytes,
+        CancellationToken cancellationToken = default);
+    Task<Result<DocumentDownloadDto>> DownloadAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+}
+
+internal sealed class DocumentService : IDocumentService
+{
+    public const long MaxFileSizeBytes = 10 * 1024 * 1024;
+
+    private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    };
+
+    private readonly IDocumentRepository _repository;
+    private readonly IEmployeeLookup _employeeLookup;
+    private readonly IStorageProvider _storageProvider;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TenantContext _tenantContext;
+    private readonly UserContext _userContext;
+    private readonly IAuditService _auditService;
+    private readonly ILogger<DocumentService> _logger;
+
+    public DocumentService(
+        IDocumentRepository repository,
+        IEmployeeLookup employeeLookup,
+        IStorageProvider storageProvider,
+        IUnitOfWork unitOfWork,
+        TenantContext tenantContext,
+        UserContext userContext,
+        IAuditService auditService,
+        ILogger<DocumentService> logger)
+    {
+        _repository = repository;
+        _employeeLookup = employeeLookup;
+        _storageProvider = storageProvider;
+        _unitOfWork = unitOfWork;
+        _tenantContext = tenantContext;
+        _userContext = userContext;
+        _auditService = auditService;
+        _logger = logger;
+    }
+
+    public async Task<Result<IReadOnlyList<DocumentDto>>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        var documents = await _repository.GetAllAsync(cancellationToken);
+        return Result.Success(documents.Select(MapToDto).ToList() as IReadOnlyList<DocumentDto>);
+    }
+
+    public async Task<Result<DocumentDto>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var document = await _repository.GetByIdAsync(id, cancellationToken);
+        if (document is null)
+            return Result.Failure<DocumentDto>("Document not found.", "NOT_FOUND");
+
+        return Result.Success(MapToDto(document));
+    }
+
+    public async Task<Result<DocumentDto>> UploadAsync(
+        UploadDocumentRequest request,
+        Stream fileStream,
+        string fileName,
+        string contentType,
+        long sizeBytes,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureTenantResolved();
+
+        if (!Enum.TryParse<DocumentCategory>(request.Category, true, out var category))
+            return Result.Failure<DocumentDto>("Invalid document category.", "VALIDATION_ERROR");
+
+        if (!await _employeeLookup.ExistsAndIsActiveAsync(request.EmployeeId, cancellationToken))
+            return Result.Failure<DocumentDto>("Employee not found or inactive.", "NOT_FOUND");
+
+        if (sizeBytes > MaxFileSizeBytes)
+            return Result.Failure<DocumentDto>("File size exceeds the maximum of 10 MB.", "VALIDATION_ERROR");
+
+        if (!AllowedContentTypes.Contains(contentType))
+            return Result.Failure<DocumentDto>("File type is not allowed.", "VALIDATION_ERROR");
+
+        var storageFileName = $"{Guid.NewGuid():N}_{fileName}";
+        var storageResult = await _storageProvider.UploadAsync(new StorageUploadRequest
+        {
+            TenantId = _tenantContext.TenantId,
+            Category = "employee/documents",
+            FileName = storageFileName,
+            Content = fileStream,
+            ContentType = contentType
+        }, cancellationToken);
+
+        var document = Document.Create(
+            _tenantContext.TenantId,
+            request.EmployeeId,
+            fileName,
+            contentType,
+            storageResult.SizeBytes,
+            storageResult.Path,
+            category,
+            _userContext.UserId);
+
+        await _repository.AddAsync(document, cancellationToken);
+
+        await _auditService.LogAsync(new AuditEntry(
+            "document.uploaded",
+            nameof(Document),
+            document.Id.ToString()), cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Document {DocumentId} uploaded for employee {EmployeeId}", document.Id, request.EmployeeId);
+
+        return Result.Success(MapToDto(document));
+    }
+
+    public async Task<Result<DocumentDownloadDto>> DownloadAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var document = await _repository.GetByIdAsync(id, cancellationToken);
+        if (document is null)
+            return Result.Failure<DocumentDownloadDto>("Document not found.", "NOT_FOUND");
+
+        var stream = await _storageProvider.DownloadAsync(document.StoragePath, cancellationToken);
+        return Result.Success(new DocumentDownloadDto(stream, document.FileName, document.ContentType));
+    }
+
+    public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var document = await _repository.GetByIdAsync(id, cancellationToken);
+        if (document is null)
+            return Result.Failure("Document not found.", "NOT_FOUND");
+
+        await _storageProvider.DeleteAsync(document.StoragePath, cancellationToken);
+        await _repository.DeleteAsync(document, cancellationToken);
+
+        await _auditService.LogAsync(new AuditEntry(
+            "document.deleted",
+            nameof(Document),
+            document.Id.ToString()), cancellationToken);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Document {DocumentId} deleted", id);
+
+        return Result.Success();
+    }
+
+    private void EnsureTenantResolved()
+    {
+        if (!_tenantContext.IsResolved)
+            throw new DomainException("Tenant context is not resolved.");
+    }
+
+    private static DocumentDto MapToDto(Document document) =>
+        new(
+            document.Id,
+            document.EmployeeId,
+            document.FileName,
+            document.ContentType,
+            document.SizeBytes,
+            document.Category.ToString(),
+            document.UploadedAt,
+            document.UploadedBy);
+}

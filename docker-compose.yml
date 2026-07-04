@@ -68,12 +68,13 @@ services:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_KEYCLOAK_URL: http://localhost:8080
+        VITE_KEYCLOAK_REALM: hrportal
+        VITE_KEYCLOAK_CLIENT_ID: hrportal-web
+        VITE_TENANT_ID: demo
     container_name: hrportal-frontend
-    environment:
-      VITE_API_BASE_URL: /api
-      VITE_KEYCLOAK_URL: http://localhost:8080
-      VITE_KEYCLOAK_REALM: hrportal
-      VITE_KEYCLOAK_CLIENT_ID: hrportal-web
     ports:
       - "5173:80"
     depends_on:
