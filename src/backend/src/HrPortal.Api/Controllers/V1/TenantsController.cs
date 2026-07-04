@@ -1,4 +1,5 @@
 using HrPortal.Api.Infrastructure.OpenApi;
+using HrPortal.Audit.Application;
 using HrPortal.Tenancy.Application;
 using HrPortal.Tenancy.Application.Dtos;
 using HrPortal.Tenancy.Domain;
