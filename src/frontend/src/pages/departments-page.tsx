@@ -5,8 +5,10 @@ import { z } from 'zod';
 import { createDepartment, deactivateDepartment, fetchDepartments } from '@/api/departments';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { confirmAction, getApiErrorMessage } from '@/lib/utils';
 import type { Department } from '@/types/department';
 
 const createDepartmentSchema = z.object({
@@ -41,8 +43,8 @@ export function DepartmentsPage() {
       setError(null);
       const data = await fetchDepartments();
       setDepartments(data);
-    } catch {
-      setError('Failed to load departments. Ensure you are authenticated and the API is running.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to load departments. Ensure you are authenticated and the API is running.'));
     } finally {
       setLoading(false);
     }
@@ -62,17 +64,18 @@ export function DepartmentsPage() {
       });
       reset();
       await loadDepartments();
-    } catch {
-      setError('Failed to create department.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to create department.'));
     }
   };
 
   const handleDeactivate = async (id: string) => {
+    if (!confirmAction('Deactivate this department?')) return;
     try {
       await deactivateDepartment(id);
       await loadDepartments();
-    } catch {
-      setError('Failed to deactivate department. It may have active child departments.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to deactivate department. It may have active child departments.'));
     }
   };
 
@@ -86,11 +89,7 @@ export function DepartmentsPage() {
         <p className="text-muted-foreground">Organize your company structure by department.</p>
       </div>
 
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner message={error} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -131,9 +130,9 @@ export function DepartmentsPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <LoadingSpinner label="Loading departments" />
             ) : departments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No departments found.</p>
+              <EmptyState message="No departments found." />
             ) : (
               <ul className="divide-y divide-border">
                 {departments.map((department) => (

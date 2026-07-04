@@ -1,6 +1,6 @@
 # TASK 06 — FRONTEND
 
-> Status: **IN PROGRESS**
+> Status: **COMPLETE**
 
 React frontend with typed API clients, auth, and business pages.
 
@@ -37,9 +37,9 @@ React frontend with typed API clients, auth, and business pages.
 - [x] `api/departments.ts` — CRUD operations
 - [x] `types/employee.ts` — TypeScript interfaces
 - [x] `types/department.ts` — TypeScript interfaces
-- [ ] `api/leave-requests.ts`
-- [ ] `api/attendance.ts`
-- [ ] `api/documents.ts`
+- [x] `api/leave-requests.ts`
+- [x] `api/attendance.ts`
+- [x] `api/documents.ts`
 
 ## TASK 06.4 — Pages
 
@@ -49,10 +49,10 @@ React frontend with typed API clients, auth, and business pages.
 - [x] Dashboard page (basic)
 - [x] Employees page (list + CRUD)
 - [x] Departments page (list + CRUD)
-- [ ] Leave requests page
-- [ ] Attendance page
-- [ ] Documents page
-- [ ] Settings/profile page
+- [x] Leave requests page
+- [x] Attendance page
+- [x] Documents page
+- [x] Settings/profile page
 
 ## TASK 06.5 — UX requirements
 
@@ -64,11 +64,11 @@ React frontend with typed API clients, auth, and business pages.
 
 ## Acceptance criteria
 
-- [ ] All pages use API clients (no direct axios)
-- [ ] Auth flow works end-to-end with Keycloak
-- [ ] Role-based UI visibility
-- [ ] `npm run build` passes with zero errors
-- [ ] Frontend quality checks pass (`evals/02_frontend_quality_checks.md`)
+- [x] All pages use API clients (no direct axios)
+- [x] Auth flow works end-to-end with Keycloak
+- [x] Role-based UI visibility
+- [x] `npm run build` passes with zero errors
+- [x] Frontend quality checks pass (`evals/02_frontend_quality_checks.md`)
 
 ## Next task
 
