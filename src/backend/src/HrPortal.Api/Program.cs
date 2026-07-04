@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using HrPortal.Api.Infrastructure.Filters;
 using HrPortal.Api.Infrastructure.Middleware;
 using HrPortal.Api.Infrastructure.Persistence;
@@ -15,6 +16,8 @@ using HrPortal.SharedKernel.Persistence;
 using HrPortal.Storage;
 using HrPortal.Tenancy;
 using HrPortal.Tenancy.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -67,6 +70,12 @@ var databaseOptions = builder.Configuration
     .GetSection(DatabaseOptions.SectionName)
     .Get<DatabaseOptions>() ?? new DatabaseOptions();
 
+if (builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(databaseOptions.ConnectionString))
+{
+    throw new InvalidOperationException(
+        "Database:ConnectionString must be configured via environment variables in Production.");
+}
+
 builder.Services.AddDbContext<HrPortalDbContext>(options =>
     options.UseNpgsql(databaseOptions.ConnectionString));
 
@@ -89,19 +98,50 @@ var corsOptions = builder.Configuration
     .GetSection(CorsOptions.SectionName)
     .Get<CorsOptions>() ?? new CorsOptions();
 
+if (builder.Environment.IsProduction() && corsOptions.AllowedOrigins.Length == 0)
+{
+    throw new InvalidOperationException(
+        "Cors:AllowedOrigins must be configured in Production.");
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
         if (corsOptions.AllowedOrigins.Length > 0)
             policy.WithOrigins(corsOptions.AllowedOrigins);
-        else
+        else if (!builder.Environment.IsProduction())
             policy.AllowAnyOrigin();
 
         policy.AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
+
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        options.OnRejected = async (context, cancellationToken) =>
+        {
+            context.HttpContext.Response.ContentType = "application/problem+json";
+            await context.HttpContext.Response.WriteAsJsonAsync(new
+            {
+                title = "Too many requests",
+                detail = "Rate limit exceeded. Try again later.",
+                status = StatusCodes.Status429TooManyRequests
+            }, cancellationToken);
+        };
+
+        options.AddFixedWindowLimiter("api", limiterOptions =>
+        {
+            limiterOptions.Window = TimeSpan.FromMinutes(1);
+            limiterOptions.PermitLimit = 100;
+            limiterOptions.QueueLimit = 0;
+        });
+    });
+}
 
 var healthChecksBuilder = builder.Services.AddHealthChecks();
 
@@ -113,6 +153,22 @@ if (!builder.Environment.IsEnvironment("Testing"))
 var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    });
+}
+
+if (app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+    app.UseHsts();
+}
+
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
@@ -122,11 +178,19 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+
+if (!app.Environment.IsEnvironment("Testing"))
+    app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseMiddleware<TenantResolverMiddleware>();
 app.UseAuthorization();
 
-app.MapControllers();
+if (app.Environment.IsEnvironment("Testing"))
+    app.MapControllers();
+else
+    app.MapControllers().RequireRateLimiting("api");
+
 app.MapHealthChecks("/health");
 app.MapHealthChecks("/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {

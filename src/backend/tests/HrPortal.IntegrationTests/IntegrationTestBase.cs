@@ -34,6 +34,16 @@ public abstract class IntegrationTestBase : IClassFixture<HrPortalWebApplication
         return client;
     }
 
+    protected HttpClient CreateClientForTenant(
+        string tenantSlug,
+        string? role = null,
+        Guid? userId = null)
+    {
+        var client = CreateClient(role, userId, includeTenantHeader: false);
+        client.DefaultRequestHeaders.Add("X-Tenant-Id", tenantSlug);
+        return client;
+    }
+
     protected HttpClient CreateAuthenticatedClient(string role, Guid? userId = null) =>
         CreateClient(role, userId);
 

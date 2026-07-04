@@ -52,6 +52,14 @@ The system is valid only if **all** criteria below pass.
 - [ ] Data survives container restart (PostgreSQL volume)
 - [ ] File storage persists in `storage_data` volume
 
+## Security
+
+- [ ] No secrets in committed `appsettings.json` or docker-compose defaults
+- [ ] Security headers on API responses (`X-Content-Type-Options`, `X-Frame-Options`)
+- [ ] Tenant isolation verified by integration tests
+- [ ] All business endpoints require authorization (except health/tenants)
+- [ ] CI runs dependency vulnerability scans (`dotnet list package --vulnerable`, `npm audit`, Trivy)
+
 ## Validation command
 
 ```bash

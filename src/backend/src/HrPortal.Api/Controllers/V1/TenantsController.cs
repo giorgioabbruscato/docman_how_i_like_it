@@ -1,4 +1,6 @@
+using HrPortal.Audit.Application;
 using HrPortal.Tenancy.Application;
+using HrPortal.Tenancy.Application.Dtos;
 using HrPortal.Tenancy.Domain;
 using HrPortal.SharedKernel.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -12,11 +14,16 @@ public sealed class TenantsController : ControllerBase
 {
     private readonly ITenantRepository _tenantRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAuditService _auditService;
 
-    public TenantsController(ITenantRepository tenantRepository, IUnitOfWork unitOfWork)
+    public TenantsController(
+        ITenantRepository tenantRepository,
+        IUnitOfWork unitOfWork,
+        IAuditService auditService)
     {
         _tenantRepository = tenantRepository;
         _unitOfWork = unitOfWork;
+        _auditService = auditService;
     }
 
     [HttpGet]
@@ -35,9 +42,13 @@ public sealed class TenantsController : ControllerBase
     {
         var tenant = Tenant.Create(request.Name, request.Slug);
         await _tenantRepository.AddAsync(tenant, cancellationToken);
+
+        await _auditService.LogForTenantAsync(
+            tenant.Id,
+            new AuditEntry("tenant.created", nameof(Tenant), tenant.Id.ToString()),
+            cancellationToken);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return CreatedAtAction(nameof(GetAll), new { id = tenant.Id }, new { tenant.Id, tenant.Name, tenant.Slug });
     }
 }
-
-public sealed record CreateTenantRequest(string Name, string Slug);

@@ -3,6 +3,8 @@
   "enabled": true,
   "sslRequired": "none",
   "displayName": "HR Portal",
+  "accessTokenLifespan": 300,
+  "ssoSessionMaxLifespan": 1800,
   "roles": {
     "realm": [
       { "name": "Admin", "description": "Platform administrator" },

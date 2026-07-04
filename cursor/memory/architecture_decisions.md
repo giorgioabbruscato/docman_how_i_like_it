@@ -172,3 +172,35 @@
 - All agents must read `/cursor/core/` before coding
 - Memory files must be updated when domain/API changes
 - Task files track execution progress
+
+---
+
+## ADR-009: Secrets via Environment Variables
+
+**Status:** Accepted  
+**Date:** 2026-07
+
+**Context:** Task 09 requires no hardcoded secrets in source or Docker defaults.
+
+**Decision:** All secrets (database passwords, Keycloak admin, API client secrets) are supplied via environment variables or `.env` (gitignored). Base `appsettings.json` contains no credentials; `appsettings.Development.json` holds local dev values only.
+
+**Consequences:**
+- `docker compose` requires a populated `.env` (from `.env.example`)
+- Production startup fails fast if `Database:ConnectionString` or `Cors:AllowedOrigins` are missing
+- Keycloak realm export remains dev-only; production uses separate Keycloak configuration
+
+---
+
+## ADR-010: In-Memory JWT Storage for SPA Auth
+
+**Status:** Accepted  
+**Date:** 2026-07
+
+**Context:** Task 09.1 requires secure auth without introducing a BFF layer.
+
+**Decision:** Frontend stores JWT access tokens in memory only (Zustand without persist). SSO session continuity relies on Keycloak session cookies via `check-sso` on page load. Production Keycloak/nginx enforce secure cookie flags over HTTPS.
+
+**Consequences:**
+- No JWT in `localStorage`
+- Page reload re-authenticates silently when Keycloak session is valid
+- API client retries once with `keycloak.updateToken()` on 401 before logout
