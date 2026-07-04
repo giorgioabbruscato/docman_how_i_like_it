@@ -67,5 +67,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate Docker Compose
+      - name: Validate compose config
         run: docker compose config
+
+      - name: Build images
+        run: docker compose build --parallel
+
+      - name: Start full stack
+        run: docker compose up -d --wait
+        timeout-minutes: 10
+
+      - name: Smoke test
+        run: ./scripts/docker-smoke-test.sh --skip-up
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
