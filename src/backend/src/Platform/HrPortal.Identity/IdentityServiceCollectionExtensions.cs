@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using HrPortal.Identity.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -30,6 +31,48 @@ public static class IdentityServiceCollectionExtensions
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     RoleClaimType = ClaimTypes.Role
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = context =>
+                    {
+                        var identity = context.Principal?.Identity as ClaimsIdentity;
+                        if (identity is null)
+                        {
+                            return Task.CompletedTask;
+                        }
+
+                        var realmAccessClaim = context.Principal?.FindFirst("realm_access")?.Value;
+                        if (string.IsNullOrWhiteSpace(realmAccessClaim))
+                        {
+                            return Task.CompletedTask;
+                        }
+
+                        try
+                        {
+                            using var document = JsonDocument.Parse(realmAccessClaim);
+                            if (!document.RootElement.TryGetProperty("roles", out var rolesElement))
+                            {
+                                return Task.CompletedTask;
+                            }
+
+                            foreach (var role in rolesElement.EnumerateArray())
+                            {
+                                var roleName = role.GetString();
+                                if (!string.IsNullOrWhiteSpace(roleName))
+                                {
+                                    identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+                                }
+                            }
+                        }
+                        catch (JsonException)
+                        {
+                            // Ignore malformed realm_access claim
+                        }
+
+                        return Task.CompletedTask;
+                    }
                 };
             });
 
