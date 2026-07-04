@@ -164,6 +164,7 @@ Demo users (after Keycloak import):
 |------|----------|------|
 | admin@demo.local | admin123 | Admin |
 | hr@demo.local | hr123 | HR |
+| employee@demo.local | employee123 | Employee |
 
 ## API conventions
 

@@ -124,6 +124,8 @@ Admin console: http://localhost:8080 (credentials from `.env`).
 
 With `--import-realm`, Keycloak imports on startup. If the realm already exists, behaviour depends on Keycloak version and import strategy — treat production realm updates as a controlled change: export first, test in staging, then apply.
 
+**Local dev:** after pulling changes to demo users in `realm-export.json`, Keycloak does not add new users to an existing realm. Either reset volumes (`docker compose down -v` then `docker compose up --build -d`) or create the user manually in the Keycloak Admin Console. The backend seeds the matching `Employee` record on startup when missing.
+
 ### Client secret rotation
 
 1. Rotate secret in Keycloak Admin Console for client `hrportal-api` or `hrportal-web`.
