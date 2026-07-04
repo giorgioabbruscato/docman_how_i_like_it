@@ -29,16 +29,6 @@ public interface IDocumentService
 
 internal sealed class DocumentService : IDocumentService
 {
-    public const long MaxFileSizeBytes = 10 * 1024 * 1024;
-
-    private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "application/pdf",
-        "image/jpeg",
-        "image/png",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    };
-
     private readonly IDocumentRepository _repository;
     private readonly IEmployeeLookup _employeeLookup;
     private readonly IStorageProvider _storageProvider;
@@ -99,11 +89,9 @@ internal sealed class DocumentService : IDocumentService
         if (!await _employeeLookup.ExistsAndIsActiveAsync(request.EmployeeId, cancellationToken))
             return Result.Failure<DocumentDto>("Employee not found or inactive.", "NOT_FOUND");
 
-        if (sizeBytes > MaxFileSizeBytes)
-            return Result.Failure<DocumentDto>("File size exceeds the maximum of 10 MB.", "VALIDATION_ERROR");
-
-        if (!AllowedContentTypes.Contains(contentType))
-            return Result.Failure<DocumentDto>("File type is not allowed.", "VALIDATION_ERROR");
+        var fileValidation = DocumentUploadRules.Validate(contentType, sizeBytes);
+        if (!fileValidation.IsSuccess)
+            return Result.Failure<DocumentDto>(fileValidation.Error!, "VALIDATION_ERROR");
 
         var storageFileName = $"{Guid.NewGuid():N}_{fileName}";
         var storageResult = await _storageProvider.UploadAsync(new StorageUploadRequest

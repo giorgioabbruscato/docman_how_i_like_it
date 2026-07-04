@@ -18,7 +18,8 @@ public sealed class TenantResolverMiddleware
     public async Task InvokeAsync(
         HttpContext context,
         ITenantResolver tenantResolver,
-        ITenantRepository tenantRepository)
+        ITenantRepository tenantRepository,
+        ITenantContextAccessor tenantContextAccessor)
     {
         if (IsExcludedPath(context.Request.Path))
         {
@@ -56,7 +57,9 @@ public sealed class TenantResolverMiddleware
             return;
         }
 
-        context.Items[nameof(TenantContext)] = TenantContext.Create(tenant.Id, tenant.Slug);
+        var tenantContext = TenantContext.Create(tenant.Id, tenant.Slug);
+        tenantContextAccessor.Set(tenantContext);
+        context.Items[nameof(TenantContext)] = tenantContext;
 
         await _next(context);
     }

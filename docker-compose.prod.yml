@@ -1,0 +1,26 @@
+# Production override: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+# Requires .env with production secrets and TLS certificates in docker/nginx/certs/
+
+services:
+  keycloak:
+    command: start --import-realm
+    environment:
+      KC_HTTP_ENABLED: "false"
+      KC_HOSTNAME_STRICT: "true"
+      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/certs/tls.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/certs/tls.key
+
+  backend:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Keycloak__RequireHttpsMetadata: "true"
+      Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGINS}
+
+  nginx:
+    ports:
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/certs:/etc/nginx/certs:ro

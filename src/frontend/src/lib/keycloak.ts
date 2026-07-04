@@ -1,8 +1,24 @@
 import Keycloak, { type KeycloakTokenParsed } from 'keycloak-js';
 
-const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? 'http://localhost:8080';
-const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? 'hrportal';
-const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? 'hrportal-web';
+function requireEnv(value: string | undefined, name: string, devFallback: string): string {
+  if (value) {
+    return value;
+  }
+
+  if (import.meta.env.DEV) {
+    return devFallback;
+  }
+
+  throw new Error(`Missing required environment variable: ${name}`);
+}
+
+const keycloakUrl = requireEnv(import.meta.env.VITE_KEYCLOAK_URL, 'VITE_KEYCLOAK_URL', 'http://localhost:8080');
+const keycloakRealm = requireEnv(import.meta.env.VITE_KEYCLOAK_REALM, 'VITE_KEYCLOAK_REALM', 'hrportal');
+const keycloakClientId = requireEnv(
+  import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
+  'VITE_KEYCLOAK_CLIENT_ID',
+  'hrportal-web',
+);
 
 export const keycloak = new Keycloak({
   url: keycloakUrl,
