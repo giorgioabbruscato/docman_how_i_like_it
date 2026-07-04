@@ -17,7 +17,6 @@ public sealed class DepartmentsController : ControllerBase
         _departmentService = departmentService;
 
     [HttpGet]
-    [Authorize(Policy = Policies.ManagerOrAbove)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _departmentService.GetAllAsync(cancellationToken);

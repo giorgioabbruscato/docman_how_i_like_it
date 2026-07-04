@@ -64,5 +64,6 @@ public sealed class TenantResolverMiddleware
     private static bool IsExcludedPath(PathString path) =>
         path.StartsWithSegments("/health") ||
         path.StartsWithSegments("/ready") ||
-        path.StartsWithSegments("/swagger");
+        path.StartsWithSegments("/swagger") ||
+        path.StartsWithSegments("/api/v1/tenants");
 }
