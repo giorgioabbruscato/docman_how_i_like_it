@@ -15,7 +15,7 @@ public static class TenancyServiceCollectionExtensions
 
         services.AddScoped<ITenantResolver, TenantResolver>();
         services.AddScoped<ITenantRepository, TenantRepository>();
-        services.AddScoped<TenantContext>(sp =>
+        services.AddTransient<TenantContext>(sp =>
         {
             var httpContext = sp.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>()?.HttpContext;
             if (httpContext?.Items.TryGetValue(nameof(TenantContext), out var ctx) == true && ctx is TenantContext tenantContext)

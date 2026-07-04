@@ -18,6 +18,9 @@ public sealed class HrPortalDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Audit.Domain.AuditLog).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Departments.Domain.Department).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Employees.Domain.Employee).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Leave.Domain.LeaveRequest).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Attendance.Domain.AttendanceRecord).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Documents.Domain.Document).Assembly);
 
         ApplyTenantFilters(modelBuilder);
     }

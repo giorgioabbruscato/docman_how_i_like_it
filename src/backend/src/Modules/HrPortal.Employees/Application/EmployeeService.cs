@@ -7,10 +7,11 @@ using HrPortal.SharedKernel.Exceptions;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.SharedKernel.Results;
 using HrPortal.Tenancy;
+using Microsoft.Extensions.Logging;
 
 namespace HrPortal.Employees.Application;
 
-public interface IEmployeeService
+public interface IEmployeeService : IEmployeeLookup
 {
     Task<Result<IReadOnlyList<EmployeeDto>>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<Result<EmployeeDto>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
@@ -19,7 +20,7 @@ public interface IEmployeeService
     Task<Result> DeactivateAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
-internal sealed class EmployeeService : IEmployeeService
+internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
 {
     private readonly IEmployeeRepository _repository;
     private readonly IDepartmentLookup _departmentLookup;
@@ -27,6 +28,7 @@ internal sealed class EmployeeService : IEmployeeService
     private readonly TenantContext _tenantContext;
     private readonly UserContext _userContext;
     private readonly IAuditService _auditService;
+    private readonly ILogger<EmployeeService> _logger;
 
     public EmployeeService(
         IEmployeeRepository repository,
@@ -34,7 +36,8 @@ internal sealed class EmployeeService : IEmployeeService
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
         UserContext userContext,
-        IAuditService auditService)
+        IAuditService auditService,
+        ILogger<EmployeeService> logger)
     {
         _repository = repository;
         _departmentLookup = departmentLookup;
@@ -42,6 +45,7 @@ internal sealed class EmployeeService : IEmployeeService
         _tenantContext = tenantContext;
         _userContext = userContext;
         _auditService = auditService;
+        _logger = logger;
     }
 
     public async Task<Result<IReadOnlyList<EmployeeDto>>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -91,6 +95,7 @@ internal sealed class EmployeeService : IEmployeeService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        _logger.LogInformation("Employee {EmployeeId} created", employee.Id);
         return Result.Success(MapToDto(employee));
     }
 
@@ -127,6 +132,7 @@ internal sealed class EmployeeService : IEmployeeService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        _logger.LogInformation("Employee {EmployeeId} updated", employee.Id);
         return Result.Success(MapToDto(employee));
     }
 
@@ -146,7 +152,14 @@ internal sealed class EmployeeService : IEmployeeService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        _logger.LogInformation("Employee {EmployeeId} deactivated", employee.Id);
         return Result.Success();
+    }
+
+    public async Task<bool> ExistsAndIsActiveAsync(Guid employeeId, CancellationToken cancellationToken = default)
+    {
+        var employee = await _repository.GetByIdAsync(employeeId, cancellationToken);
+        return employee is not null && employee.IsActive;
     }
 
     private async Task<Result> ValidateDepartmentAsync(

@@ -1,12 +1,15 @@
 using HrPortal.Api.Infrastructure.Filters;
 using HrPortal.Api.Infrastructure.Middleware;
 using HrPortal.Api.Infrastructure.Persistence;
+using HrPortal.Attendance;
 using HrPortal.Audit;
 using HrPortal.Authorization;
 using HrPortal.Configuration;
 using HrPortal.Departments;
+using HrPortal.Documents;
 using HrPortal.Employees;
 using HrPortal.Identity;
+using HrPortal.Leave;
 using HrPortal.Notifications;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.Storage;
@@ -78,6 +81,9 @@ builder.Services.AddHrPortalNotifications();
 builder.Services.AddHrPortalAudit();
 builder.Services.AddDepartmentsModule();
 builder.Services.AddEmployeesModule();
+builder.Services.AddLeaveModule();
+builder.Services.AddAttendanceModule();
+builder.Services.AddDocumentsModule();
 
 var corsOptions = builder.Configuration
     .GetSection(CorsOptions.SectionName)
@@ -97,8 +103,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddHealthChecks()
-    .AddNpgSql(databaseOptions.ConnectionString, name: "postgresql", tags: ["ready"]);
+var healthChecksBuilder = builder.Services.AddHealthChecks();
+
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    healthChecksBuilder.AddNpgSql(databaseOptions.ConnectionString, name: "postgresql", tags: ["ready"]);
+}
 
 var app = builder.Build();
 

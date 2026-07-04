@@ -6,6 +6,7 @@ using HrPortal.SharedKernel.Exceptions;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.SharedKernel.Results;
 using HrPortal.Tenancy;
+using Microsoft.Extensions.Logging;
 
 namespace HrPortal.Departments.Application;
 
@@ -25,19 +26,22 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
     private readonly TenantContext _tenantContext;
     private readonly UserContext _userContext;
     private readonly IAuditService _auditService;
+    private readonly ILogger<DepartmentService> _logger;
 
     public DepartmentService(
         IDepartmentRepository repository,
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
         UserContext userContext,
-        IAuditService auditService)
+        IAuditService auditService,
+        ILogger<DepartmentService> logger)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
         _userContext = userContext;
         _auditService = auditService;
+        _logger = logger;
     }
 
     public async Task<Result<IReadOnlyList<DepartmentDto>>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -85,6 +89,7 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        _logger.LogInformation("Department {DepartmentId} created", department.Id);
         return Result.Success(MapToDto(department));
     }
 

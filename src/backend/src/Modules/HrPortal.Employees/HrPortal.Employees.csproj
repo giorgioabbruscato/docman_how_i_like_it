@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <InternalsVisibleTo Include="HrPortal.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Platform\HrPortal.SharedKernel\HrPortal.SharedKernel.csproj" />
     <ProjectReference Include="..\..\Platform\HrPortal.Tenancy\HrPortal.Tenancy.csproj" />
     <ProjectReference Include="..\..\Platform\HrPortal.Identity\HrPortal.Identity.csproj" />
@@ -12,6 +16,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
     <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
   </ItemGroup>
 
 </Project>

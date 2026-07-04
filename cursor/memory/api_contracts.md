@@ -177,37 +177,123 @@
 
 ---
 
-## Planned endpoints
+## Leave Requests
 
-### Leave Requests (not yet implemented)
+### GET /api/v1/leave-requests
 
-```
-GET    /api/v1/leave-requests
-GET    /api/v1/leave-requests/{id}
-POST   /api/v1/leave-requests
-PUT    /api/v1/leave-requests/{id}/approve
-PUT    /api/v1/leave-requests/{id}/reject
-DELETE /api/v1/leave-requests/{id}
+**Auth:** ManagerOrAbove  
+**Response:** `200 OK` — array of LeaveRequestDto
+
+### GET /api/v1/leave-requests/{id}
+
+**Auth:** Authenticated  
+**Response:** `200 OK` — single LeaveRequestDto
+
+### POST /api/v1/leave-requests
+
+**Auth:** Authenticated  
+**Request:**
+
+```json
+{
+  "employeeId": "uuid",
+  "startDate": "2025-07-01",
+  "endDate": "2025-07-05",
+  "type": "Annual",
+  "reason": "Summer holiday"
+}
 ```
 
-### Attendance (not yet implemented)
+**Response:** `201 Created` — LeaveRequestDto
 
-```
-GET    /api/v1/attendance
-POST   /api/v1/attendance/check-in
-POST   /api/v1/attendance/check-out
-GET    /api/v1/attendance/reports
+### PUT /api/v1/leave-requests/{id}/approve
+
+**Auth:** ManagerOrAbove  
+**Response:** `200 OK` — LeaveRequestDto
+
+### PUT /api/v1/leave-requests/{id}/reject
+
+**Auth:** ManagerOrAbove  
+**Request:**
+
+```json
+{ "reason": "Insufficient coverage" }
 ```
 
-### Documents (not yet implemented)
+**Response:** `200 OK` — LeaveRequestDto
 
+### DELETE /api/v1/leave-requests/{id}
+
+**Auth:** Authenticated  
+**Action:** Cancel pending request  
+**Response:** `204 No Content`
+
+---
+
+## Attendance
+
+### GET /api/v1/attendance
+
+**Auth:** ManagerOrAbove  
+**Response:** `200 OK` — array of AttendanceRecordDto
+
+### POST /api/v1/attendance/check-in
+
+**Auth:** Authenticated  
+**Request:**
+
+```json
+{
+  "employeeId": "uuid",
+  "date": "2025-07-04",
+  "time": "09:00:00"
+}
 ```
-GET    /api/v1/documents
-GET    /api/v1/documents/{id}
-POST   /api/v1/documents          (multipart/form-data)
-GET    /api/v1/documents/{id}/download
-DELETE /api/v1/documents/{id}
-```
+
+**Response:** `200 OK` — AttendanceRecordDto
+
+### POST /api/v1/attendance/check-out
+
+**Auth:** Authenticated  
+**Request:** Same shape as check-in  
+**Response:** `200 OK` — AttendanceRecordDto
+
+### GET /api/v1/attendance/reports
+
+**Auth:** ManagerOrAbove  
+**Query:** `from`, `to` (DateOnly)  
+**Response:** `200 OK` — AttendanceReportDto
+
+---
+
+## Documents
+
+### GET /api/v1/documents
+
+**Auth:** ManagerOrAbove  
+**Response:** `200 OK` — array of DocumentDto
+
+### GET /api/v1/documents/{id}
+
+**Auth:** Authenticated  
+**Response:** `200 OK` — single DocumentDto
+
+### POST /api/v1/documents
+
+**Auth:** Authenticated  
+**Content-Type:** `multipart/form-data`  
+**Form fields:** `employeeId`, `category`, `file`  
+**Response:** `201 Created` — DocumentDto
+
+### GET /api/v1/documents/{id}/download
+
+**Auth:** Authenticated  
+**Response:** `200 OK` — file stream
+
+### DELETE /api/v1/documents/{id}
+
+**Auth:** HrOrAdmin  
+**Response:** `204 No Content`
 
 ---
 

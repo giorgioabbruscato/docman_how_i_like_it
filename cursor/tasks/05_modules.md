@@ -70,7 +70,7 @@ builder.Services.AddEmployees();
 ## Acceptance criteria
 
 - [x] `IDepartmentLookup` implemented and used by Employees
-- [ ] `IEmployeeLookup` for upcoming modules
+- [x] `IEmployeeLookup` for upcoming modules
 - [ ] No circular dependencies between modules
 - [ ] Module dependency graph documented in memory
 

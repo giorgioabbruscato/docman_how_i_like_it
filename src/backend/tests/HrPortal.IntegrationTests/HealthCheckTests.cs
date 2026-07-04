@@ -1,14 +1,14 @@
 using System.Net;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
+using HrPortal.IntegrationTests.Infrastructure;
 
 namespace HrPortal.IntegrationTests;
 
-public sealed class HealthCheckTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class HealthCheckTests : IClassFixture<HrPortalWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public HealthCheckTests(WebApplicationFactory<Program> factory) =>
+    public HealthCheckTests(HrPortalWebApplicationFactory factory) =>
         _client = factory.CreateClient();
 
     [Fact]

@@ -14,6 +14,7 @@ public static class EmployeesServiceCollectionExtensions
     {
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<IEmployeeService, EmployeeService>();
+        services.AddScoped<IEmployeeLookup>(sp => sp.GetRequiredService<IEmployeeService>());
         services.AddValidatorsFromAssemblyContaining<CreateEmployeeRequestValidator>();
         return services;
     }
