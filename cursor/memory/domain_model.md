@@ -195,6 +195,8 @@ Tenant (platform)
 
 ## Cross-module lookup interfaces
 
+See also: `cursor/memory/module_dependencies.md` for the full dependency graph.
+
 | Interface | Module | Method |
 |-----------|--------|--------|
 | `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync(Guid departmentId)` |

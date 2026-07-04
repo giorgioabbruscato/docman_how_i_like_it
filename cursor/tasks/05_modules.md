@@ -1,6 +1,6 @@
 # TASK 05 — MODULE INTEGRATION
 
-> Status: **IN PROGRESS**
+> Status: **COMPLETE**
 
 Cross-module communication patterns and shared abstractions.
 
@@ -27,7 +27,7 @@ When Module A needs to validate/reference data from Module B:
 // In HrPortal.Departments
 public interface IDepartmentLookup
 {
-    Task<bool> ExistsAsync(Guid departmentId, CancellationToken ct);
+    Task<bool> ExistsAndIsActiveAsync(Guid departmentId, CancellationToken ct);
 }
 
 // In HrPortal.Employees — inject IDepartmentLookup in service
@@ -71,8 +71,8 @@ builder.Services.AddEmployees();
 
 - [x] `IDepartmentLookup` implemented and used by Employees
 - [x] `IEmployeeLookup` for upcoming modules
-- [ ] No circular dependencies between modules
-- [ ] Module dependency graph documented in memory
+- [x] No circular dependencies between modules
+- [x] Module dependency graph documented in memory (`cursor/memory/module_dependencies.md`)
 
 ## Next task
 
