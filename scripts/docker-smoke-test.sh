@@ -36,14 +36,16 @@ require_command() {
 }
 
 get_access_token() {
+  local username="$1"
+  local password="$2"
   local response
   response="$(curl -sf -X POST "${NGINX_BASE}/auth/realms/hrportal/protocol/openid-connect/token" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "grant_type=password" \
     -d "client_id=hrportal-api" \
     -d "client_secret=hrportal-api-secret" \
-    -d "username=admin@demo.local" \
-    -d "password=admin123")"
+    -d "username=${username}" \
+    -d "password=${password}")"
   echo "$response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])'
 }
 
@@ -77,7 +79,22 @@ if not any(t.get("slug") == "demo" for t in tenants):
 '
 
 log "Obtaining JWT from Keycloak..."
-ACCESS_TOKEN="$(get_access_token)"
+ACCESS_TOKEN="$(get_access_token "admin@demo.local" "admin123")"
+
+log "Checking demo employee Keycloak login..."
+EMPLOYEE_ACCESS_TOKEN="$(get_access_token "employee@demo.local" "employee123")"
+[[ -n "${EMPLOYEE_ACCESS_TOKEN}" ]] || fail "Demo employee token not returned"
+
+log "Checking demo employee database seed..."
+employees_response="$(curl -sf "${API_BASE}/api/v1/employees" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "X-Tenant-Id: ${TENANT_ID}")"
+echo "$employees_response" | python3 -c '
+import json, sys
+employees = json.load(sys.stdin)
+if not any(e.get("email") == "employee@demo.local" for e in employees):
+    raise SystemExit("Demo employee record not found")
+'
 
 log "Creating department for persistence test..."
 create_response="$(curl -sf -X POST "${API_BASE}/api/v1/departments" \

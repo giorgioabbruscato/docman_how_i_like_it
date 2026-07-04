@@ -89,6 +89,18 @@
         { "type": "password", "value": "hr123", "temporary": false }
       ],
       "realmRoles": ["HR"]
+    },
+    {
+      "username": "employee@demo.local",
+      "email": "employee@demo.local",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Employee",
+      "lastName": "User",
+      "credentials": [
+        { "type": "password", "value": "employee123", "temporary": false }
+      ],
+      "realmRoles": ["Employee"]
     }
   ]
 }
