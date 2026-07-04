@@ -1,7 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using HrPortal.Api.Infrastructure.Persistence;
+using HrPortal.Employees.Domain;
 using HrPortal.IntegrationTests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HrPortal.IntegrationTests;
 
@@ -59,6 +63,33 @@ public sealed class EmployeesEndpointTests : IntegrationTestBase
         var response = await client.GetAsync($"/api/v1/employees/{Guid.NewGuid()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Create_SetsCreatedBy_FromUserContext()
+    {
+        var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        using var client = CreateAuthenticatedClient("hr", userId);
+        var email = $"audit.{Guid.NewGuid():N}@demo.local";
+
+        var response = await client.PostAsJsonAsync("/api/v1/employees", new
+        {
+            firstName = "Audit",
+            lastName = "User",
+            email,
+            hireDate = "2024-01-15"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<EmployeeResponse>(JsonOptions);
+
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
+        var employee = await db.Set<Employee>()
+            .IgnoreQueryFilters()
+            .SingleAsync(e => e.Id == body!.Id);
+
+        employee.CreatedBy.Should().Be(userId);
     }
 
     private sealed record EmployeeResponse(Guid Id, string Email);

@@ -57,7 +57,7 @@ JWT authentication and policy-based authorization.
 - [x] Unauthenticated requests to protected endpoints return 401
 - [x] Authenticated but unauthorized requests return 403
 - [x] Role claims correctly mapped from Keycloak realm roles
-- [ ] Integration tests for each policy combination
+- [x] Integration tests for each policy combination
 
 ## Next task
 
