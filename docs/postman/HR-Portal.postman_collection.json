@@ -1,0 +1,837 @@
+{
+  "info": {
+    "name": "HR Portal API",
+    "description": "Multi-tenant HR Portal API. Set accessToken (Bearer JWT from Keycloak) and tenantId (default: demo).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "tenantId",
+      "value": "demo"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "employeeId",
+      "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    },
+    {
+      "key": "departmentId",
+      "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    },
+    {
+      "key": "documentId",
+      "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    },
+    {
+      "key": "leaveRequestId",
+      "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    }
+  ],
+  "item": [
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "List attendance records.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/attendance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "attendance"
+              ]
+            },
+            "description": "List attendance records."
+          }
+        },
+        {
+          "name": "Record employee check-in.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/attendance/check-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "attendance",
+                "check-in"
+              ]
+            },
+            "description": "Record employee check-in.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{employeeId}}\",\n  \"date\": \"2025-07-04\",\n  \"time\": \"09:00:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Record employee check-out.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/attendance/check-out",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "attendance",
+                "check-out"
+              ]
+            },
+            "description": "Record employee check-out.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{employeeId}}\",\n  \"date\": \"2025-07-04\",\n  \"time\": \"18:00:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get attendance report for a date range.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/attendance/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "attendance",
+                "reports"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2025-07-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2025-07-31"
+                }
+              ]
+            },
+            "description": "Get attendance report for a date range."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "List all departments.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/departments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "departments"
+              ]
+            },
+            "description": "List all departments."
+          }
+        },
+        {
+          "name": "Create a new department.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/departments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "departments"
+              ]
+            },
+            "description": "Create a new department.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering\",\n  \"code\": \"ENG\",\n  \"description\": \"Software development\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get department by ID.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/departments/{{departmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "departments",
+                "{{departmentId}}"
+              ]
+            },
+            "description": "Get department by ID."
+          }
+        },
+        {
+          "name": "Update a department.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/departments/{{departmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "departments",
+                "{{departmentId}}"
+              ]
+            },
+            "description": "Update a department.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering\",\n  \"code\": \"ENG\",\n  \"description\": \"Software development\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Deactivate a department (soft delete).",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/departments/{{departmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "departments",
+                "{{departmentId}}"
+              ]
+            },
+            "description": "Deactivate a department (soft delete)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "List all documents.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "documents"
+              ]
+            },
+            "description": "List all documents."
+          }
+        },
+        {
+          "name": "Upload a document for an employee.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "documents"
+              ]
+            },
+            "description": "Upload a document for an employee.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "employeeId",
+                  "value": "{{employeeId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "Contract",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get document metadata by ID.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "documents",
+                "{{documentId}}"
+              ]
+            },
+            "description": "Get document metadata by ID."
+          }
+        },
+        {
+          "name": "Delete a document.",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "documents",
+                "{{documentId}}"
+              ]
+            },
+            "description": "Delete a document."
+          }
+        },
+        {
+          "name": "Download document file content.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "documents",
+                "{{documentId}}",
+                "download"
+              ]
+            },
+            "description": "Download document file content."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "List all employees.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "employees"
+              ]
+            },
+            "description": "List all employees."
+          }
+        },
+        {
+          "name": "Create a new employee.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "employees"
+              ]
+            },
+            "description": "Create a new employee.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Mario\",\n  \"lastName\": \"Rossi\",\n  \"email\": \"mario.rossi@demo.local\",\n  \"hireDate\": \"2024-01-15\",\n  \"jobTitle\": \"Developer\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get employee by ID.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employees/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "employees",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "Get employee by ID."
+          }
+        },
+        {
+          "name": "Update an employee.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employees/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "employees",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "Update an employee.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Mario\",\n  \"lastName\": \"Rossi\",\n  \"email\": \"mario.rossi@demo.local\",\n  \"jobTitle\": \"Senior Developer\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Deactivate an employee (soft delete).",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employees/{{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "employees",
+                "{{employeeId}}"
+              ]
+            },
+            "description": "Deactivate an employee (soft delete)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leave",
+      "item": [
+        {
+          "name": "List all leave requests.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leave-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "leave-requests"
+              ]
+            },
+            "description": "List all leave requests."
+          }
+        },
+        {
+          "name": "Submit a new leave request.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leave-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "leave-requests"
+              ]
+            },
+            "description": "Submit a new leave request.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": \"{{employeeId}}\",\n  \"startDate\": \"2025-07-01\",\n  \"endDate\": \"2025-07-05\",\n  \"type\": \"Annual\",\n  \"reason\": \"Summer holiday\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get leave request by ID.",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leave-requests/{{leaveRequestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "leave-requests",
+                "{{leaveRequestId}}"
+              ]
+            },
+            "description": "Get leave request by ID."
+          }
+        },
+        {
+          "name": "Cancel a pending leave request.",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leave-requests/{{leaveRequestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "leave-requests",
+                "{{leaveRequestId}}"
+              ]
+            },
+            "description": "Cancel a pending leave request."
+          }
+        },
+        {
+          "name": "Approve a pending leave request.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leave-requests/{{leaveRequestId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "leave-requests",
+                "{{leaveRequestId}}",
+                "approve"
+              ]
+            },
+            "description": "Approve a pending leave request."
+          }
+        },
+        {
+          "name": "Reject a pending leave request.",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leave-requests/{{leaveRequestId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "leave-requests",
+                "{{leaveRequestId}}",
+                "reject"
+              ]
+            },
+            "description": "Reject a pending leave request.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Insufficient coverage\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenants",
+      "item": [
+        {
+          "name": "List all tenants.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tenants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "tenants"
+              ]
+            },
+            "description": "List all tenants."
+          }
+        },
+        {
+          "name": "Create a new tenant.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tenants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "tenants"
+              ]
+            },
+            "description": "Create a new tenant.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Corp\",\n  \"slug\": \"acme\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -115,13 +115,13 @@ One responsibility per container:
 
 Each service can be updated independently.
 
-## Backup targets
+## Backup and operations
 
-- PostgreSQL (pg_dump)
-- Keycloak realm export
-- `storage/` volume
+See [OPERATIONS.md](OPERATIONS.md) for backup/restore procedures (PostgreSQL, storage volume, Keycloak realm).
 
-## CI/CD pipeline (planned)
+## CI/CD pipeline
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the production deployment checklist. Automated pipeline:
 
 ```
 Build → Tests → Docker Build → Compose Validation → Deploy

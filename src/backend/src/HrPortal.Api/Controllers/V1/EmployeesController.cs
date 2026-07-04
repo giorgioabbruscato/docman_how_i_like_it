@@ -6,9 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HrPortal.Api.Controllers.V1;
 
+/// <summary>Employee CRUD operations.</summary>
 [ApiController]
 [Route("api/v1/employees")]
+[Tags("Employees")]
 [Authorize(Policy = Policies.Authenticated)]
+[Produces("application/json")]
 public sealed class EmployeesController : ControllerBase
 {
     private readonly IEmployeeService _employeeService;
@@ -16,23 +19,35 @@ public sealed class EmployeesController : ControllerBase
     public EmployeesController(IEmployeeService employeeService) =>
         _employeeService = employeeService;
 
+    /// <summary>List all employees.</summary>
+    /// <remarks>Auth: ManagerOrAbove</remarks>
     [HttpGet]
     [Authorize(Policy = Policies.ManagerOrAbove)]
+    [ProducesResponseType(typeof(IEnumerable<EmployeeDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _employeeService.GetAllAsync(cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
+    /// <summary>Get employee by ID.</summary>
+    /// <remarks>Auth: Authenticated</remarks>
     [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(EmployeeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _employeeService.GetByIdAsync(id, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
+    /// <summary>Create a new employee.</summary>
+    /// <remarks>Auth: HrOrAdmin</remarks>
     [HttpPost]
     [Authorize(Policy = Policies.HrOrAdmin)]
+    [ProducesResponseType(typeof(EmployeeDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create(
         [FromBody] CreateEmployeeRequest request,
         CancellationToken cancellationToken)
@@ -43,8 +58,14 @@ public sealed class EmployeesController : ControllerBase
             : MapFailure(result);
     }
 
+    /// <summary>Update an employee.</summary>
+    /// <remarks>Auth: HrOrAdmin</remarks>
     [HttpPut("{id:guid}")]
     [Authorize(Policy = Policies.HrOrAdmin)]
+    [ProducesResponseType(typeof(EmployeeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateEmployeeRequest request,
@@ -54,8 +75,12 @@ public sealed class EmployeesController : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
+    /// <summary>Deactivate an employee (soft delete).</summary>
+    /// <remarks>Auth: HrOrAdmin</remarks>
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = Policies.HrOrAdmin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
         var result = await _employeeService.DeactivateAsync(id, cancellationToken);

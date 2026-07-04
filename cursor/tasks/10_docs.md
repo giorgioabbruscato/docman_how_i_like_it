@@ -1,6 +1,6 @@
 # TASK 10 — DOCUMENTATION
 
-> Status: **IN PROGRESS**
+> Status: **COMPLETE**
 
 Project documentation for developers and operators.
 
@@ -45,23 +45,23 @@ Project documentation for developers and operators.
 
 ## TASK 10.4 — API documentation
 
-- [ ] OpenAPI/Swagger annotations on all endpoints
-- [ ] Request/response examples in Swagger
-- [ ] Postman collection export
+- [x] OpenAPI/Swagger annotations on all endpoints
+- [x] Request/response examples in Swagger
+- [x] Postman collection export
 
 ## TASK 10.5 — Operational docs
 
-- [ ] Backup and restore procedures
-- [ ] Keycloak realm export/import
-- [ ] Database migration workflow
-- [ ] Monitoring and logging setup
-- [ ] Production deployment checklist
+- [x] Backup and restore procedures
+- [x] Keycloak realm export/import
+- [x] Database migration workflow
+- [x] Monitoring and logging setup
+- [x] Production deployment checklist
 
 ## Acceptance criteria
 
 - [x] New developer can start project from README alone
 - [x] Agent system provides enough context for AI-assisted development
-- [ ] All API endpoints documented in Swagger
+- [x] All API endpoints documented in Swagger
 
 ## Completion
 
