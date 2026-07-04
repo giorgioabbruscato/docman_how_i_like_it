@@ -30,12 +30,18 @@ public static class IdentityServiceCollectionExtensions
                     options.Authority = keycloakOptions.Authority;
                     options.Audience = keycloakOptions.Audience;
                     options.RequireHttpsMetadata = keycloakOptions.RequireHttpsMetadata;
+
+                    var validIssuers = keycloakOptions.ValidIssuers.Length > 0
+                        ? keycloakOptions.ValidIssuers
+                        : [keycloakOptions.Authority];
+
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true,
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
+                        ValidIssuers = validIssuers,
                         RoleClaimType = ClaimTypes.Role
                     };
 
