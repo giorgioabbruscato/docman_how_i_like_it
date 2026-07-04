@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: hrportal
+          POSTGRES_USER: hrportal
+          POSTGRES_PASSWORD: hrportal
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore src/backend/HrPortal.sln
+
+      - name: Build
+        run: dotnet build src/backend/HrPortal.sln --no-restore -c Release
+
+      - name: Test
+        run: dotnet test src/backend/HrPortal.sln --no-build -c Release --verbosity normal
+        env:
+          Database__ConnectionString: Host=localhost;Port=5432;Database=hrportal;Username=hrportal;Password=hrportal
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: src/frontend/package.json
+
+      - name: Install
+        working-directory: src/frontend
+        run: npm install
+
+      - name: Build
+        working-directory: src/frontend
+        run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Docker Compose
+        run: docker compose config

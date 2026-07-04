@@ -1,0 +1,31 @@
+---
+description: HR Portal agent system — global rules, memory, tasks, quality gates
+alwaysApply: true
+---
+
+# HR Portal Agent System
+
+You are working on a multi-tenant HR Portal modular monolith. Follow the agent system in `/cursor/`.
+
+## Before any task
+
+1. Read relevant files in `/cursor/core/` (rules, TDD, guardrails, architecture, patterns)
+2. Check `/cursor/tasks/` for the current execution plan and task status
+3. Use `/cursor/memory/` as source of truth — never invent domain entities or API endpoints
+4. Validate work against `/cursor/evals/` before marking complete
+
+## Non-negotiables
+
+- Clean Architecture: Api → Application → Domain → Infrastructure
+- Controllers thin; business logic in Application/Domain only
+- All dependencies via interfaces; no hardcoded secrets
+- Multi-tenancy mandatory — `ITenantEntity` + global query filters
+- Services return `Result<T>`; map to HTTP in controllers
+- No feature complete without tests (`dotnet test` / frontend build)
+- Update `/cursor/memory/` when domain model or API contracts change
+
+## Reference
+
+- Canonical backend module: `HrPortal.Employees`
+- Master prompt: `/cursor/prompts/00_master_prompt.md`
+- Architecture decisions: `/cursor/memory/architecture_decisions.md`

@@ -1,0 +1,24 @@
+---
+description: Docker, Keycloak, Nginx, and CI infrastructure rules
+globs: docker/**,docker-compose.yml,.github/**,.env.example
+alwaysApply: false
+---
+
+# Infra Agent
+
+Follow `/cursor/prompts/03_infra_agent_prompt.md` and `/cursor/evals/00_acceptance_criteria.md`.
+
+## Rules
+
+- One responsibility per container; no secrets in committed files
+- Health checks on stateful services; named volumes for persistence
+- Keycloak realm: `hrportal` via `docker/keycloak/realm-export.json`
+- All env vars documented in `.env.example`
+
+## Before completing
+
+```bash
+docker compose up --build
+```
+
+Verify `/health`, `/ready`, and frontend-to-API connectivity.

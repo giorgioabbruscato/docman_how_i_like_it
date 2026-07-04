@@ -1,0 +1,26 @@
+---
+description: Frontend API clients, auth, and UI conventions
+globs: src/frontend/**
+alwaysApply: false
+---
+
+# Frontend Agent
+
+Follow `/cursor/prompts/02_frontend_agent_prompt.md` and `/cursor/evals/02_frontend_quality_checks.md`.
+
+## Architecture
+
+Pages → `@/api/{module}` → `apiClient` → Backend. Never import axios in pages.
+
+## Rules
+
+- Types in `types/` must mirror backend DTOs (`/cursor/memory/api_contracts.md`)
+- Auth via Zustand `stores/auth-store.ts`; token + `X-Tenant-Id` on every request
+- Reusable UI in `components/ui/`; layout in `components/layout/`
+- 401 responses trigger logout
+
+## Before completing
+
+```bash
+cd src/frontend && npm run build
+```

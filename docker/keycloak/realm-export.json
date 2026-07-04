@@ -1,0 +1,65 @@
+{
+  "realm": "hrportal",
+  "enabled": true,
+  "displayName": "HR Portal",
+  "roles": {
+    "realm": [
+      { "name": "Admin", "description": "Platform administrator" },
+      { "name": "HR", "description": "HR staff" },
+      { "name": "Manager", "description": "Team manager" },
+      { "name": "Employee", "description": "Standard employee" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "hrportal-api",
+      "name": "HR Portal API",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "hrportal-api-secret",
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": ["http://localhost:5173/*", "http://localhost/*"],
+      "webOrigins": ["http://localhost:5173", "http://localhost"]
+    },
+    {
+      "clientId": "hrportal-web",
+      "name": "HR Portal Web",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": ["http://localhost:5173/*", "http://localhost/*"],
+      "webOrigins": ["http://localhost:5173", "http://localhost"]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@demo.local",
+      "email": "admin@demo.local",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [
+        { "type": "password", "value": "admin123", "temporary": false }
+      ],
+      "realmRoles": ["Admin"]
+    },
+    {
+      "username": "hr@demo.local",
+      "email": "hr@demo.local",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "HR",
+      "lastName": "User",
+      "credentials": [
+        { "type": "password", "value": "hr123", "temporary": false }
+      ],
+      "realmRoles": ["HR"]
+    }
+  ]
+}

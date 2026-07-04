@@ -1,0 +1,46 @@
+# Build
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# .NET
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Node
+node_modules/
+dist/
+.npm
+
+# Environment
+.env
+.env.local
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Storage (runtime files)
+storage/**/*
+!storage/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Test results
+TestResults/
+coverage/
+
+# Docker
+docker-compose.override.yml

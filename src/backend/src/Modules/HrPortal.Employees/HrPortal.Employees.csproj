@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform\HrPortal.SharedKernel\HrPortal.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Platform\HrPortal.Tenancy\HrPortal.Tenancy.csproj" />
+    <ProjectReference Include="..\..\Platform\HrPortal.Identity\HrPortal.Identity.csproj" />
+    <ProjectReference Include="..\..\Platform\HrPortal.Audit\HrPortal.Audit.csproj" />
+    <ProjectReference Include="..\HrPortal.Departments\HrPortal.Departments.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+  </ItemGroup>
+
+</Project>

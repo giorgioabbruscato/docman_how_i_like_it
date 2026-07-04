@@ -1,0 +1,28 @@
+---
+description: Backend Clean Architecture, TDD, and module conventions
+globs: src/backend/**
+alwaysApply: false
+---
+
+# Backend Agent
+
+Follow `/cursor/prompts/01_backend_agent_prompt.md` and `/cursor/evals/01_backend_quality_checks.md`.
+
+## Module structure
+
+Copy `HrPortal.Employees`: Domain → Application (DTOs, validators, service, repo interface) → Infrastructure (EF config, repository) → `{Module}ServiceCollectionExtensions`.
+
+## Rules
+
+- FluentValidation on all request DTOs
+- Migrations only in `HrPortal.Api/Infrastructure/Persistence/Migrations/`
+- No `DbContext` outside repositories; no cross-module table access
+- Cross-module lookups via public interfaces (e.g. `IDepartmentLookup`)
+
+## Before completing
+
+```bash
+cd src/backend && dotnet build && dotnet test
+```
+
+Update `/cursor/memory/domain_model.md` and `/cursor/memory/api_contracts.md` if entities or endpoints changed.

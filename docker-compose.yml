@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hrportal-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hrportal}
+      POSTGRES_USER: ${POSTGRES_USER:-hrportal}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hrportal}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hrportal} -d ${POSTGRES_DB:-hrportal}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: hrportal-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-hrportal}
+      KC_DB_USERNAME: ${POSTGRES_USER:-hrportal}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-hrportal}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+    volumes:
+      - ./docker/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: hrportal-backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Database__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-hrportal};Username=${POSTGRES_USER:-hrportal};Password=${POSTGRES_PASSWORD:-hrportal}
+      Keycloak__Authority: http://keycloak:8080/realms/hrportal
+      Keycloak__Audience: hrportal-api
+      Keycloak__RequireHttpsMetadata: "false"
+      Tenancy__TenantHeaderName: X-Tenant-Id
+      Tenancy__UseSubdomainResolution: "false"
+      Storage__RootPath: /app/storage
+      Cors__AllowedOrigins__0: http://localhost:5173
+      Cors__AllowedOrigins__1: http://localhost
+    volumes:
+      - storage_data:/app/storage
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    container_name: hrportal-frontend
+    environment:
+      VITE_API_BASE_URL: /api
+      VITE_KEYCLOAK_URL: http://localhost:8080
+      VITE_KEYCLOAK_REALM: hrportal
+      VITE_KEYCLOAK_CLIENT_ID: hrportal-web
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: hrportal-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+      - keycloak
+
+volumes:
+  postgres_data:
+  storage_data:

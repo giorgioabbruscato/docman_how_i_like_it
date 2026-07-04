@@ -1,0 +1,12 @@
+**/.git
+**/.gitignore
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/.env
+**/TestResults
+storage/**
+!storage/.gitkeep
+*.md
+!README.md
