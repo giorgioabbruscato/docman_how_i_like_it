@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HrPortal.Api.Controllers.V1;
 
+/// <summary>Employee document upload and download.</summary>
 [ApiController]
 [Route("api/v1/documents")]
+[Tags("Documents")]
 [Authorize(Policy = Policies.Authenticated)]
 public sealed class DocumentsController : ControllerBase
 {
@@ -16,22 +18,37 @@ public sealed class DocumentsController : ControllerBase
     public DocumentsController(IDocumentService documentService) =>
         _documentService = documentService;
 
+    /// <summary>List all documents.</summary>
+    /// <remarks>Auth: ManagerOrAbove</remarks>
     [HttpGet]
     [Authorize(Policy = Policies.ManagerOrAbove)]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(IEnumerable<DocumentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _documentService.GetAllAsync(cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
+    /// <summary>Get document metadata by ID.</summary>
+    /// <remarks>Auth: Authenticated</remarks>
     [HttpGet("{id:guid}")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(DocumentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _documentService.GetByIdAsync(id, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
+    /// <summary>Upload a document for an employee.</summary>
+    /// <remarks>Auth: Authenticated. Form fields: employeeId, category, file.</remarks>
     [HttpPost]
+    [Consumes("multipart/form-data")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(DocumentDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Upload(
         [FromForm] UploadDocumentRequest request,
         IFormFile file,
@@ -59,7 +76,12 @@ public sealed class DocumentsController : ControllerBase
             : MapFailure(result);
     }
 
+    /// <summary>Download document file content.</summary>
+    /// <remarks>Auth: Authenticated</remarks>
     [HttpGet("{id:guid}/download")]
+    [Produces("application/octet-stream", "application/pdf", "image/jpeg", "image/png")]
+    [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Download(Guid id, CancellationToken cancellationToken)
     {
         var result = await _documentService.DownloadAsync(id, cancellationToken);
@@ -69,8 +91,12 @@ public sealed class DocumentsController : ControllerBase
         return File(result.Value!.Content, result.Value.ContentType, result.Value.FileName);
     }
 
+    /// <summary>Delete a document.</summary>
+    /// <remarks>Auth: HrOrAdmin</remarks>
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = Policies.HrOrAdmin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var result = await _documentService.DeleteAsync(id, cancellationToken);

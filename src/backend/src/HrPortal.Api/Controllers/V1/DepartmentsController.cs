@@ -6,9 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HrPortal.Api.Controllers.V1;
 
+/// <summary>Department CRUD operations.</summary>
 [ApiController]
 [Route("api/v1/departments")]
+[Tags("Departments")]
 [Authorize(Policy = Policies.Authenticated)]
+[Produces("application/json")]
 public sealed class DepartmentsController : ControllerBase
 {
     private readonly IDepartmentService _departmentService;
@@ -16,22 +19,34 @@ public sealed class DepartmentsController : ControllerBase
     public DepartmentsController(IDepartmentService departmentService) =>
         _departmentService = departmentService;
 
+    /// <summary>List all departments.</summary>
+    /// <remarks>Auth: Authenticated</remarks>
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _departmentService.GetAllAsync(cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
+    /// <summary>Get department by ID.</summary>
+    /// <remarks>Auth: Authenticated</remarks>
     [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(DepartmentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _departmentService.GetByIdAsync(id, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
+    /// <summary>Create a new department.</summary>
+    /// <remarks>Auth: HrOrAdmin</remarks>
     [HttpPost]
     [Authorize(Policy = Policies.HrOrAdmin)]
+    [ProducesResponseType(typeof(DepartmentDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create(
         [FromBody] CreateDepartmentRequest request,
         CancellationToken cancellationToken)
@@ -42,8 +57,14 @@ public sealed class DepartmentsController : ControllerBase
             : MapFailure(result);
     }
 
+    /// <summary>Update a department.</summary>
+    /// <remarks>Auth: HrOrAdmin</remarks>
     [HttpPut("{id:guid}")]
     [Authorize(Policy = Policies.HrOrAdmin)]
+    [ProducesResponseType(typeof(DepartmentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateDepartmentRequest request,
@@ -53,8 +74,12 @@ public sealed class DepartmentsController : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
+    /// <summary>Deactivate a department (soft delete).</summary>
+    /// <remarks>Auth: HrOrAdmin</remarks>
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = Policies.HrOrAdmin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
         var result = await _departmentService.DeactivateAsync(id, cancellationToken);

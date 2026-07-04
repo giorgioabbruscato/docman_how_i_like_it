@@ -102,6 +102,8 @@ API: http://localhost:5000
 Swagger: http://localhost:5000/swagger  
 Health: http://localhost:5000/health
 
+**API artifacts:** [OpenAPI spec](docs/openapi/hrportal-v1.json) · [Postman collection](docs/postman/HR-Portal.postman_collection.json)
+
 ### 4. Run frontend
 
 ```bash
@@ -148,6 +150,8 @@ Demo users (after Keycloak import):
 - Base path: `/api/v1/`
 - Errors: RFC 7807 `ProblemDetails` (no stack traces in production)
 - Health: `/health`, `/ready`
+- OpenAPI: [`docs/openapi/hrportal-v1.json`](docs/openapi/hrportal-v1.json)
+- Postman: [`docs/postman/HR-Portal.postman_collection.json`](docs/postman/HR-Portal.postman_collection.json)
 
 ### Example: create employee
 
@@ -162,6 +166,20 @@ curl -X POST http://localhost:5000/api/v1/employees \
     "email": "mario.rossi@demo.local",
     "hireDate": "2024-01-15"
   }'
+```
+
+## Operations
+
+Operator runbooks for day-2 operations:
+
+- [Operations guide](docs/OPERATIONS.md) — backup/restore, Keycloak, migrations, logging
+- [Deployment checklist](docs/DEPLOYMENT.md) — production rollout and smoke tests
+
+Regenerate API artifacts after endpoint changes:
+
+```bash
+./scripts/export-openapi.sh
+python3 scripts/generate-postman-collection.py
 ```
 
 ## Development order

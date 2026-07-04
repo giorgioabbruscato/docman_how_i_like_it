@@ -15,6 +15,7 @@ The system is valid only if **all** criteria below pass.
 - [ ] `/health` returns 200
 - [ ] `/ready` returns 200
 - [ ] Swagger UI accessible at `/swagger`
+- [ ] All API endpoints documented in Swagger (27 business endpoints with examples)
 - [ ] `dotnet test` passes with zero failures
 - [ ] Migrations apply cleanly on fresh database
 

@@ -1,6 +1,8 @@
 using System.Threading.RateLimiting;
 using HrPortal.Api.Infrastructure.Filters;
 using HrPortal.Api.Infrastructure.Middleware;
+using HrPortal.Api.Infrastructure.OpenApi;
+using System.Reflection;
 using HrPortal.Api.Infrastructure.Persistence;
 using HrPortal.Attendance;
 using HrPortal.Audit;
@@ -41,8 +43,16 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "HR Portal API",
         Version = "v1",
-        Description = "Modular monolith HR platform API"
+        Description = "Modular monolith HR platform API. Business endpoints require Bearer JWT and X-Tenant-Id header."
     });
+
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
+    if (File.Exists(xmlPath))
+        options.IncludeXmlComments(xmlPath);
+
+    options.OperationFilter<TenantHeaderOperationFilter>();
+    options.OperationFilter<AuthResponsesOperationFilter>();
+    options.OperationFilter<ExamplesOperationFilter>();
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {

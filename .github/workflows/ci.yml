@@ -92,3 +92,19 @@ jobs:
         with:
           image-ref: hrportal-backend:latest
           severity: CRITICAL,HIGH
+
+      - name: Scan IaC configuration
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH
+
+      - name: Build backend image
+        run: docker build -f docker/backend/Dockerfile -t hrportal-backend:latest .
+
+      - name: Scan backend image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: hrportal-backend:latest
+          severity: CRITICAL,HIGH
