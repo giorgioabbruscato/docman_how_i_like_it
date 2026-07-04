@@ -1,6 +1,6 @@
 # TASK 08 — DOCKER FINAL
 
-> Status: **IN PROGRESS**
+> Status: **COMPLETED**
 
 Full stack Docker Compose validation and production readiness.
 
@@ -13,11 +13,11 @@ docker compose up --build
 ```
 
 **Verify:**
-- [ ] All 5 containers start (postgres, keycloak, backend, frontend, nginx)
-- [ ] Backend applies migrations on startup
-- [ ] Keycloak imports realm
-- [ ] Demo tenant seeded
-- [ ] No manual intervention required
+- [x] All 5 containers start (postgres, keycloak, backend, frontend, nginx)
+- [x] Backend applies migrations on startup
+- [x] Keycloak imports realm
+- [x] Demo tenant seeded
+- [x] No manual intervention required
 
 ## TASK 08.2 — Inter-service communication
 
@@ -36,8 +36,8 @@ docker compose up --build
 
 **Goal:** Data survives container restarts.
 
-- [ ] `postgres_data` — database persists
-- [ ] `storage_data` — uploaded files persist
+- [x] `postgres_data` — database persists
+- [x] `storage_data` — uploaded files persist
 
 **Test:**
 ```bash
@@ -46,21 +46,23 @@ docker compose up -d
 # Verify data still exists
 ```
 
+Automated via `scripts/docker-smoke-test.sh`.
+
 ## TASK 08.4 — CI pipeline
 
 **Goal:** Automated build and test in GitHub Actions.
 
 **Deliverables:**
 - [x] `.github/workflows/ci.yml`
-- [ ] Backend build + test
-- [ ] Frontend build
-- [ ] Docker compose validation
+- [x] Backend build + test
+- [x] Frontend build
+- [x] Docker compose validation (build + up --wait + smoke test)
 
 ## Acceptance criteria
 
-- [ ] `docker compose up --build` works from clean clone
-- [ ] All acceptance criteria pass (`evals/00_acceptance_criteria.md`)
-- [ ] CI pipeline green on main branch
+- [x] `docker compose up --build` works from clean clone
+- [x] All acceptance criteria pass (`evals/00_acceptance_criteria.md`)
+- [x] CI pipeline green on main branch
 
 ## Next task
 
