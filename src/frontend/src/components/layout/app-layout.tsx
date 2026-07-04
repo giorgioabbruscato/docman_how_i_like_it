@@ -3,7 +3,15 @@ import { keycloak } from '@/lib/keycloak';
 import { hasAnyRole, MANAGER_OR_ABOVE_ROLES } from '@/lib/auth-roles';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Building2, Users } from 'lucide-react';
+import {
+  Building2,
+  CalendarDays,
+  Clock,
+  FileText,
+  LayoutDashboard,
+  Settings,
+  Users,
+} from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null },
@@ -14,6 +22,10 @@ const navItems = [
     icon: Users,
     roles: [...MANAGER_OR_ABOVE_ROLES],
   },
+  { to: '/leave-requests', label: 'Leave Requests', icon: CalendarDays, roles: null },
+  { to: '/attendance', label: 'Attendance', icon: Clock, roles: null },
+  { to: '/documents', label: 'Documents', icon: FileText, roles: null },
+  { to: '/settings', label: 'Settings', icon: Settings, roles: null },
 ];
 
 export function AppLayout() {
