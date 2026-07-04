@@ -136,6 +136,94 @@ public sealed class AuthorizationPolicyTests : IntegrationTestBase
         response.StatusCode.Should().Be(expectedStatus);
     }
 
+    [Theory]
+    [MemberData(nameof(GetEmployeesPolicyCases))]
+    public async Task GetDocuments_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync("/api/v1/documents");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
+    [Theory]
+    [MemberData(nameof(AuthenticatedOnlyPolicyCases))]
+    public async Task GetDocumentById_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync($"/api/v1/documents/{MissingId}");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
+    [Theory]
+    [MemberData(nameof(HrOrAdminNotFoundPolicyCases))]
+    public async Task DeleteDocuments_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.DeleteAsync($"/api/v1/documents/{MissingId}");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetEmployeesPolicyCases))]
+    public async Task GetLeaveRequests_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync("/api/v1/leave-requests");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
+    [Theory]
+    [MemberData(nameof(AuthenticatedOnlyPolicyCases))]
+    public async Task GetLeaveRequestById_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync($"/api/v1/leave-requests/{MissingId}");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
+    [Theory]
+    [MemberData(nameof(ManagerOrAboveNotFoundPolicyCases))]
+    public async Task ApproveLeaveRequests_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.PutAsync($"/api/v1/leave-requests/{MissingId}/approve", null);
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetEmployeesPolicyCases))]
+    public async Task GetAttendance_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync("/api/v1/attendance");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
+    [Theory]
+    [MemberData(nameof(GetEmployeesPolicyCases))]
+    public async Task GetAttendanceReports_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync("/api/v1/attendance/reports?from=2024-01-01&to=2024-01-31");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
     public static TheoryData<string?, HttpStatusCode> GetEmployeesPolicyCases() => new()
     {
         { null, HttpStatusCode.Unauthorized },
@@ -177,6 +265,15 @@ public sealed class AuthorizationPolicyTests : IntegrationTestBase
         { null, HttpStatusCode.Unauthorized },
         { "employee", HttpStatusCode.Forbidden },
         { "manager", HttpStatusCode.Forbidden },
+        { "hr", HttpStatusCode.NotFound },
+        { "admin", HttpStatusCode.NotFound }
+    };
+
+    public static TheoryData<string?, HttpStatusCode> ManagerOrAboveNotFoundPolicyCases() => new()
+    {
+        { null, HttpStatusCode.Unauthorized },
+        { "employee", HttpStatusCode.Forbidden },
+        { "manager", HttpStatusCode.NotFound },
         { "hr", HttpStatusCode.NotFound },
         { "admin", HttpStatusCode.NotFound }
     };

@@ -3,15 +3,15 @@ services:
     image: postgres:16-alpine
     container_name: hrportal-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-hrportal}
-      POSTGRES_USER: ${POSTGRES_USER:-hrportal}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hrportal}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hrportal} -d ${POSTGRES_DB:-hrportal}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,17 +22,24 @@ services:
     command: start-dev --import-realm
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-hrportal}
-      KC_DB_USERNAME: ${POSTGRES_USER:-hrportal}
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-hrportal}
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
+      KC_HEALTH_ENABLED: "true"
     volumes:
       - ./docker/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080; echo -e 'GET /realms/hrportal HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3; cat <&3 | grep -q '200'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,10 +52,13 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      Database__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB:-hrportal};Username=${POSTGRES_USER:-hrportal};Password=${POSTGRES_PASSWORD:-hrportal}
+      Database__ConnectionString: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Keycloak__Authority: http://keycloak:8080/realms/hrportal
       Keycloak__Audience: hrportal-api
       Keycloak__RequireHttpsMetadata: "false"
+      Keycloak__ValidIssuers__0: http://keycloak:8080/realms/hrportal
+      Keycloak__ValidIssuers__1: http://localhost:8080/realms/hrportal
+      Keycloak__ValidIssuers__2: http://localhost/realms/hrportal
       Tenancy__TenantHeaderName: X-Tenant-Id
       Tenancy__UseSubdomainResolution: "false"
       Storage__RootPath: /app/storage
@@ -57,28 +67,35 @@ services:
     volumes:
       - storage_data:/app/storage
     ports:
-      - "5000:8080"
+      - "${BACKEND_PORT:-5000}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
       keycloak:
-        condition: service_started
+        condition: service_healthy
 
   frontend:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
       args:
-        VITE_API_BASE_URL: /api
-        VITE_KEYCLOAK_URL: http://localhost:8080
-        VITE_KEYCLOAK_REALM: hrportal
-        VITE_KEYCLOAK_CLIENT_ID: hrportal-web
-        VITE_TENANT_ID: demo
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-http://localhost:8080}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-hrportal}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-hrportal-web}
+        VITE_TENANT_ID: ${VITE_TENANT_ID:-demo}
     container_name: hrportal-frontend
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   nginx:
     image: nginx:1.27-alpine
@@ -87,10 +104,19 @@ services:
       - "80:80"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     depends_on:
-      - frontend
-      - backend
-      - keycloak
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
 
 volumes:
   postgres_data:

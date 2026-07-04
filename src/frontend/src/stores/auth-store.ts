@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 interface AuthState {
   accessToken: string | null;
@@ -8,14 +7,9 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      accessToken: null,
-      user: null,
-      setAuth: (accessToken, user) => set({ accessToken, user }),
-      logout: () => set({ accessToken: null, user: null }),
-    }),
-    { name: 'hrportal-auth' },
-  ),
-);
+export const useAuthStore = create<AuthState>()((set) => ({
+  accessToken: null,
+  user: null,
+  setAuth: (accessToken, user) => set({ accessToken, user }),
+  logout: () => set({ accessToken: null, user: null }),
+}));

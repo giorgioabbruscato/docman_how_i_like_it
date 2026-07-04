@@ -6,8 +6,10 @@ import { fetchDepartments } from '@/api/departments';
 import { createEmployee, deactivateEmployee, fetchEmployees } from '@/api/employees';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { confirmAction, getApiErrorMessage } from '@/lib/utils';
 import type { Department } from '@/types/department';
 import type { Employee } from '@/types/employee';
 
@@ -50,8 +52,8 @@ export function EmployeesPage() {
       ]);
       setEmployees(employeeData);
       setDepartments(departmentData);
-    } catch {
-      setError('Failed to load data. Ensure you are authenticated and the API is running.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to load data. Ensure you are authenticated and the API is running.'));
     } finally {
       setLoading(false);
     }
@@ -73,17 +75,18 @@ export function EmployeesPage() {
       });
       reset({ hireDate: new Date().toISOString().slice(0, 10) });
       await loadData();
-    } catch {
-      setError('Failed to create employee.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to create employee.'));
     }
   };
 
   const handleDeactivate = async (id: string) => {
+    if (!confirmAction('Deactivate this employee?')) return;
     try {
       await deactivateEmployee(id);
       await loadData();
-    } catch {
-      setError('Failed to deactivate employee.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to deactivate employee.'));
     }
   };
 
@@ -97,11 +100,7 @@ export function EmployeesPage() {
         <p className="text-muted-foreground">Manage employee records for your organization.</p>
       </div>
 
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner message={error} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -149,9 +148,9 @@ export function EmployeesPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <LoadingSpinner label="Loading employees" />
             ) : employees.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No employees found.</p>
+              <EmptyState message="No employees found." />
             ) : (
               <ul className="divide-y divide-border">
                 {employees.map((employee) => (

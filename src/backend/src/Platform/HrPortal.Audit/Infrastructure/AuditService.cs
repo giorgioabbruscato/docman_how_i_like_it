@@ -34,9 +34,32 @@ internal sealed class AuditService : IAuditService
             return;
         }
 
-        var auditLog = AuditLog.Create(
+        await AddAuditLogAsync(
             _tenantContext.TenantId,
             _userContext.IsAuthenticated ? _userContext.UserId : Guid.Empty,
+            entry,
+            cancellationToken);
+    }
+
+    public Task LogForTenantAsync(
+        Guid tenantId,
+        AuditEntry entry,
+        CancellationToken cancellationToken = default) =>
+        AddAuditLogAsync(
+            tenantId,
+            _userContext.IsAuthenticated ? _userContext.UserId : Guid.Empty,
+            entry,
+            cancellationToken);
+
+    private async Task AddAuditLogAsync(
+        Guid tenantId,
+        Guid userId,
+        AuditEntry entry,
+        CancellationToken cancellationToken)
+    {
+        var auditLog = AuditLog.Create(
+            tenantId,
+            userId,
             entry.Action,
             entry.Entity,
             entry.EntityId,

@@ -9,4 +9,5 @@ public sealed record AuditEntry(
 public interface IAuditService
 {
     Task LogAsync(AuditEntry entry, CancellationToken cancellationToken = default);
+    Task LogForTenantAsync(Guid tenantId, AuditEntry entry, CancellationToken cancellationToken = default);
 }

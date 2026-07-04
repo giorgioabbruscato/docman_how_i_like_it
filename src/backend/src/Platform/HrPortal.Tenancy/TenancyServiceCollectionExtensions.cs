@@ -1,4 +1,6 @@
+using FluentValidation;
 using HrPortal.Tenancy.Application;
+using HrPortal.Tenancy.Application.Validators;
 using HrPortal.Tenancy.Infrastructure;
 using HrPortal.Tenancy.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
@@ -13,15 +15,11 @@ public static class TenancyServiceCollectionExtensions
         services.Configure<TenantResolverOptions>(
             configuration.GetSection(TenantResolverOptions.SectionName));
 
+        services.AddScoped<ITenantContextAccessor, TenantContextAccessor>();
         services.AddScoped<ITenantResolver, TenantResolver>();
         services.AddScoped<ITenantRepository, TenantRepository>();
-        services.AddTransient<TenantContext>(sp =>
-        {
-            var httpContext = sp.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>()?.HttpContext;
-            if (httpContext?.Items.TryGetValue(nameof(TenantContext), out var ctx) == true && ctx is TenantContext tenantContext)
-                return tenantContext;
-            return TenantContext.Empty;
-        });
+        services.AddValidatorsFromAssemblyContaining<CreateTenantRequestValidator>();
+        services.AddScoped<TenantContext>(sp => sp.GetRequiredService<ITenantContextAccessor>().Current);
 
         return services;
     }
