@@ -87,14 +87,10 @@ docker compose up -d postgres keycloak
 
 ### 3. Run backend
 
+Migrations are committed in the repo and applied automatically on startup.
+
 ```bash
 cd src/backend
-
-# Create initial migration (first time only)
-dotnet ef migrations add InitialCreate \
-  --project src/HrPortal.Api \
-  --output-dir Infrastructure/Persistence/Migrations
-
 dotnet run --project src/HrPortal.Api
 ```
 
@@ -119,6 +115,30 @@ Frontend: http://localhost:5173
 ```bash
 docker compose up --build
 ```
+
+### Database migrations (model changes only)
+
+You only need the EF Core CLI when adding a new migration after changing entities — not for the initial setup.
+
+```bash
+dotnet tool install --global dotnet-ef --version 8.0.11
+```
+
+On macOS with Homebrew .NET, add to your shell profile:
+
+```bash
+export DOTNET_ROOT="/opt/homebrew/opt/dotnet@8/libexec"
+export PATH="$PATH:$HOME/.dotnet/tools"
+```
+
+```bash
+cd src/backend
+dotnet ef migrations add <MigrationName> \
+  --project src/HrPortal.Api \
+  --output-dir Infrastructure/Persistence/Migrations
+```
+
+See [Operations guide](docs/OPERATIONS.md#database-migrations) for apply/rollback details.
 
 ## Multi-tenancy
 
