@@ -2,7 +2,6 @@ using HrPortal.Audit.Application;
 using HrPortal.Departments.Application;
 using HrPortal.Departments.Application.Dtos;
 using HrPortal.Departments.Domain;
-using HrPortal.Identity;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.Tenancy;
 using Moq;
@@ -15,8 +14,10 @@ public sealed class DepartmentServiceTests
     private readonly Mock<IDepartmentRepository> _repository = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAuditService> _auditService = new();
-    private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo");
-    private readonly UserContext _userContext = new() { UserId = Guid.NewGuid(), IsAuthenticated = true };
+    private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo") with
+    {
+        UserId = Guid.NewGuid()
+    };
     private readonly DepartmentService _service;
 
     public DepartmentServiceTests()
@@ -25,7 +26,6 @@ public sealed class DepartmentServiceTests
             _repository.Object,
             _unitOfWork.Object,
             _tenantContext,
-            _userContext,
             _auditService.Object,
         NullLogger<DepartmentService>.Instance);
     }

@@ -1,6 +1,6 @@
 # TASK 26 — SERVICE CONTEXT UNIFICATION
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Remove dual `TenantContext` + `UserContext` injection from all application services.
 
@@ -68,23 +68,23 @@ Read before starting:
 
 Remove `UserContext` constructor injection; use `_tenantContext.UserId` for audit fields:
 
-- [ ] `EmployeeService`
-- [ ] `DepartmentService`
-- [ ] `LeaveRequestService`
-- [ ] `AttendanceService`
-- [ ] `DocumentService`
-- [ ] `AuditService`
+- [x] `EmployeeService`
+- [x] `DepartmentService`
+- [x] `LeaveRequestService`
+- [x] `AttendanceService`
+- [x] `DocumentService`
+- [x] `AuditService`
 
 ### Cleanup
 
-- [ ] Remove duplicated `EnsureTenantResolved()` private methods — middleware guarantees resolution in multi mode; single mode uses default tenant
-- [ ] Replace `_tenantContext.TenantId` with ctx from accessor consistently
-- [ ] Update service unit tests to build `TenantContext` fixtures (not UserContext)
+- [x] Remove duplicated `EnsureTenantResolved()` private methods — middleware guarantees resolution in multi mode; single mode uses default tenant
+- [x] Replace `_tenantContext.TenantId` with ctx from accessor consistently
+- [x] Update service unit tests to build `TenantContext` fixtures (not UserContext)
 
 ### DI
 
-- [ ] Verify scoped `TenantContext` is enriched before service resolution
-- [ ] Document: services must never inject `IHttpContextAccessor`
+- [x] Verify scoped `TenantContext` is enriched before service resolution
+- [x] Document: services must never inject `IHttpContextAccessor`
 
 ## Files to touch
 
@@ -96,10 +96,10 @@ Remove `UserContext` constructor injection; use `_tenantContext.UserId` for audi
 
 ## Acceptance criteria
 
-- [ ] No application service injects `UserContext`
-- [ ] Audit fields (`CreatedBy`, `UpdatedBy`) use `TenantContext.UserId`
-- [ ] All unit tests pass with TenantContext fixtures
-- [ ] `dotnet test` green
+- [x] No application service injects `UserContext`
+- [x] Audit fields (`CreatedBy`, `UpdatedBy`) use `TenantContext.UserId`
+- [x] All unit tests pass with TenantContext fixtures
+- [x] `dotnet test` green
 
 ## Next task
 

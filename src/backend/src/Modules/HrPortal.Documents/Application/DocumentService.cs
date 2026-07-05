@@ -2,8 +2,6 @@ using HrPortal.Audit.Application;
 using HrPortal.Documents.Application.Dtos;
 using HrPortal.Documents.Domain;
 using HrPortal.Employees.Application;
-using HrPortal.Identity;
-using HrPortal.SharedKernel.Exceptions;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.SharedKernel.Results;
 using HrPortal.Storage;
@@ -34,7 +32,6 @@ internal sealed class DocumentService : IDocumentService
     private readonly IStorageProvider _storageProvider;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
-    private readonly UserContext _userContext;
     private readonly IAuditService _auditService;
     private readonly ILogger<DocumentService> _logger;
 
@@ -44,7 +41,6 @@ internal sealed class DocumentService : IDocumentService
         IStorageProvider storageProvider,
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
-        UserContext userContext,
         IAuditService auditService,
         ILogger<DocumentService> logger)
     {
@@ -53,7 +49,6 @@ internal sealed class DocumentService : IDocumentService
         _storageProvider = storageProvider;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
-        _userContext = userContext;
         _auditService = auditService;
         _logger = logger;
     }
@@ -81,8 +76,6 @@ internal sealed class DocumentService : IDocumentService
         long sizeBytes,
         CancellationToken cancellationToken = default)
     {
-        EnsureTenantResolved();
-
         if (!Enum.TryParse<DocumentCategory>(request.Category, true, out var category))
             return Result.Failure<DocumentDto>("Invalid document category.", "VALIDATION_ERROR");
 
@@ -111,7 +104,7 @@ internal sealed class DocumentService : IDocumentService
             storageResult.SizeBytes,
             storageResult.Path,
             category,
-            _userContext.UserId);
+            _tenantContext.UserId);
 
         await _repository.AddAsync(document, cancellationToken);
 
@@ -154,12 +147,6 @@ internal sealed class DocumentService : IDocumentService
         _logger.LogInformation("Document {DocumentId} deleted", id);
 
         return Result.Success();
-    }
-
-    private void EnsureTenantResolved()
-    {
-        if (!_tenantContext.IsResolved)
-            throw new DomainException("Tenant context is not resolved.");
     }
 
     private static DocumentDto MapToDto(Document document) =>

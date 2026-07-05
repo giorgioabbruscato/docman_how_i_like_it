@@ -2,7 +2,6 @@ using HrPortal.Attendance.Application.Dtos;
 using HrPortal.Attendance.Domain;
 using HrPortal.Audit.Application;
 using HrPortal.Employees.Application;
-using HrPortal.Identity;
 using HrPortal.SharedKernel.Exceptions;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.SharedKernel.Results;
@@ -25,7 +24,6 @@ internal sealed class AttendanceService : IAttendanceService
     private readonly IEmployeeLookup _employeeLookup;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
-    private readonly UserContext _userContext;
     private readonly IAuditService _auditService;
     private readonly ILogger<AttendanceService> _logger;
 
@@ -34,7 +32,6 @@ internal sealed class AttendanceService : IAttendanceService
         IEmployeeLookup employeeLookup,
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
-        UserContext userContext,
         IAuditService auditService,
         ILogger<AttendanceService> logger)
     {
@@ -42,7 +39,6 @@ internal sealed class AttendanceService : IAttendanceService
         _employeeLookup = employeeLookup;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
-        _userContext = userContext;
         _auditService = auditService;
         _logger = logger;
     }
@@ -57,8 +53,6 @@ internal sealed class AttendanceService : IAttendanceService
         CheckInRequest request,
         CancellationToken cancellationToken = default)
     {
-        EnsureTenantResolved();
-
         if (!await _employeeLookup.ExistsAndIsActiveAsync(request.EmployeeId, cancellationToken))
             return Result.Failure<AttendanceRecordDto>("Employee not found or inactive.", "NOT_FOUND");
 
@@ -73,7 +67,7 @@ internal sealed class AttendanceService : IAttendanceService
                 _tenantContext.TenantId,
                 request.EmployeeId,
                 date,
-                _userContext.UserId);
+                _tenantContext.UserId);
 
             try
             {
@@ -109,8 +103,6 @@ internal sealed class AttendanceService : IAttendanceService
         CheckOutRequest request,
         CancellationToken cancellationToken = default)
     {
-        EnsureTenantResolved();
-
         if (!await _employeeLookup.ExistsAndIsActiveAsync(request.EmployeeId, cancellationToken))
             return Result.Failure<AttendanceRecordDto>("Employee not found or inactive.", "NOT_FOUND");
 
@@ -163,12 +155,6 @@ internal sealed class AttendanceService : IAttendanceService
     {
         await _auditService.LogAsync(new AuditEntry(action, nameof(AttendanceRecord), record.Id.ToString()), cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-    }
-
-    private void EnsureTenantResolved()
-    {
-        if (!_tenantContext.IsResolved)
-            throw new DomainException("Tenant context is not resolved.");
     }
 
     private static AttendanceRecordDto MapToDto(AttendanceRecord record) =>

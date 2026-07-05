@@ -2,8 +2,6 @@ using HrPortal.Audit.Application;
 using HrPortal.Departments.Application;
 using HrPortal.Employees.Application.Dtos;
 using HrPortal.Employees.Domain;
-using HrPortal.Identity;
-using HrPortal.SharedKernel.Exceptions;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.SharedKernel.Results;
 using HrPortal.Tenancy;
@@ -27,7 +25,6 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
     private readonly IDepartmentLookup _departmentLookup;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
-    private readonly UserContext _userContext;
     private readonly IAuditService _auditService;
     private readonly IFeatureGateService _featureGateService;
     private readonly ILogger<EmployeeService> _logger;
@@ -37,7 +34,6 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
         IDepartmentLookup departmentLookup,
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
-        UserContext userContext,
         IAuditService auditService,
         IFeatureGateService featureGateService,
         ILogger<EmployeeService> logger)
@@ -46,7 +42,6 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
         _departmentLookup = departmentLookup;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
-        _userContext = userContext;
         _auditService = auditService;
         _featureGateService = featureGateService;
         _logger = logger;
@@ -71,8 +66,6 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
         CreateEmployeeRequest request,
         CancellationToken cancellationToken = default)
     {
-        EnsureTenantResolved();
-
         var maxEmployees = await _featureGateService.GetMaxEmployeesAsync(cancellationToken);
         var activeCount = await _repository.CountActiveAsync(cancellationToken);
         if (activeCount >= maxEmployees)
@@ -97,7 +90,7 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
             request.HireDate,
             request.JobTitle,
             request.DepartmentId,
-            _userContext.UserId);
+            _tenantContext.UserId);
 
         await _repository.AddAsync(employee, cancellationToken);
 
@@ -134,7 +127,7 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
             request.Email,
             request.JobTitle,
             request.DepartmentId,
-            _userContext.UserId);
+            _tenantContext.UserId);
 
         await _repository.UpdateAsync(employee, cancellationToken);
 
@@ -155,7 +148,7 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
         if (employee is null)
             return Result.Failure("Employee not found.", "NOT_FOUND");
 
-        employee.Deactivate(_userContext.UserId);
+        employee.Deactivate(_tenantContext.UserId);
         await _repository.UpdateAsync(employee, cancellationToken);
 
         await _auditService.LogAsync(new AuditEntry(
@@ -186,12 +179,6 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
             return Result.Failure("Department not found or inactive.", "NOT_FOUND");
 
         return Result.Success();
-    }
-
-    private void EnsureTenantResolved()
-    {
-        if (!_tenantContext.IsResolved)
-            throw new DomainException("Tenant context is not resolved.");
     }
 
     private static EmployeeDto MapToDto(Employee employee) =>

@@ -1,8 +1,6 @@
 using HrPortal.Audit.Application;
 using HrPortal.Departments.Application.Dtos;
 using HrPortal.Departments.Domain;
-using HrPortal.Identity;
-using HrPortal.SharedKernel.Exceptions;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.SharedKernel.Results;
 using HrPortal.Tenancy;
@@ -24,7 +22,6 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
     private readonly IDepartmentRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
-    private readonly UserContext _userContext;
     private readonly IAuditService _auditService;
     private readonly ILogger<DepartmentService> _logger;
 
@@ -32,14 +29,12 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
         IDepartmentRepository repository,
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
-        UserContext userContext,
         IAuditService auditService,
         ILogger<DepartmentService> logger)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
-        _userContext = userContext;
         _auditService = auditService;
         _logger = logger;
     }
@@ -63,8 +58,6 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
         CreateDepartmentRequest request,
         CancellationToken cancellationToken = default)
     {
-        EnsureTenantResolved();
-
         if (await _repository.CodeExistsAsync(request.Code, cancellationToken: cancellationToken))
             return Result.Failure<DepartmentDto>("A department with this code already exists.", "CONFLICT");
 
@@ -78,7 +71,7 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
             request.Code,
             request.Description,
             request.ParentDepartmentId,
-            _userContext.UserId);
+            _tenantContext.UserId);
 
         await _repository.AddAsync(department, cancellationToken);
 
@@ -114,7 +107,7 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
             request.Code,
             request.Description,
             request.ParentDepartmentId,
-            _userContext.UserId);
+            _tenantContext.UserId);
 
         await _repository.UpdateAsync(department, cancellationToken);
 
@@ -137,7 +130,7 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
         if (await _repository.HasActiveChildrenAsync(id, cancellationToken))
             return Result.Failure("Cannot deactivate a department with active child departments.", "CONFLICT");
 
-        department.Deactivate(_userContext.UserId);
+        department.Deactivate(_tenantContext.UserId);
         await _repository.UpdateAsync(department, cancellationToken);
 
         await _auditService.LogAsync(new AuditEntry(
@@ -172,12 +165,6 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
             return Result.Failure("Parent department not found or inactive.", "NOT_FOUND");
 
         return Result.Success();
-    }
-
-    private void EnsureTenantResolved()
-    {
-        if (!_tenantContext.IsResolved)
-            throw new DomainException("Tenant context is not resolved.");
     }
 
     private static DepartmentDto MapToDto(Department department) =>

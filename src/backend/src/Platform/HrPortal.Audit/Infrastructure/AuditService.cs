@@ -1,7 +1,6 @@
 using System.Text.Json;
 using HrPortal.Audit.Application;
 using HrPortal.Audit.Domain;
-using HrPortal.Identity;
 using HrPortal.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -12,18 +11,15 @@ internal sealed class AuditService : IAuditService
 {
     private readonly DbContext _dbContext;
     private readonly TenantContext _tenantContext;
-    private readonly UserContext _userContext;
     private readonly ILogger<AuditService> _logger;
 
     public AuditService(
         DbContext dbContext,
         TenantContext tenantContext,
-        UserContext userContext,
         ILogger<AuditService> logger)
     {
         _dbContext = dbContext;
         _tenantContext = tenantContext;
-        _userContext = userContext;
         _logger = logger;
     }
 
@@ -37,7 +33,7 @@ internal sealed class AuditService : IAuditService
 
         await AddAuditLogAsync(
             _tenantContext.TenantId,
-            _userContext.IsAuthenticated ? _userContext.UserId : Guid.Empty,
+            _tenantContext.UserId ?? Guid.Empty,
             entry,
             cancellationToken);
     }
@@ -48,7 +44,7 @@ internal sealed class AuditService : IAuditService
         CancellationToken cancellationToken = default) =>
         AddAuditLogAsync(
             tenantId,
-            _userContext.IsAuthenticated ? _userContext.UserId : Guid.Empty,
+            _tenantContext.UserId ?? Guid.Empty,
             entry,
             cancellationToken);
 
@@ -77,14 +73,14 @@ internal sealed class AuditService : IAuditService
 
         await AddAuditLogAsync(
             _tenantContext.TenantId,
-            entry.ActorUserId ?? (_userContext.IsAuthenticated ? _userContext.UserId : Guid.Empty),
+            entry.ActorUserId ?? (_tenantContext.UserId ?? Guid.Empty),
             new AuditEntry(
                 entry.Allowed ? "access.allowed" : "access.denied",
                 "Authorization",
                 entry.Permission,
                 metadata),
             cancellationToken,
-            actorEmail: _userContext.IsAuthenticated ? _userContext.Email : null,
+            actorEmail: _tenantContext.UserId.HasValue ? _tenantContext.Email : null,
             ipAddress: entry.IpAddress,
             decision: entry.Allowed ? AuditDecision.Allow : AuditDecision.Deny,
             scope: ResolveScope(entry.Permission),

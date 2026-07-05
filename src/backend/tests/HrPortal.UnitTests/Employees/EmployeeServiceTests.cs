@@ -3,7 +3,6 @@ using HrPortal.Departments.Application;
 using HrPortal.Employees.Application;
 using HrPortal.Employees.Application.Dtos;
 using HrPortal.Employees.Domain;
-using HrPortal.Identity;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.Tenancy;
 using HrPortal.Tenancy.Application;
@@ -19,8 +18,10 @@ public sealed class EmployeeServiceTests
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAuditService> _auditService = new();
     private readonly Mock<IFeatureGateService> _featureGateService = new();
-    private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo");
-    private readonly UserContext _userContext = new() { UserId = Guid.NewGuid(), IsAuthenticated = true };
+    private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo") with
+    {
+        UserId = Guid.NewGuid()
+    };
     private readonly EmployeeService _service;
 
     public EmployeeServiceTests()
@@ -37,7 +38,6 @@ public sealed class EmployeeServiceTests
             _departmentLookup.Object,
             _unitOfWork.Object,
             _tenantContext,
-            _userContext,
             _auditService.Object,
             _featureGateService.Object,
         NullLogger<EmployeeService>.Instance);
