@@ -1,6 +1,6 @@
 # TASK 16 — APPLY TENANT SCOPE HELPER
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create the unified `ApplyTenantScope` query helper with mode-aware tenant filtering rules.
 
@@ -72,26 +72,26 @@ Read before starting:
 
 ### TenantQueryExtensions
 
-- [ ] Create `HrPortal.Tenancy/TenantQueryExtensions.cs`
-- [ ] `ApplyTenantScope<TEntity>(query, ctx)` where `TEntity : ITenantEntity`:
+- [x] Create `HrPortal.Tenancy/TenantQueryExtensions.cs`
+- [x] `ApplyTenantScope<TEntity>(query, ctx)` where `TEntity : ITenantEntity`:
   - `ctx.Mode == Single` → return query unchanged
   - `ctx.Mode == Multi` && `!ctx.IsResolved` → throw `TenantNotResolvedException`
   - `ctx.Mode == Multi` && resolved → `Where(e => e.TenantId == ctx.TenantId)`
 
 ### Shared helper
 
-- [ ] `TenantScopingRules.ShouldApplyTenantFilter(ctx)` → bool
-- [ ] Used by both extensions and DbContext filter expressions
+- [x] `TenantScopingRules.ShouldApplyTenantFilter(ctx)` → bool
+- [x] Used by both extensions and DbContext filter expressions
 
 ### Seeding / background context
 
-- [ ] `TenantScopingContext.ForSeeding(tenantId)` — explicit context for DbInitializer
-- [ ] No silent bypass via `!IsResolved` in multi mode
-- [ ] Document usage in guardrails
+- [x] `TenantScopingContext.ForSeeding(tenantId)` — explicit context for DbInitializer
+- [x] No silent bypass via `!IsResolved` in multi mode
+- [x] Document usage in guardrails
 
 ### Exception
 
-- [ ] `TenantNotResolvedException` in SharedKernel (if not exists)
+- [x] `TenantNotResolvedException` in SharedKernel (if not exists)
 
 ## Files to touch
 
@@ -105,10 +105,10 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] Single mode: `ApplyTenantScope` is a no-op
-- [ ] Multi mode: unresolved context throws
-- [ ] Multi mode: resolved context filters by TenantId
-- [ ] Unit tests for all three branches
+- [x] Single mode: `ApplyTenantScope` is a no-op
+- [x] Multi mode: unresolved context throws
+- [x] Multi mode: resolved context filters by TenantId
+- [x] Unit tests for all three branches
 
 ## Next task
 

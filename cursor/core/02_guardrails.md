@@ -25,6 +25,8 @@
 - Use RFC 7807 `ProblemDetails` for error responses
 - Set `TenantId` via entity factory methods, not in controllers
 - Call `ApplyTenantScope(ctx)` on every repository query for `ITenantEntity`
+- Set tenant context before any DbContext use outside the HTTP pipeline (seeding, background jobs): `accessor.Set(TenantScopingContext.ForSeeding(tenantId))`
+- Platform cross-tenant queries use an explicit `tenantId` parameter (e.g. `IgnoreQueryFilters()` + `Where`), not an unresolved accessor bypass
 - Inject and use `TenantContext` (via `ITenantContextAccessor`) as sole request identity in services
 - Delegate authorization to Policy layer (`IPolicyEngine.Can`)
 - Register new modules in `Program.cs` via `{Module}ServiceCollectionExtensions`

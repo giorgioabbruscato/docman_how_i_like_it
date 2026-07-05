@@ -1,7 +1,7 @@
-using HrPortal.Api.Infrastructure.Persistence;
 using HrPortal.AccessControl.Domain;
 using HrPortal.AccessControl.Infrastructure.Seeding;
 using HrPortal.Employees.Domain;
+using HrPortal.Tenancy;
 using HrPortal.Tenancy.Domain;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +19,7 @@ public static class DbInitializer
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
+        var tenantContextAccessor = scope.ServiceProvider.GetRequiredService<ITenantContextAccessor>();
         var roleSeeder = scope.ServiceProvider.GetRequiredService<ISystemRoleSeeder>();
 
         var pending = await dbContext.Database.GetPendingMigrationsAsync();
@@ -46,10 +47,11 @@ public static class DbInitializer
             await dbContext.SaveChangesAsync();
         }
 
+        tenantContextAccessor.Set(TenantScopingContext.ForSeeding(demoTenant.Id));
+
         await roleSeeder.SeedAsync(demoTenant.Id);
 
         var demoEmployee = await dbContext.Set<Employee>()
-            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(e => e.TenantId == demoTenant.Id && e.Email == DemoEmployeeEmail);
 
         if (demoEmployee is null)
@@ -75,7 +77,6 @@ public static class DbInitializer
         Guid demoEmployeeId)
     {
         var roles = await dbContext.Set<TenantRole>()
-            .IgnoreQueryFilters()
             .Where(r => r.TenantId == tenantId && r.IsActive)
             .ToListAsync();
 
@@ -128,7 +129,6 @@ public static class DbInitializer
         Guid? employeeId = null)
     {
         var exists = await dbContext.Set<TenantMembership>()
-            .IgnoreQueryFilters()
             .AnyAsync(m => m.TenantId == tenantId && m.UserId == userId && m.IsActive);
 
         if (exists)

@@ -1,5 +1,6 @@
 using HrPortal.AccessControl.Application;
 using HrPortal.AccessControl.Domain;
+using HrPortal.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.AccessControl.Infrastructure.Persistence;
@@ -7,18 +8,27 @@ namespace HrPortal.AccessControl.Infrastructure.Persistence;
 internal sealed class TenantRoleRepository : ITenantRoleRepository
 {
     private readonly DbContext _dbContext;
+    private readonly ITenantContextAccessor _accessor;
 
-    public TenantRoleRepository(DbContext dbContext) => _dbContext = dbContext;
+    public TenantRoleRepository(DbContext dbContext, ITenantContextAccessor accessor)
+    {
+        _dbContext = dbContext;
+        _accessor = accessor;
+    }
 
     public async Task<TenantRole?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await _dbContext.Set<TenantRole>().FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+        await _dbContext.Set<TenantRole>()
+            .ApplyTenantScope(_accessor.Current)
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
     public async Task<TenantRole?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default) =>
         await _dbContext.Set<TenantRole>()
+            .ApplyTenantScope(_accessor.Current)
             .FirstOrDefaultAsync(r => r.Slug == TenantRole.NormalizeSlug(slug), cancellationToken);
 
     public async Task<IReadOnlyList<TenantRole>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await _dbContext.Set<TenantRole>()
+            .ApplyTenantScope(_accessor.Current)
             .Where(r => r.IsActive)
             .OrderBy(r => r.Slug)
             .ToListAsync(cancellationToken);
@@ -31,6 +41,7 @@ internal sealed class TenantRoleRepository : ITenantRoleRepository
             return [];
 
         return await _dbContext.Set<TenantRole>()
+            .ApplyTenantScope(_accessor.Current)
             .Where(r => ids.Contains(r.Id) && r.IsActive)
             .ToListAsync(cancellationToken);
     }
@@ -41,6 +52,7 @@ internal sealed class TenantRoleRepository : ITenantRoleRepository
         CancellationToken cancellationToken = default)
     {
         var query = _dbContext.Set<TenantRole>()
+            .ApplyTenantScope(_accessor.Current)
             .Where(r => r.Slug == TenantRole.NormalizeSlug(slug));
 
         if (excludeId.HasValue)
@@ -72,20 +84,29 @@ internal sealed class TenantRoleRepository : ITenantRoleRepository
 internal sealed class TenantMembershipRepository : ITenantMembershipRepository
 {
     private readonly DbContext _dbContext;
+    private readonly ITenantContextAccessor _accessor;
 
-    public TenantMembershipRepository(DbContext dbContext) => _dbContext = dbContext;
+    public TenantMembershipRepository(DbContext dbContext, ITenantContextAccessor accessor)
+    {
+        _dbContext = dbContext;
+        _accessor = accessor;
+    }
 
     public async Task<TenantMembership?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await _dbContext.Set<TenantMembership>().FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+        await _dbContext.Set<TenantMembership>()
+            .ApplyTenantScope(_accessor.Current)
+            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
     public async Task<TenantMembership?> GetActiveByUserIdAsync(
         Guid userId,
         CancellationToken cancellationToken = default) =>
         await _dbContext.Set<TenantMembership>()
+            .ApplyTenantScope(_accessor.Current)
             .FirstOrDefaultAsync(m => m.UserId == userId && m.IsActive, cancellationToken);
 
     public async Task<IReadOnlyList<TenantMembership>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await _dbContext.Set<TenantMembership>()
+            .ApplyTenantScope(_accessor.Current)
             .Where(m => m.IsActive)
             .OrderBy(m => m.UserId)
             .ToListAsync(cancellationToken);
@@ -96,6 +117,7 @@ internal sealed class TenantMembershipRepository : ITenantMembershipRepository
         CancellationToken cancellationToken = default)
     {
         var query = _dbContext.Set<TenantMembership>()
+            .ApplyTenantScope(_accessor.Current)
             .Where(m => m.UserId == userId && m.IsActive);
 
         if (excludeId.HasValue)

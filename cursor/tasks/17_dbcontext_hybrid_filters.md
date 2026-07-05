@@ -1,6 +1,6 @@
 # TASK 17 — DBCONTEXT HYBRID FILTERS
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Refactor EF Core global query filters to use mode-aware tenant scoping and eliminate the unsafe unresolved-tenant bypass.
 
@@ -71,7 +71,7 @@ Read before starting:
 
 ### Global query filters
 
-- [ ] Refactor `HrPortalDbContext.SetTenantFilter<TEntity>()`:
+- [x] Refactor `HrPortalDbContext.SetTenantFilter<TEntity>()`:
   - Use `TenantScopingRules.ShouldApplyTenantFilter(_accessor.Current)`
   - When filter applies: `e.TenantId == ctx.TenantId`
   - When single mode: no filter
@@ -79,18 +79,18 @@ Read before starting:
 
 ### Insert stamping
 
-- [ ] `ApplyTenantIdOnInsert()`:
+- [x] `ApplyTenantIdOnInsert()`:
   - Multi mode: stamp from resolved context
   - Single mode: stamp default tenant if `TenantId == Guid.Empty`
 
 ### DbInitializer
 
-- [ ] Use `TenantScopingContext.ForSeeding(demoTenantId)` when querying during startup
-- [ ] Remove reliance on unresolved context disabling filters
+- [x] Use `TenantScopingContext.ForSeeding(demoTenantId)` when querying during startup
+- [x] Remove reliance on unresolved context disabling filters
 
 ### Background jobs (future-proof)
 
-- [ ] Document pattern: always set tenant context before DbContext use outside HTTP pipeline
+- [x] Document pattern: always set tenant context before DbContext use outside HTTP pipeline
 
 ## Files to touch
 
@@ -102,11 +102,11 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] Multi mode: no code path returns all tenants' data without explicit context
-- [ ] Single mode: global filter disabled
-- [ ] DbInitializer seeds correctly with seeding context
-- [ ] Existing tenant isolation test still passes
-- [ ] Regression test: unresolved context in multi mode does not leak data
+- [x] Multi mode: no code path returns all tenants' data without explicit context
+- [x] Single mode: global filter disabled
+- [x] DbInitializer seeds correctly with seeding context
+- [x] Existing tenant isolation test still passes
+- [x] Regression test: unresolved context in multi mode does not leak data
 
 ## Next task
 

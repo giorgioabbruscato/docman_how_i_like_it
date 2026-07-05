@@ -82,6 +82,8 @@ public sealed class FileSystemStorageProvider : IStorageProvider
         return fullPath;
     }
 
+    // Paths are prefixed with tenantId. In single-tenant mode, middleware resolves the default
+    // tenant so callers (e.g. DocumentService) always pass a concrete tenantId, not Guid.Empty.
     private static string BuildPath(Guid tenantId, string category, string fileName)
     {
         var safeCategory = SanitizeSegment(category);

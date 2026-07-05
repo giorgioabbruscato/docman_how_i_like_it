@@ -1,12 +1,32 @@
 using System.Net;
 using System.Net.Http.Json;
+using HrPortal.Api.Infrastructure.Persistence;
+using HrPortal.Employees.Domain;
 using HrPortal.IntegrationTests.Infrastructure;
+using HrPortal.Tenancy;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HrPortal.IntegrationTests;
 
 public sealed class TenantIsolationTests : IntegrationTestBase
 {
     public TenantIsolationTests(HrPortalWebApplicationFactory factory) : base(factory) { }
+
+    [Fact]
+    public async Task UnresolvedMultiModeContext_DoesNotLeakTenantData()
+    {
+        using var scope = Factory.Services.CreateScope();
+        var accessor = scope.ServiceProvider.GetRequiredService<ITenantContextAccessor>();
+
+        accessor.Current.IsResolved.Should().BeFalse();
+        accessor.Current.Mode.Should().Be(TenantDeploymentMode.Multi);
+
+        var db = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
+        var count = await db.Set<Employee>().CountAsync();
+
+        count.Should().Be(0);
+    }
 
     [Fact]
     public async Task GetEmployeeById_ReturnsNotFound_WhenAccessingAnotherTenantsData()

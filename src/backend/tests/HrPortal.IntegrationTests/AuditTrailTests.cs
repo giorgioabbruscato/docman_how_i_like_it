@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using HrPortal.Api.Infrastructure.Persistence;
 using HrPortal.Audit.Domain;
 using HrPortal.IntegrationTests.Infrastructure;
+using HrPortal.Tenancy;
+using HrPortal.Tenancy.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -32,6 +34,10 @@ public sealed class AuditTrailTests : IntegrationTestBase
 
         using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
+        var accessor = scope.ServiceProvider.GetRequiredService<ITenantContextAccessor>();
+        var demoTenant = await dbContext.Set<Tenant>().FirstAsync(t => t.Slug == TenantSlug);
+        accessor.Set(TenantScopingContext.ForSeeding(demoTenant.Id));
+
         var auditLog = await dbContext.Set<AuditLog>()
             .AsNoTracking()
             .SingleOrDefaultAsync(a =>
@@ -50,9 +56,12 @@ public sealed class AuditTrailTests : IntegrationTestBase
     {
         using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
+        var accessor = scope.ServiceProvider.GetRequiredService<ITenantContextAccessor>();
+        var tenantId = Guid.NewGuid();
+        accessor.Set(TenantScopingContext.ForSeeding(tenantId));
 
         var auditLog = AuditLog.Create(
-            Guid.NewGuid(),
+            tenantId,
             Guid.NewGuid(),
             "test.action",
             "TestEntity",
@@ -87,6 +96,9 @@ public sealed class AuditTrailTests : IntegrationTestBase
 
         using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
+        var accessor = scope.ServiceProvider.GetRequiredService<ITenantContextAccessor>();
+        accessor.Set(TenantScopingContext.ForSeeding(body!.Id));
+
         var auditLog = await dbContext.Set<AuditLog>()
             .AsNoTracking()
             .SingleOrDefaultAsync(a =>

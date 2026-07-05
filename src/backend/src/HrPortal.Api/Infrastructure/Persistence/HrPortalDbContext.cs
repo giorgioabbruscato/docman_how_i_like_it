@@ -66,19 +66,24 @@ public sealed class HrPortalDbContext : DbContext
     private void SetTenantFilter<TEntity>(ModelBuilder modelBuilder) where TEntity : class, ITenantEntity
     {
         modelBuilder.Entity<TEntity>().HasQueryFilter(e =>
-            !_tenantContextAccessor.Current.IsResolved ||
+            !TenantScopingRules.ShouldApplyTenantFilter(_tenantContextAccessor.Current) ||
             e.TenantId == _tenantContextAccessor.Current.TenantId);
     }
 
     private void ApplyTenantIdOnInsert()
     {
         var tenantContext = _tenantContextAccessor.Current;
-        if (!tenantContext.IsResolved)
-            return;
 
         foreach (var entry in ChangeTracker.Entries<ITenantEntity>())
         {
-            if (entry.State == EntityState.Added && entry.Entity.TenantId == Guid.Empty)
+            if (entry.State != EntityState.Added || entry.Entity.TenantId != Guid.Empty)
+                continue;
+
+            if (tenantContext.Mode == TenantDeploymentMode.Single)
+            {
+                entry.Property(nameof(ITenantEntity.TenantId)).CurrentValue = tenantContext.TenantId;
+            }
+            else if (tenantContext.IsResolved)
             {
                 entry.Property(nameof(ITenantEntity.TenantId)).CurrentValue = tenantContext.TenantId;
             }

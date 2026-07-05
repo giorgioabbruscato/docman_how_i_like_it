@@ -98,6 +98,8 @@ public sealed class RequestContextMiddleware
             options.Mode,
             tenant.GetFeatures());
 
+        SetContext(context, tenantContextAccessor, tenantContext);
+
         if (userContext.IsAuthenticated)
         {
             tenantContext = await tenantContextFactory.EnrichAsync(
@@ -119,9 +121,10 @@ public sealed class RequestContextMiddleware
                     "You do not have access to this tenant.");
                 return;
             }
+
+            SetContext(context, tenantContextAccessor, tenantContext);
         }
 
-        SetContext(context, tenantContextAccessor, tenantContext);
         await _next(context);
     }
 

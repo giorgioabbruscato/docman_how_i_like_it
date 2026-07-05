@@ -1,6 +1,6 @@
 # TASK 18 — REPOSITORY TENANT SCOPING MIGRATION
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Migrate all repository implementations to explicitly call `ApplyTenantScope` on every database query.
 
@@ -74,31 +74,31 @@ Read before starting:
 
 Inject `ITenantContextAccessor` and call `.ApplyTenantScope(_accessor.Current)` on every query:
 
-- [ ] `EmployeeRepository`
-- [ ] `DepartmentRepository`
-- [ ] `LeaveRequestRepository`
-- [ ] `AttendanceRepository`
-- [ ] `DocumentRepository`
+- [x] `EmployeeRepository`
+- [x] `DepartmentRepository`
+- [x] `LeaveRequestRepository`
+- [x] `AttendanceRepository`
+- [x] `DocumentRepository`
 
 ### AccessControl repositories
 
-- [ ] `TenantRoleRepository`
-- [ ] `TenantMembershipRepository`
-- [ ] `UserProfileRepository`
+- [x] `TenantRoleRepository`
+- [x] `TenantMembershipRepository`
+- [x] `UserProfileRepository` (exempt — not ITenantEntity)
 
 ### Exemptions (document, do not scope)
 
-- [ ] `TenantRepository` — platform table, not `ITenantEntity`
-- [ ] Cross-tenant platform admin queries — use explicit tenantId parameter, not accessor bypass
+- [x] `TenantRepository` — platform table, not `ITenantEntity`
+- [x] Cross-tenant platform admin queries — use explicit tenantId parameter, not accessor bypass
 
 ### Storage
 
-- [ ] Audit `FileSystemStorageProvider` — tenant path prefix `{tenantId}/...`
-- [ ] Single mode: use default tenantId in path
+- [x] Audit `FileSystemStorageProvider` — tenant path prefix `{tenantId}/...`
+- [x] Single mode: use default tenantId in path
 
 ### Guardrail
 
-- [ ] Update `cursor/core/02_guardrails.md`: "Always use ApplyTenantScope in repositories"
+- [x] Update `cursor/core/02_guardrails.md`: "Always use ApplyTenantScope in repositories"
 
 ## Files to touch
 
@@ -114,9 +114,9 @@ Inject `ITenantContextAccessor` and call `.ApplyTenantScope(_accessor.Current)` 
 
 ## Acceptance criteria
 
-- [ ] Every repository query method calls `ApplyTenantScope`
-- [ ] No manual `Where(e => e.TenantId == ...)` duplication outside helper
-- [ ] `dotnet build && dotnet test` pass
+- [x] Every repository query method calls `ApplyTenantScope`
+- [x] No manual `Where(e => e.TenantId == ...)` duplication outside helper
+- [x] `dotnet build && dotnet test` pass
 - [ ] Static guard test passes (see task 19)
 
 ## Next task
