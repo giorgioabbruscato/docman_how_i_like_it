@@ -8,52 +8,102 @@ import { Permission, hasAnyPermission } from '@/lib/auth-permissions';
 import { useAuthStore } from '@/stores/auth-store';
 
 interface DashboardStats {
-  activeEmployees: number;
-  pendingLeave: number;
-  documentCount: number;
+  activeEmployees?: number;
+  pendingLeave?: number;
+  documentCount?: number;
 }
 
 export function DashboardPage() {
   const permissions = useAuthStore((state) => state.permissions);
-  const isManagerOrAbove = hasAnyPermission(
+  const canReadEmployees = hasAnyPermission(
     permissions,
     Permission.EmployeeReadTenant,
     Permission.EmployeeReadTeam,
   );
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(false);
+  const canReadLeave = hasAnyPermission(
+    permissions,
+    Permission.LeaveReadTenant,
+    Permission.LeaveReadTeam,
+  );
+  const canReadDocuments = hasAnyPermission(permissions, Permission.DocumentReadTenant);
+
+  const [stats, setStats] = useState<DashboardStats>({});
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [loadingLeave, setLoadingLeave] = useState(false);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
 
   useEffect(() => {
-    if (!isManagerOrAbove) return;
+    if (!canReadEmployees) return;
 
-    const loadStats = async () => {
-      setLoading(true);
+    const loadEmployees = async () => {
+      setLoadingEmployees(true);
       try {
-        const [employees, leaveRequests, documents] = await Promise.all([
-          fetchEmployees(),
-          fetchLeaveRequests(),
-          fetchDocuments(),
-        ]);
-        setStats({
+        const employees = await fetchEmployees();
+        setStats((prev) => ({
+          ...prev,
           activeEmployees: employees.filter((e) => e.isActive).length,
-          pendingLeave: leaveRequests.filter((r) => r.status === 'Pending').length,
-          documentCount: documents.length,
-        });
+        }));
       } catch {
-        setStats(null);
+        setStats((prev) => ({ ...prev, activeEmployees: undefined }));
       } finally {
-        setLoading(false);
+        setLoadingEmployees(false);
       }
     };
 
-    void loadStats();
-  }, [isManagerOrAbove]);
+    void loadEmployees();
+  }, [canReadEmployees]);
 
-  const display = (value: number | undefined) => {
+  useEffect(() => {
+    if (!canReadLeave) return;
+
+    const loadLeave = async () => {
+      setLoadingLeave(true);
+      try {
+        const leaveRequests = await fetchLeaveRequests();
+        setStats((prev) => ({
+          ...prev,
+          pendingLeave: leaveRequests.filter((r) => r.status === 'Pending').length,
+        }));
+      } catch {
+        setStats((prev) => ({ ...prev, pendingLeave: undefined }));
+      } finally {
+        setLoadingLeave(false);
+      }
+    };
+
+    void loadLeave();
+  }, [canReadLeave]);
+
+  useEffect(() => {
+    if (!canReadDocuments) return;
+
+    const loadDocuments = async () => {
+      setLoadingDocuments(true);
+      try {
+        const documents = await fetchDocuments();
+        setStats((prev) => ({ ...prev, documentCount: documents.length }));
+      } catch {
+        setStats((prev) => ({ ...prev, documentCount: undefined }));
+      } finally {
+        setLoadingDocuments(false);
+      }
+    };
+
+    void loadDocuments();
+  }, [canReadDocuments]);
+
+  const display = (
+    canRead: boolean,
+    loading: boolean,
+    value: number | undefined,
+  ) => {
+    if (!canRead) return '—';
     if (loading) return '…';
-    if (!isManagerOrAbove || value === undefined) return '—';
+    if (value === undefined) return '—';
     return String(value);
   };
+
+  const isLoading = loadingEmployees || loadingLeave || loadingDocuments;
 
   return (
     <div className="space-y-6">
@@ -62,7 +112,7 @@ export function DashboardPage() {
         <p className="text-muted-foreground">Overview of your HR platform.</p>
       </div>
 
-      {loading && <LoadingSpinner label="Loading dashboard" />}
+      {isLoading && <LoadingSpinner label="Loading dashboard" />}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -70,7 +120,9 @@ export function DashboardPage() {
             <CardTitle className="text-base">Employees</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{display(stats?.activeEmployees)}</p>
+            <p className="text-2xl font-bold">
+              {display(canReadEmployees, loadingEmployees, stats.activeEmployees)}
+            </p>
             <p className="text-xs text-muted-foreground">Active employees</p>
           </CardContent>
         </Card>
@@ -79,7 +131,9 @@ export function DashboardPage() {
             <CardTitle className="text-base">Leave Requests</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{display(stats?.pendingLeave)}</p>
+            <p className="text-2xl font-bold">
+              {display(canReadLeave, loadingLeave, stats.pendingLeave)}
+            </p>
             <p className="text-xs text-muted-foreground">Pending approval</p>
           </CardContent>
         </Card>
@@ -88,7 +142,9 @@ export function DashboardPage() {
             <CardTitle className="text-base">Documents</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{display(stats?.documentCount)}</p>
+            <p className="text-2xl font-bold">
+              {display(canReadDocuments, loadingDocuments, stats.documentCount)}
+            </p>
             <p className="text-xs text-muted-foreground">Total uploaded</p>
           </CardContent>
         </Card>

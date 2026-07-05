@@ -8,7 +8,7 @@ Run these checks before marking any frontend task complete.
 - [ ] **No direct axios in pages** — pages import from `@/api/{module}`
 - [ ] **Global auth state** — Zustand store in `stores/auth-store.ts`
 - [ ] **Route protection** — unauthenticated users redirected to login
-- [ ] **Role-based access** — UI elements hidden/disabled based on roles
+- [ ] **Permission-based access** — UI elements hidden/disabled based on `/me` permissions via `hasPermission()`
 - [ ] **Reusable layout** — `AppLayout` wraps all authenticated pages
 - [ ] **Typed models** — TypeScript interfaces in `types/` mirror backend DTOs
 
@@ -32,7 +32,7 @@ npm test             # When test suite exists
 ## API integration checklist
 
 - [ ] `apiClient` sets `Authorization: Bearer {token}` via interceptor
-- [ ] `apiClient` sets `X-Tenant-Id` header on every request
+- [ ] `apiClient` sets `X-Tenant-Id` header on every request (multi mode only; omitted in single mode)
 - [ ] 401 responses trigger logout
 - [ ] Environment variables used for Keycloak and API URLs
 
@@ -44,7 +44,8 @@ npm test             # When test suite exists
 | `VITE_KEYCLOAK_URL` | Keycloak server URL |
 | `VITE_KEYCLOAK_REALM` | Realm name (`hrportal`) |
 | `VITE_KEYCLOAK_CLIENT_ID` | OIDC client (`hrportal-web`) |
-| `VITE_TENANT_ID` | Default tenant for dev |
+| `VITE_TENANCY_MODE` | `single` or `multi` — controls tenant header behavior |
+| `VITE_TENANT_ID` | Default tenant slug for multi mode dev |
 
 ## Current page status
 

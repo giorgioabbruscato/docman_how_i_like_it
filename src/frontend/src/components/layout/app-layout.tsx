@@ -38,7 +38,19 @@ const navItems: NavItem[] = [
     isVisible: (permissions) =>
       hasAnyPermission(permissions, Permission.EmployeeReadTenant, Permission.EmployeeReadTeam),
   },
-  { to: '/leave-requests', label: 'Leave Requests', icon: CalendarDays, isVisible: () => true },
+  {
+    to: '/leave-requests',
+    label: 'Leave Requests',
+    icon: CalendarDays,
+    isVisible: (permissions) =>
+      hasAnyPermission(
+        permissions,
+        Permission.LeaveCreateSelf,
+        Permission.LeaveReadTenant,
+        Permission.LeaveReadTeam,
+        Permission.LeaveReadSelf,
+      ),
+  },
   {
     to: '/attendance',
     label: 'Attendance',
@@ -51,7 +63,13 @@ const navItems: NavItem[] = [
         Permission.AttendanceReadSelf,
       ),
   },
-  { to: '/documents', label: 'Documents', icon: FileText, isVisible: () => true },
+  {
+    to: '/documents',
+    label: 'Documents',
+    icon: FileText,
+    isVisible: (permissions) =>
+      hasAnyPermission(permissions, Permission.DocumentUploadSelf, Permission.DocumentReadTenant),
+  },
   {
     to: '/audit-logs',
     label: 'Audit Logs',

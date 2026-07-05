@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Permission, hasAnyPermission } from '@/lib/auth-permissions';
+import { Permission, hasAnyPermission, hasPermission } from '@/lib/auth-permissions';
 import {
   currentTimeString,
   formatDate,
@@ -42,10 +42,18 @@ type ReportForm = z.infer<typeof reportSchema>;
 
 export function AttendancePage() {
   const permissions = useAuthStore((state) => state.permissions);
-  const isManagerOrAbove = hasAnyPermission(
+  const authEmployeeId = useAuthStore((state) => state.employeeId);
+
+  const canCheckInOut = hasPermission(permissions, Permission.AttendanceWriteSelf);
+  const canViewRecords = hasAnyPermission(
     permissions,
     Permission.AttendanceReadTenant,
     Permission.AttendanceReadTeam,
+  );
+  const canSelectEmployee = hasAnyPermission(
+    permissions,
+    Permission.EmployeeReadTenant,
+    Permission.EmployeeReadTeam,
   );
 
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -57,6 +65,7 @@ export function AttendancePage() {
   const checkForm = useForm<CheckInOutForm>({
     resolver: zodResolver(checkInOutSchema),
     defaultValues: {
+      employeeId: authEmployeeId ?? '',
       date: todayDateString(),
       time: currentTimeString(),
     },
@@ -70,17 +79,26 @@ export function AttendancePage() {
     },
   });
 
+  useEffect(() => {
+    if (!canSelectEmployee && authEmployeeId) {
+      checkForm.setValue('employeeId', authEmployeeId);
+    }
+  }, [authEmployeeId, canSelectEmployee, checkForm]);
+
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      if (isManagerOrAbove) {
+      if (canViewRecords) {
         const [recordData, employeeData] = await Promise.all([
           fetchAttendanceRecords(),
           fetchEmployees(),
         ]);
         setRecords(recordData);
+        setEmployees(employeeData);
+      } else if (canSelectEmployee) {
+        const employeeData = await fetchEmployees();
         setEmployees(employeeData);
       }
     } catch (err) {
@@ -92,7 +110,7 @@ export function AttendancePage() {
 
   useEffect(() => {
     void loadData();
-  }, [isManagerOrAbove]);
+  }, [canViewRecords, canSelectEmployee]);
 
   const handleCheckIn = async (data: CheckInOutForm) => {
     try {
@@ -102,8 +120,12 @@ export function AttendancePage() {
         date: data.date,
         time: data.time,
       });
-      checkForm.reset({ date: todayDateString(), time: currentTimeString(), employeeId: data.employeeId });
-      if (isManagerOrAbove) await loadData();
+      checkForm.reset({
+        date: todayDateString(),
+        time: currentTimeString(),
+        employeeId: canSelectEmployee ? data.employeeId : (authEmployeeId ?? data.employeeId),
+      });
+      if (canViewRecords) await loadData();
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to check in.'));
     }
@@ -117,8 +139,12 @@ export function AttendancePage() {
         date: data.date,
         time: data.time,
       });
-      checkForm.reset({ date: todayDateString(), time: currentTimeString(), employeeId: data.employeeId });
-      if (isManagerOrAbove) await loadData();
+      checkForm.reset({
+        date: todayDateString(),
+        time: currentTimeString(),
+        employeeId: canSelectEmployee ? data.employeeId : (authEmployeeId ?? data.employeeId),
+      });
+      if (canViewRecords) await loadData();
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to check out.'));
     }
@@ -151,60 +177,62 @@ export function AttendancePage() {
       {error && <ErrorBanner message={error} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Check In / Check Out</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4">
-              <div>
-                {isManagerOrAbove ? (
-                  <Select {...register('employeeId')}>
-                    <option value="">Select employee</option>
-                    {employees.map((employee) => (
-                      <option key={employee.id} value={employee.id}>
-                        {employee.firstName} {employee.lastName}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  <>
-                    <Input placeholder="Employee ID (UUID)" {...register('employeeId')} />
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Enter your employee record ID. Contact HR if you do not have it.
+        {canCheckInOut && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Check In / Check Out</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4">
+                <div>
+                  {canSelectEmployee ? (
+                    <Select {...register('employeeId')}>
+                      <option value="">Select employee</option>
+                      {employees.map((employee) => (
+                        <option key={employee.id} value={employee.id}>
+                          {employee.firstName} {employee.lastName}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input type="hidden" {...register('employeeId')} />
+                  )}
+                  {!canSelectEmployee && authEmployeeId && (
+                    <p className="text-sm text-muted-foreground">
+                      Recording attendance for your employee record.
                     </p>
-                  </>
-                )}
-                {errors.employeeId && (
-                  <p className="mt-1 text-xs text-red-600">{errors.employeeId.message}</p>
-                )}
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Input type="date" {...register('date')} />
-                <Input type="time" step="1" {...register('time')} />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={handleSubmit(handleCheckIn)}
-                >
-                  Check In
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isSubmitting}
-                  onClick={handleSubmit(handleCheckOut)}
-                >
-                  Check Out
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+                  )}
+                  {errors.employeeId && (
+                    <p className="mt-1 text-xs text-red-600">{errors.employeeId.message}</p>
+                  )}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input type="date" {...register('date')} />
+                  <Input type="time" step="1" {...register('time')} />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={handleSubmit(handleCheckIn)}
+                  >
+                    Check In
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isSubmitting}
+                    onClick={handleSubmit(handleCheckOut)}
+                  >
+                    Check Out
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
-        {isManagerOrAbove && (
+        {canViewRecords && (
           <Card>
             <CardHeader>
               <CardTitle>Attendance Records</CardTitle>
@@ -232,7 +260,7 @@ export function AttendancePage() {
         )}
       </div>
 
-      {isManagerOrAbove && (
+      {canViewRecords && (
         <Card>
           <CardHeader>
             <CardTitle>Attendance Report</CardTitle>

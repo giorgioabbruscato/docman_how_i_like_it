@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Permission, hasAnyPermission } from '@/lib/auth-permissions';
+import { Permission, hasAnyPermission, hasPermission } from '@/lib/auth-permissions';
 import {
   confirmAction,
   formatDate,
@@ -44,10 +44,20 @@ type CreateLeaveForm = z.infer<typeof createLeaveSchema>;
 
 export function LeaveRequestsPage() {
   const permissions = useAuthStore((state) => state.permissions);
-  const isManagerOrAbove = hasAnyPermission(
+  const authEmployeeId = useAuthStore((state) => state.employeeId);
+
+  const canCreateLeave = hasPermission(permissions, Permission.LeaveCreateSelf);
+  const canViewTeamList = hasAnyPermission(
     permissions,
     Permission.LeaveReadTenant,
     Permission.LeaveReadTeam,
+  );
+  const canApproveLeave = hasPermission(permissions, Permission.LeaveApproveTeam);
+  const canCancelLeave = hasPermission(permissions, Permission.LeaveDeleteSelf);
+  const canSelectEmployee = hasAnyPermission(
+    permissions,
+    Permission.EmployeeReadTenant,
+    Permission.EmployeeReadTeam,
   );
 
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
@@ -61,29 +71,41 @@ export function LeaveRequestsPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateLeaveForm>({
     resolver: zodResolver(createLeaveSchema),
     defaultValues: {
+      employeeId: authEmployeeId ?? '',
       startDate: todayDateString(),
       endDate: todayDateString(),
       type: 'Annual',
     },
   });
 
+  useEffect(() => {
+    if (!canSelectEmployee && authEmployeeId) {
+      setValue('employeeId', authEmployeeId);
+    }
+  }, [authEmployeeId, canSelectEmployee, setValue]);
+
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      if (isManagerOrAbove) {
+      if (canViewTeamList) {
         const [requestData, employeeData] = await Promise.all([
           fetchLeaveRequests(),
           fetchEmployees(),
         ]);
         setRequests(requestData);
         setEmployees(employeeData);
-      } else if (employees.length === 0) {
+      } else if (canSelectEmployee) {
+        const employeeData = await fetchEmployees();
+        setEmployees(employeeData);
+        setRequests([]);
+      } else {
         setRequests([]);
       }
     } catch (err) {
@@ -95,7 +117,7 @@ export function LeaveRequestsPage() {
 
   useEffect(() => {
     void loadData();
-  }, [isManagerOrAbove]);
+  }, [canViewTeamList, canSelectEmployee]);
 
   const onSubmit = async (data: CreateLeaveForm) => {
     try {
@@ -108,13 +130,13 @@ export function LeaveRequestsPage() {
         reason: data.reason || undefined,
       });
       reset({
-        employeeId: '',
+        employeeId: canSelectEmployee ? '' : (authEmployeeId ?? ''),
         startDate: todayDateString(),
         endDate: todayDateString(),
         type: 'Annual',
         reason: '',
       });
-      if (isManagerOrAbove) {
+      if (canViewTeamList) {
         await loadData();
       }
     } catch (err) {
@@ -172,64 +194,66 @@ export function LeaveRequestsPage() {
       {error && <ErrorBanner message={error} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Request Leave</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                {isManagerOrAbove ? (
-                  <Select {...register('employeeId')}>
-                    <option value="">Select employee</option>
-                    {employees.map((employee) => (
-                      <option key={employee.id} value={employee.id}>
-                        {employee.firstName} {employee.lastName}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  <>
-                    <Input placeholder="Employee ID (UUID)" {...register('employeeId')} />
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Enter your employee record ID. Contact HR if you do not have it.
+        {canCreateLeave && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Request Leave</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div>
+                  {canSelectEmployee ? (
+                    <Select {...register('employeeId')}>
+                      <option value="">Select employee</option>
+                      {employees.map((employee) => (
+                        <option key={employee.id} value={employee.id}>
+                          {employee.firstName} {employee.lastName}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input type="hidden" {...register('employeeId')} />
+                  )}
+                  {!canSelectEmployee && authEmployeeId && (
+                    <p className="text-sm text-muted-foreground">
+                      Submitting leave request for your employee record.
                     </p>
-                  </>
-                )}
-                {errors.employeeId && (
-                  <p className="mt-1 text-xs text-red-600">{errors.employeeId.message}</p>
-                )}
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Input type="date" {...register('startDate')} />
-                  {errors.startDate && (
-                    <p className="mt-1 text-xs text-red-600">{errors.startDate.message}</p>
+                  )}
+                  {errors.employeeId && (
+                    <p className="mt-1 text-xs text-red-600">{errors.employeeId.message}</p>
                   )}
                 </div>
-                <div>
-                  <Input type="date" {...register('endDate')} />
-                  {errors.endDate && (
-                    <p className="mt-1 text-xs text-red-600">{errors.endDate.message}</p>
-                  )}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <Input type="date" {...register('startDate')} />
+                    {errors.startDate && (
+                      <p className="mt-1 text-xs text-red-600">{errors.startDate.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Input type="date" {...register('endDate')} />
+                    {errors.endDate && (
+                      <p className="mt-1 text-xs text-red-600">{errors.endDate.message}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <Select {...register('type')}>
-                {LEAVE_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </Select>
-              <Input placeholder="Reason (optional)" {...register('reason')} />
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Submit Request'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <Select {...register('type')}>
+                  {LEAVE_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </Select>
+                <Input placeholder="Reason (optional)" {...register('reason')} />
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
-        {isManagerOrAbove && (
+        {canViewTeamList && (
           <Card>
             <CardHeader>
               <CardTitle>Leave Request List</CardTitle>
@@ -260,45 +284,59 @@ export function LeaveRequestsPage() {
                           {request.status}
                         </span>
                       </div>
-                      {request.status === 'Pending' && (
+                      {request.status === 'Pending' && (canApproveLeave || canCancelLeave) && (
                         <div className="flex flex-wrap gap-2">
-                          <Button size="sm" onClick={() => handleApprove(request.id)}>
-                            Approve
-                          </Button>
-                          {rejectingId === request.id ? (
-                            <div className="flex flex-1 flex-wrap items-center gap-2">
-                              <Input
-                                placeholder="Rejection reason (optional)"
-                                value={rejectReason}
-                                onChange={(e) => setRejectReason(e.target.value)}
-                                className="flex-1"
-                              />
-                              <Button size="sm" variant="destructive" onClick={() => handleReject(request.id)}>
-                                Confirm Reject
+                          {canApproveLeave && (
+                            <>
+                              <Button size="sm" onClick={() => handleApprove(request.id)}>
+                                Approve
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setRejectingId(null);
-                                  setRejectReason('');
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : (
+                              {rejectingId === request.id ? (
+                                <div className="flex flex-1 flex-wrap items-center gap-2">
+                                  <Input
+                                    placeholder="Rejection reason (optional)"
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    className="flex-1"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleReject(request.id)}
+                                  >
+                                    Confirm Reject
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setRejectingId(null);
+                                      setRejectReason('');
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => setRejectingId(request.id)}
+                                >
+                                  Reject
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          {canCancelLeave && (
                             <Button
                               size="sm"
-                              variant="destructive"
-                              onClick={() => setRejectingId(request.id)}
+                              variant="outline"
+                              onClick={() => handleCancel(request.id)}
                             >
-                              Reject
+                              Cancel Request
                             </Button>
                           )}
-                          <Button size="sm" variant="outline" onClick={() => handleCancel(request.id)}>
-                            Cancel Request
-                          </Button>
                         </div>
                       )}
                     </li>

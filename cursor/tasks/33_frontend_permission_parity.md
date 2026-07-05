@@ -1,6 +1,6 @@
 # TASK 33 — FRONTEND PERMISSION PARITY
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Align all frontend pages with backend permission keys; remove hardcoded role arrays.
 
@@ -13,102 +13,56 @@ Frontend UI gating mirrors backend permissions for defense in depth. Backend rem
 - Task 32 — Frontend single-tenant mode + /me loading
 - Task 22 — Backend permission mapping
 
-## Rules & references
-
-Read before starting:
-
-| Source | Path | Notes |
-|--------|------|-------|
-| Global rules | `cursor/core/00_rules.md` | Frontend layout |
-| Frontend prompt | `cursor/prompts/02_frontend_agent_prompt.md` | API client pattern, auth |
-| Master prompt | `cursor/prompts/00_master_prompt.md` | npm run build before complete |
-| API contracts | `cursor/memory/api_contracts.md` | Permission strings, /me response |
-| ADR-012 | `cursor/memory/architecture_decisions.md` | Single/multi frontend behavior |
-| Frontend eval | `cursor/evals/02_frontend_quality_checks.md` | Architecture + API checklist |
-| Acceptance | `cursor/evals/00_acceptance_criteria.md` | Frontend auth + build |
-
-### Mandatory rules (from `cursor/core/` + ADR-012)
-
-- All API calls through typed clients in `src/frontend/src/api/` — never axios in pages
-- Auth state in Zustand (`stores/auth-store.ts`)
-- Use `hasPermission()` from `auth-permissions.ts` — not hardcoded role arrays
-- Backend is authoritative — UI hiding is defense in depth only
-- Replace all hasAnyRole() / HR_OR_ADMIN_ROLES with hasPermission()
-
-### Memory — source of truth (`cursor/memory/`)
-
-- Align permission keys with `api_contracts.md`
-
-### Quality gates (`cursor/evals/`)
-
-- `02_frontend_quality_checks.md` — typed API client, no direct axios, auth state
-- `02_frontend_quality_checks.md` — npm run build must pass
-
-### Agent prompts (`cursor/prompts/`)
-
-- `02_frontend_agent_prompt.md`
-- `00_master_prompt.md`
-
-### Before starting
-1. Read this task file and listed `cursor/core/` + `cursor/memory/` references
-2. Check `/cursor/evals/` quality gates for this task type
-3. Follow `/cursor/prompts/00_master_prompt.md` workflow
-
-- Use `02_frontend_agent_prompt.md` for implementation scope
-
-### Before completing
-1. Run quality commands listed in Acceptance criteria
-2. Verify against applicable `/cursor/evals/` checklist
-3. Update `/cursor/memory/` if domain model or API contracts changed
-4. Mark task status **COMPLETED** in this file
-
 ## Deliverables
 
 ### Page updates
 
-Replace `hasAnyRole()` / role arrays with `hasPermission()`:
-
-- [ ] `dashboard-page.tsx` — widgets gated by read permissions
-- [ ] `leave-requests-page.tsx` — create/approve/cancel buttons
-- [ ] `documents-page.tsx` — upload/delete buttons
-- [ ] `attendance-page.tsx` — check-in/report views
-- [ ] `audit-page.tsx` — visible only with `audit.read:tenant` + feature
-- [ ] `app-layout.tsx` — sidebar nav items
+- [x] `dashboard-page.tsx` — widgets gated by read permissions
+- [x] `leave-requests-page.tsx` — create/approve/cancel buttons
+- [x] `documents-page.tsx` — upload/delete buttons
+- [x] `attendance-page.tsx` — check-in/report views
+- [x] `audit-page.tsx` — visible only with `audit.read:tenant` + feature
+- [x] `app-layout.tsx` — sidebar nav items
+- [x] `employees-page.tsx` — create/deactivate gates
+- [x] `departments-page.tsx` — create/deactivate gates
 
 ### Cleanup
 
-- [ ] Deprecate `auth-roles.ts` exports (keep shim calling permission equivalents if needed)
-- [ ] Remove `HR_OR_ADMIN_ROLES`, `MANAGER_OR_ABOVE_ROLES` usage
-- [ ] Single source: `auth-permissions.ts`
+- [x] Deprecate `auth-roles.ts` exports (keep shim)
+- [x] Remove `HR_OR_ADMIN_ROLES`, `MANAGER_OR_ABOVE_ROLES` usage from pages
+- [x] Single source: `auth-permissions.ts`
+- [x] Pre-fill `employeeId` from auth store for self-scoped forms
 
 ### Permission mapping table
 
-Document frontend action → permission string in task file comments:
-
 | UI Action | Permission |
 |-----------|------------|
-| View employees | `employee.read:tenant` |
-| Create employee | `employee.write:tenant` |
-| Approve leave | `leave.approve:team` |
-| Upload document | `document.upload:self` |
-| View audit log | `audit.read:tenant` |
-| Manage roles | `role.manage:tenant` |
-
-## Files to touch
-
-| File | Action |
-|------|--------|
-| `frontend/src/pages/*.tsx` | Permission gates |
-| `frontend/src/components/layout/app-layout.tsx` | Nav permissions |
-| `frontend/src/lib/auth-roles.ts` | Deprecate |
-| `frontend/src/lib/auth-permissions.ts` | Canonical |
+| Nav: Employees / view list | `employee.read:tenant` OR `employee.read:team` |
+| Create employee | `employee.create:tenant` |
+| Deactivate employee | `employee.delete:tenant` |
+| Nav: Departments / view list | `department.read:tenant` |
+| Create/update department | `department.write:tenant` |
+| Deactivate department | `department.delete:tenant` |
+| Dashboard: Employees widget | `employee.read:tenant` OR `employee.read:team` |
+| Dashboard: Leave widget | `leave.read:tenant` OR `leave.read:team` |
+| Dashboard: Documents widget | `document.read:tenant` |
+| Nav: Leave / create request | `leave.create:self` OR any `leave.read:*` |
+| Approve/reject leave | `leave.approve:team` |
+| Cancel own leave | `leave.delete:self` |
+| Nav: Documents / upload | `document.upload:self` OR `document.read:tenant` |
+| View document list | `document.read:tenant` |
+| Delete document | `document.delete:tenant` |
+| Check-in/out | `attendance.write:self` |
+| View records / report | `attendance.read:tenant` OR `attendance.read:team` |
+| Nav: Audit | `audit.read:tenant` + `planFeatures.auditLog` |
 
 ## Acceptance criteria
 
-- [ ] No page uses hardcoded role string arrays for authorization
-- [ ] UI actions hidden when user lacks permission
-- [ ] Demo users see correct UI per their tenant role permissions
-- [ ] `npm run build` succeeds
+- [x] No page uses hardcoded role string arrays for authorization
+- [x] UI actions hidden when user lacks permission
+- [x] Demo users see correct UI per their tenant role permissions
+- [x] `npm run build` succeeds
+- [x] Zero `hasAnyRole` / `HR_OR_ADMIN_ROLES` / `MANAGER_OR_ABOVE` usage outside `auth-roles.ts`
 
 ## Next task
 

@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { Permission, hasPermission } from '@/lib/auth-permissions';
 import { confirmAction, getApiErrorMessage } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
 import type { Department } from '@/types/department';
 
 const createDepartmentSchema = z.object({
@@ -24,6 +26,10 @@ const createDepartmentSchema = z.object({
 type CreateDepartmentForm = z.infer<typeof createDepartmentSchema>;
 
 export function DepartmentsPage() {
+  const permissions = useAuthStore((state) => state.permissions);
+  const canCreateDepartment = hasPermission(permissions, Permission.DepartmentWriteTenant);
+  const canDeactivateDepartment = hasPermission(permissions, Permission.DepartmentDeleteTenant);
+
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +98,7 @@ export function DepartmentsPage() {
       {error && <ErrorBanner message={error} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {canCreateDepartment && (
         <Card>
           <CardHeader>
             <CardTitle>Add Department</CardTitle>
@@ -123,6 +130,7 @@ export function DepartmentsPage() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -151,13 +159,15 @@ export function DepartmentsPage() {
                         <p className="text-sm text-muted-foreground">{department.description}</p>
                       )}
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeactivate(department.id)}
-                    >
-                      Deactivate
-                    </Button>
+                    {canDeactivateDepartment && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeactivate(department.id)}
+                      >
+                        Deactivate
+                      </Button>
+                    )}
                   </li>
                 ))}
               </ul>

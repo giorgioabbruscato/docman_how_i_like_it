@@ -9,7 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { Permission, hasPermission } from '@/lib/auth-permissions';
 import { confirmAction, getApiErrorMessage } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
 import type { Department } from '@/types/department';
 import type { Employee } from '@/types/employee';
 
@@ -25,6 +27,10 @@ const createEmployeeSchema = z.object({
 type CreateEmployeeForm = z.infer<typeof createEmployeeSchema>;
 
 export function EmployeesPage() {
+  const permissions = useAuthStore((state) => state.permissions);
+  const canCreateEmployee = hasPermission(permissions, Permission.EmployeeCreateTenant);
+  const canDeactivateEmployee = hasPermission(permissions, Permission.EmployeeDeleteTenant);
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,6 +109,7 @@ export function EmployeesPage() {
       {error && <ErrorBanner message={error} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {canCreateEmployee && (
         <Card>
           <CardHeader>
             <CardTitle>Add Employee</CardTitle>
@@ -141,6 +148,7 @@ export function EmployeesPage() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -166,13 +174,15 @@ export function EmployeesPage() {
                         </p>
                       )}
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeactivate(employee.id)}
-                    >
-                      Deactivate
-                    </Button>
+                    {canDeactivateEmployee && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeactivate(employee.id)}
+                      >
+                        Deactivate
+                      </Button>
+                    )}
                   </li>
                 ))}
               </ul>

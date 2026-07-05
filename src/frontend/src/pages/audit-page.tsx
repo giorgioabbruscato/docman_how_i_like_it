@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { Permission, hasPermission } from '@/lib/auth-permissions';
 import { formatDateTime, getApiErrorMessage } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
 import type { AuditLogEntry } from '@/types/audit-log';
 
 const PAGE_SIZE = 25;
@@ -13,6 +15,11 @@ const PAGE_SIZE = 25;
 const DECISIONS = ['', 'Allow', 'Deny'] as const;
 
 export function AuditPage() {
+  const permissions = useAuthStore((state) => state.permissions);
+  const planFeatures = useAuthStore((state) => state.planFeatures);
+  const canViewAuditLog =
+    hasPermission(permissions, Permission.AuditReadTenant) && planFeatures.auditLog;
+
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -56,9 +63,24 @@ export function AuditPage() {
   };
 
   useEffect(() => {
+    if (!canViewAuditLog) return;
     void loadAuditLogs(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [canViewAuditLog]);
+
+  if (!canViewAuditLog) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Audit Logs</h2>
+          <p className="text-muted-foreground">
+            You do not have access to audit logs. This feature requires the audit.read:tenant
+            permission and an Enterprise plan with audit logging enabled.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const onFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
