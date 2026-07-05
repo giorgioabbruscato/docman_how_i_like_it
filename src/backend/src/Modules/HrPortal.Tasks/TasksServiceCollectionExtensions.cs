@@ -21,6 +21,8 @@ public static class TasksServiceCollectionExtensions
         services.AddScoped<DeleteProjectTaskCommandHandler>();
         services.AddScoped<GetProjectTaskByIdQueryHandler>();
         services.AddScoped<GetProjectTasksQueryHandler>();
+        services.AddScoped<GetTaskBoardQueryHandler>();
+        services.AddScoped<UpdateTaskStatusCommandHandler>();
 
         services.AddValidatorsFromAssemblyContaining<CreateProjectTaskRequestValidator>();
         return services;

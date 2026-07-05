@@ -4,6 +4,8 @@ using HrPortal.Projects.Application.Commands;
 using HrPortal.Projects.Application.Dtos;
 using HrPortal.Projects.Application.Queries;
 using HrPortal.Projects.Domain;
+using HrPortal.Tasks.Application.Queries;
+using TaskBoardDto = HrPortal.Tasks.Application.Dtos.TaskBoardDto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,6 +27,7 @@ public sealed class ProjectsController : ControllerBase
     private readonly GetProjectMembersQueryHandler _getProjectMembersHandler;
     private readonly AddProjectMemberCommandHandler _addProjectMemberHandler;
     private readonly RemoveProjectMemberCommandHandler _removeProjectMemberHandler;
+    private readonly GetTaskBoardQueryHandler _getTaskBoardHandler;
 
     public ProjectsController(
         GetProjectsQueryHandler getProjectsHandler,
@@ -34,7 +37,8 @@ public sealed class ProjectsController : ControllerBase
         DeleteProjectCommandHandler deleteProjectHandler,
         GetProjectMembersQueryHandler getProjectMembersHandler,
         AddProjectMemberCommandHandler addProjectMemberHandler,
-        RemoveProjectMemberCommandHandler removeProjectMemberHandler)
+        RemoveProjectMemberCommandHandler removeProjectMemberHandler,
+        GetTaskBoardQueryHandler getTaskBoardHandler)
     {
         _getProjectsHandler = getProjectsHandler;
         _getProjectByIdHandler = getProjectByIdHandler;
@@ -44,6 +48,7 @@ public sealed class ProjectsController : ControllerBase
         _getProjectMembersHandler = getProjectMembersHandler;
         _addProjectMemberHandler = addProjectMemberHandler;
         _removeProjectMemberHandler = removeProjectMemberHandler;
+        _getTaskBoardHandler = getTaskBoardHandler;
     }
 
     /// <summary>List projects with pagination and filters.</summary>
@@ -159,6 +164,18 @@ public sealed class ProjectsController : ControllerBase
     {
         var result = await _removeProjectMemberHandler.HandleAsync(id, memberId, cancellationToken);
         return result.IsSuccess ? NoContent() : MapFailure(result);
+    }
+
+    /// <summary>Get Kanban board for a project (tasks grouped by status).</summary>
+    /// <remarks>Auth: task.read:tenant</remarks>
+    [HttpGet("{id:guid}/tasks/board")]
+    [RequirePermission(Permissions.TaskReadTenant)]
+    [ProducesResponseType(typeof(TaskBoardDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetTaskBoard(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _getTaskBoardHandler.HandleAsync(id, cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
     private IActionResult MapFailure(HrPortal.SharedKernel.Results.Result result) =>

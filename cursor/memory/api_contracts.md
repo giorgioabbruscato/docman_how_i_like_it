@@ -390,6 +390,43 @@ only as constants to avoid breaking references while call sites are cleaned up; 
 **Response:** `204 No Content`  
 **Audit:** `task.deleted`
 
+### GET /api/v1/projects/{projectId}/tasks/board
+
+**Auth:** `task.read:tenant`  
+**Response:** `200 OK` — tasks grouped by all four statuses (empty arrays when no tasks)
+
+```json
+{
+  "projectId": "uuid",
+  "columns": [
+    { "status": "Todo", "tasks": [/* ProjectTaskDto */] },
+    { "status": "InProgress", "tasks": [] },
+    { "status": "Review", "tasks": [] },
+    { "status": "Done", "tasks": [] }
+  ]
+}
+```
+
+**Errors:** `404` if project not found
+
+### PATCH /api/v1/tasks/{id}/status
+
+**Auth:** `task.update:tenant` OR `task.update_status:self` (assignee only for self scope)  
+**Request:**
+
+```json
+{
+  "status": "InProgress",
+  "updatedAt": "2026-07-05T14:30:00Z"
+}
+```
+
+`updatedAt` is optional — when provided, mismatched value returns `409 Conflict` (optimistic concurrency).
+
+**Response:** `200 OK` — ProjectTaskDto  
+**Errors:** `400` if invalid/no-op transition; `404` if not found; `409` if concurrency conflict  
+**Audit:** `task.status_changed` with metadata `{"oldStatus":"Todo","newStatus":"InProgress"}`
+
 ---
 
 ## Time Tracking — IMPLEMENTED

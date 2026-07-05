@@ -1,6 +1,6 @@
 # TASK 04 — TASK BOARD
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create Kanban board APIs supporting drag-and-drop status updates and grouped task responses.
 
@@ -91,18 +91,18 @@ Read before starting:
 
 ### Business rules
 
-- [ ] Invalid status transition returns `400 Bad Request`
-- [ ] Task must belong to specified project on board query
-- [ ] Assignee can PATCH status on own tasks when holding `task.update_status:self`
-- [ ] HR/admin with `task.update:tenant` can update any task status
+- [x] Invalid status transition returns `400 Bad Request`
+- [x] Task must belong to specified project on board query
+- [x] Assignee can PATCH status on own tasks when holding `task.update_status:self`
+- [x] HR/admin with `task.update:tenant` can update any task status
 
 ### Tests
 
-- [ ] Integration: board returns all 4 columns (empty arrays when no tasks)
-- [ ] Integration: status PATCH updates task
-- [ ] Integration: self-scope permission for assignee
-- [ ] Integration: 403 when non-assignee lacks tenant permission
-- [ ] Unit: domain status transition rules
+- [x] Integration: board returns all 4 columns (empty arrays when no tasks)
+- [x] Integration: status PATCH updates task
+- [x] Integration: self-scope permission for assignee
+- [x] Integration: 403 when non-assignee lacks tenant permission
+- [x] Unit: domain status transition rules
 
 ## Files to touch
 
@@ -116,11 +116,11 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] Board endpoint returns tasks grouped by all 4 statuses
-- [ ] Drag-and-drop status update works via PATCH
-- [ ] Permission scoping enforced (self vs tenant)
-- [ ] Audit logged on status change
-- [ ] `dotnet test` green
+- [x] Board endpoint returns tasks grouped by all 4 statuses
+- [x] Drag-and-drop status update works via PATCH
+- [x] Permission scoping enforced (self vs tenant)
+- [x] Audit logged on status change
+- [x] `dotnet test` green
 
 ## Next task
 

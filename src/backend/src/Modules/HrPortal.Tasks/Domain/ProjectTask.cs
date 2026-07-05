@@ -74,6 +74,15 @@ public sealed class ProjectTask : AuditableEntity
         MarkUpdated(updatedBy);
     }
 
+    public void UpdateStatus(TaskStatus newStatus, Guid? updatedBy)
+    {
+        if (newStatus == Status)
+            throw new DomainException("Task is already in the requested status.", "INVALID_TRANSITION");
+
+        Status = newStatus;
+        MarkUpdated(updatedBy);
+    }
+
     private static void ValidateTitle(string title)
     {
         if (string.IsNullOrWhiteSpace(title))

@@ -46,3 +46,9 @@ public sealed record GetProjectTasksQuery(
     DomainTaskStatus? Status = null,
     TaskPriority? Priority = null,
     Guid? AssignedEmployeeId = null);
+
+public sealed record TaskBoardDto(Guid ProjectId, IReadOnlyList<TaskBoardColumnDto> Columns);
+
+public sealed record TaskBoardColumnDto(DomainTaskStatus Status, IReadOnlyList<ProjectTaskDto> Tasks);
+
+public sealed record UpdateTaskStatusRequest(DomainTaskStatus Status, DateTime? UpdatedAt = null);

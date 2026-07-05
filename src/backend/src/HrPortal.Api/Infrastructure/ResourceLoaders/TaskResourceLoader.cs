@@ -33,8 +33,16 @@ internal sealed class TaskResourceLoader : IEndpointResourceLoader
             .ApplyTenantScope(_accessor.Current)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
-        return task is null
-            ? null
-            : new ResourceContext(null, task.Id, task.TenantId);
+        if (task is null)
+            return null;
+
+        if (task.AssignedEmployeeId is null)
+            return new ResourceContext(null, task.Id, task.TenantId);
+
+        return await ResourceLoaderHelpers.LoadEmployeeContextAsync(
+            _dbContext,
+            _accessor,
+            task.AssignedEmployeeId.Value,
+            cancellationToken);
     }
 }

@@ -36,3 +36,11 @@ public sealed class GetProjectTasksQueryValidator : AbstractValidator<GetProject
         RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
     }
 }
+
+public sealed class UpdateTaskStatusRequestValidator : AbstractValidator<UpdateTaskStatusRequest>
+{
+    public UpdateTaskStatusRequestValidator()
+    {
+        RuleFor(x => x.Status).IsInEnum();
+    }
+}

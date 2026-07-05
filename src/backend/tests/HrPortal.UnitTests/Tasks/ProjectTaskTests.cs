@@ -86,4 +86,29 @@ public sealed class ProjectTaskTests
         task.Status.Should().Be(DomainTaskStatus.InProgress);
         task.SpentHours.Should().Be(2m);
     }
+
+    [Theory]
+    [InlineData(DomainTaskStatus.Todo, DomainTaskStatus.InProgress)]
+    [InlineData(DomainTaskStatus.Done, DomainTaskStatus.Todo)]
+    [InlineData(DomainTaskStatus.Review, DomainTaskStatus.InProgress)]
+    public void UpdateStatus_AllowsFreeKanbanTransitions(DomainTaskStatus from, DomainTaskStatus to)
+    {
+        var task = ProjectTask.Create(Guid.NewGuid(), Guid.NewGuid(), "Task", TaskPriority.Low, from);
+
+        task.UpdateStatus(to, Guid.NewGuid());
+
+        task.Status.Should().Be(to);
+    }
+
+    [Fact]
+    public void UpdateStatus_Throws_WhenSameStatus()
+    {
+        var task = ProjectTask.Create(Guid.NewGuid(), Guid.NewGuid(), "Task", TaskPriority.Low);
+
+        var act = () => task.UpdateStatus(DomainTaskStatus.Todo, Guid.NewGuid());
+
+        act.Should().Throw<DomainException>()
+            .WithMessage("*already in the requested status*")
+            .Where(ex => ex.ErrorCode == "INVALID_TRANSITION");
+    }
 }

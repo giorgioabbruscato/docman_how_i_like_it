@@ -377,7 +377,7 @@ Sole identity object for application services. Enriched per request by `TenantCo
 | DueDate | DateOnly? | Optional |
 
 **Factory:** `ProjectTask.Create(tenantId, projectId, title, priority, status?, ...)`  
-**Methods:** `Update(...)`
+**Methods:** `Update(...)`, `UpdateStatus(newStatus, updatedBy)`
 
 **Enums:**
 - `TaskPriority`: Low, Medium, High, Critical
@@ -387,6 +387,7 @@ Sole identity object for application services. Enriched per request by `TenantCo
 - ProjectId validated via `IProjectLookup.ExistsAsync`
 - AssignedEmployeeId validated via `IEmployeeLookup.ExistsAndIsActiveAsync` when set
 - Delete is hard delete (no soft-delete flag)
+- Status transitions: free Kanban — any move between valid statuses allowed; no-op (same status) rejected
 
 **Cross-module interface:** `ITaskLookup.ExistsAsync(taskId)`, `GetTitleAsync(taskId)`
 

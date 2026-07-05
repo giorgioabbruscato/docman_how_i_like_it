@@ -22,19 +22,22 @@ public sealed class TasksController : ControllerBase
     private readonly CreateProjectTaskCommandHandler _createTaskHandler;
     private readonly UpdateProjectTaskCommandHandler _updateTaskHandler;
     private readonly DeleteProjectTaskCommandHandler _deleteTaskHandler;
+    private readonly UpdateTaskStatusCommandHandler _updateTaskStatusHandler;
 
     public TasksController(
         GetProjectTasksQueryHandler getTasksHandler,
         GetProjectTaskByIdQueryHandler getTaskByIdHandler,
         CreateProjectTaskCommandHandler createTaskHandler,
         UpdateProjectTaskCommandHandler updateTaskHandler,
-        DeleteProjectTaskCommandHandler deleteTaskHandler)
+        DeleteProjectTaskCommandHandler deleteTaskHandler,
+        UpdateTaskStatusCommandHandler updateTaskStatusHandler)
     {
         _getTasksHandler = getTasksHandler;
         _getTaskByIdHandler = getTaskByIdHandler;
         _createTaskHandler = createTaskHandler;
         _updateTaskHandler = updateTaskHandler;
         _deleteTaskHandler = deleteTaskHandler;
+        _updateTaskStatusHandler = updateTaskStatusHandler;
     }
 
     /// <summary>List tasks with pagination and filters.</summary>
@@ -105,6 +108,23 @@ public sealed class TasksController : ControllerBase
     {
         var result = await _deleteTaskHandler.HandleAsync(id, cancellationToken);
         return result.IsSuccess ? NoContent() : MapFailure(result);
+    }
+
+    /// <summary>Update task status only (for Kanban drag-and-drop).</summary>
+    /// <remarks>Auth: task.update:tenant OR task.update_status:self</remarks>
+    [HttpPatch("{id:guid}/status")]
+    [RequireAnyPermission(Permissions.TaskUpdateTenant, Permissions.TaskUpdateStatusSelf)]
+    [ProducesResponseType(typeof(ProjectTaskDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> UpdateStatus(
+        Guid id,
+        [FromBody] UpdateTaskStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _updateTaskStatusHandler.HandleAsync(id, request, cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
     private IActionResult MapFailure(HrPortal.SharedKernel.Results.Result result) =>

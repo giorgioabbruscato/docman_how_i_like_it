@@ -59,6 +59,15 @@ internal sealed class ProjectTaskRepository : IProjectTaskRepository
         return new PagedResult<ProjectTask>(items, totalCount, query.Page, query.PageSize);
     }
 
+    public async Task<IReadOnlyList<ProjectTask>> GetByProjectIdAsync(
+        Guid projectId,
+        CancellationToken cancellationToken = default) =>
+        await _dbContext.Set<ProjectTask>()
+            .ApplyTenantScope(_accessor.Current)
+            .Where(t => t.ProjectId == projectId)
+            .OrderBy(t => t.Title)
+            .ToListAsync(cancellationToken);
+
     public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default) =>
         await _dbContext.Set<ProjectTask>()
             .ApplyTenantScope(_accessor.Current)

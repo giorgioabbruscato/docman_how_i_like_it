@@ -7,6 +7,7 @@ public interface IProjectTaskRepository
 {
     Task<ProjectTask?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<PagedResult<ProjectTask>> GetPagedAsync(GetProjectTasksQuery query, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ProjectTask>> GetByProjectIdAsync(Guid projectId, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(ProjectTask task, CancellationToken cancellationToken = default);
     Task UpdateAsync(ProjectTask task, CancellationToken cancellationToken = default);
