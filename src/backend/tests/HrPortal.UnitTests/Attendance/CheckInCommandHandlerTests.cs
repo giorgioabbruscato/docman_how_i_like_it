@@ -14,9 +14,11 @@ namespace HrPortal.UnitTests.Attendance;
 public sealed class CheckInCommandHandlerTests
 {
     private readonly Mock<IAttendanceSessionRepository> _repository = new();
+    private readonly Mock<IGeofenceRepository> _geofenceRepository = new();
     private readonly Mock<IEmployeeLookup> _employeeLookup = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAuditService> _auditService = new();
+    private readonly IGeofenceValidator _geofenceValidator = new GeofenceValidator();
     private readonly TenantContext _tenantContext;
     private readonly CheckInCommandHandler _handler;
 
@@ -28,26 +30,30 @@ public sealed class CheckInCommandHandlerTests
             EmployeeId = Guid.NewGuid()
         };
 
-        _handler = new CheckInCommandHandler(
-            _repository.Object,
-            _employeeLookup.Object,
-            _unitOfWork.Object,
-            _tenantContext,
-            _auditService.Object,
-            NullLogger<CheckInCommandHandler>.Instance);
+        _geofenceRepository.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GeofenceSettings?)null);
+        _geofenceRepository.Setup(r => r.GetActiveZonesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<GeofenceZone>());
+
+        _handler = CreateHandler(_tenantContext);
     }
 
-    [Fact]
-    public async Task HandleAsync_ReturnsForbidden_WhenEmployeeContextMissing()
-    {
-        var context = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo");
-        var handler = new CheckInCommandHandler(
+    private CheckInCommandHandler CreateHandler(TenantContext context) =>
+        new(
             _repository.Object,
+            _geofenceRepository.Object,
+            _geofenceValidator,
             _employeeLookup.Object,
             _unitOfWork.Object,
             context,
             _auditService.Object,
             NullLogger<CheckInCommandHandler>.Instance);
+
+    [Fact]
+    public async Task HandleAsync_ReturnsForbidden_WhenEmployeeContextMissing()
+    {
+        var context = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo");
+        var handler = CreateHandler(context);
 
         var result = await handler.HandleAsync(new CheckInRequest(), null);
 

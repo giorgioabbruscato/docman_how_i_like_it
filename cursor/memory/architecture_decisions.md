@@ -429,3 +429,32 @@ Dedup via in-process `ConcurrentDictionary` keyed by `tenantId:employeeId:date:t
 - Options bound from `AttendanceReminders` configuration section
 - Notification failures logged via `NotificationHelper`; never affect attendance data
 - MVP dedup resets on process restart (acceptable for logging-only notification backend)
+
+---
+
+## ADR-015: Timesheet Approval Gates Analytics
+
+**Status:** Accepted  
+**Date:** 2026-07
+
+**Decision:** Hours from `TimeEntry` rows count toward analytics KPIs and worked-hours export only when linked to a `TimesheetSubmission` with `Status = Approved`. Unapproved or missing timesheets yield zero counted hours for that employee/period.
+
+**Rationale:** Supervisors must sign off before billing/analytics use logged time; mirrors leave approval trust model.
+
+---
+
+## ADR-016: Calendar Aggregation Module
+
+**Status:** Accepted  
+**Date:** 2026-07
+
+**Decision:** Introduce `HrPortal.Calendar` as a read-only aggregation module. Leave events via `ILeaveCalendarProvider` (implemented in Leave), holidays and smart-working schedules owned in Calendar schema. No direct Leave DbSet access from Calendar.
+
+---
+
+## ADR-017: Attendance Geofencing
+
+**Status:** Accepted  
+**Date:** 2026-07
+
+**Decision:** Optional tenant geofence zones (Haversine radius). Defaults: geofencing off, allow check-in without GPS. When enabled with active zones, out-of-range check-ins return `GEOFENCE_VIOLATION`. `AttendanceSession` stores `MatchedGeofenceZoneId` and `GpsUnavailableAtCheckIn`.

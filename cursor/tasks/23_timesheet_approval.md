@@ -1,6 +1,6 @@
 # TASK 23 — TIMESHEET APPROVAL
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Extend Time Tracking with timesheet submission and supervisor approval before hours count in analytics and billing.
 

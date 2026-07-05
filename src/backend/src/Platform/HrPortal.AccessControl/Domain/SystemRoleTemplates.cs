@@ -57,6 +57,12 @@ public static class SystemRoleTemplates
         Permissions.TimeEntryUpdateSelf,
         Permissions.TimeEntryDeleteSelf,
         Permissions.TimeEntryExportTenant,
+        Permissions.TimesheetReadTeam,
+        Permissions.TimesheetApproveTeam,
+        Permissions.CalendarReadTeam,
+        Permissions.CalendarManageTenant,
+        Permissions.GeofenceReadTenant,
+        Permissions.GeofenceManageTenant,
         Permissions.AnalyticsReadTenant,
         Permissions.ReportGenerateTenant
     ];
@@ -84,6 +90,9 @@ public static class SystemRoleTemplates
         Permissions.TimeEntryUpdateSelf,
         Permissions.TimeEntryDeleteSelf,
         Permissions.TimeEntryExportTeam,
+        Permissions.TimesheetReadTeam,
+        Permissions.TimesheetApproveTeam,
+        Permissions.CalendarReadTeam,
         Permissions.AnalyticsReadTeam,
         Permissions.ReportGenerateTeam
     ];
@@ -104,6 +113,9 @@ public static class SystemRoleTemplates
         Permissions.TimeEntryCreateSelf,
         Permissions.TimeEntryUpdateSelf,
         Permissions.TimeEntryDeleteSelf,
+        Permissions.TimesheetSubmitSelf,
+        Permissions.TimesheetReadSelf,
+        Permissions.CalendarReadSelf,
         Permissions.ReportGenerateSelf
     ];
 

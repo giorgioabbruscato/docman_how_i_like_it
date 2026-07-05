@@ -31,3 +31,25 @@ internal sealed class AttendanceSessionConfiguration : IEntityTypeConfiguration<
             .IsUnique();
     }
 }
+
+internal sealed class GeofenceZoneConfiguration : IEntityTypeConfiguration<GeofenceZone>
+{
+    public void Configure(EntityTypeBuilder<GeofenceZone> builder)
+    {
+        builder.ToTable("geofence_zones", "attendance");
+        builder.HasKey(z => z.Id);
+        builder.Property(z => z.Name).HasMaxLength(200).IsRequired();
+        builder.Property(z => z.Description).HasMaxLength(1000);
+        builder.HasIndex(z => new { z.TenantId, z.IsActive });
+    }
+}
+
+internal sealed class GeofenceSettingsConfiguration : IEntityTypeConfiguration<GeofenceSettings>
+{
+    public void Configure(EntityTypeBuilder<GeofenceSettings> builder)
+    {
+        builder.ToTable("geofence_settings", "attendance");
+        builder.HasKey(s => s.Id);
+        builder.HasIndex(s => s.TenantId).IsUnique();
+    }
+}

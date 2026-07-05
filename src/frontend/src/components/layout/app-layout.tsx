@@ -27,7 +27,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, isVisible: () => true },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, isVisible: () => true },
   {
     to: '/departments',
     label: 'Departments',
@@ -73,6 +73,25 @@ const navItems: NavItem[] = [
     isVisible: (permissions) => hasAnyPermission(permissions, Permission.ProjectReadTenant),
   },
   {
+    to: '/calendar/team',
+    label: 'Calendar',
+    icon: CalendarDays,
+    isVisible: (permissions) =>
+      hasAnyPermission(permissions, Permission.CalendarReadTeam, Permission.CalendarReadSelf),
+  },
+  {
+    to: '/time-tracking/timesheets',
+    label: 'Timesheets',
+    icon: Timer,
+    isVisible: (permissions) =>
+      hasAnyPermission(
+        permissions,
+        Permission.TimesheetReadSelf,
+        Permission.TimesheetReadTeam,
+        Permission.TimesheetApproveTeam,
+      ),
+  },
+  {
     to: '/time-tracking',
     label: 'Time Tracking',
     icon: Timer,
@@ -107,6 +126,12 @@ const navItems: NavItem[] = [
       planFeatures.advancedReports,
   },
   { to: '/settings', label: 'Settings', icon: Settings, isVisible: () => true },
+  {
+    to: '/settings/geofencing',
+    label: 'Geofencing',
+    icon: Settings,
+    isVisible: (permissions) => hasAnyPermission(permissions, Permission.GeofenceManageTenant),
+  },
 ];
 
 export function AppLayout() {

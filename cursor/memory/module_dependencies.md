@@ -15,6 +15,7 @@ Employees
     │       └── Tasks
     │               └── TimeTracking
     ├── Leave        (+ Notifications)
+    ├── Calendar     (+ Leave provider, Employees, Departments)
     ├── Attendance
     ├── Documents    (+ Storage)
     └── Analytics    (read-only; aggregates via provider interfaces)
@@ -36,6 +37,12 @@ The graph is a DAG: no module references another module transitively back to its
 | TimeTracking | Employees | `IEmployeeLookup` | Validate employee, team scope, export names |
 | TimeTracking | Projects | `IProjectLookup` | Validate project, export names |
 | TimeTracking | Tasks | `ITaskLookup` | Validate task, export titles |
+| TimeTracking | Notifications | `INotificationService` | Timesheet submit/approve/reject hooks |
+| TimeTracking | AccessControl | `INotificationRecipientResolver` | Supervisor/employee recipient mapping |
+| Calendar | Leave | `ILeaveCalendarProvider` | Approved leave events in date range |
+| Calendar | Employees | `IEmployeeLookup` | Employee names, read scope |
+| Calendar | Departments | `IDepartmentLookup` | Department-scoped team calendar |
+| Leave | Calendar | `ILeaveCalendarProvider` impl | `LeaveCalendarProvider` registration |
 | Leave | Employees | `IEmployeeLookup` | Validate employee on leave request |
 | Attendance | Employees | `IEmployeeLookup` | Validate employee on clock-in/out |
 | Documents | Employees | `IEmployeeLookup` | Validate employee on document upload |
@@ -77,6 +84,7 @@ Implementations live in the provider's application service (`IDepartmentService`
 | HrPortal.Api | AccessControl | `IMeService`, `ITenantRoleService`, `ITenantMembershipService`, `IPolicyEngine` |
 | HrPortal.Authorization | AccessControl | `IPolicyEngine`, `IPermissionEvaluator` |
 | Leave | Notifications | `INotificationService` |
+| TimeTracking | Notifications | `INotificationService` (timesheet workflow hooks) |
 | Projects | Notifications | `INotificationService` (project/task assignment hooks) |
 | Tasks | Notifications | `INotificationService` (task assignment hooks) |
 | Documents | Notifications | `INotificationService` (document upload hook) |
@@ -99,5 +107,5 @@ Implementations live in the provider's application service (`IDepartmentService`
 AddTenancy → AddHrPortalIdentity → AddHrPortalAccessControl
 → AddHrPortalAuthorization → AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalAudit
 → AddDepartmentsModule → AddEmployeesModule → AddProjectsModule → AddTasksModule
-→ AddTimeTrackingModule → AddLeaveModule → AddAttendanceModule → AddAnalyticsModule → AddReportingModule → AddDocumentsModule
+→ AddTimeTrackingModule → AddLeaveModule → AddCalendarModule → AddAttendanceModule → AddAnalyticsModule → AddReportingModule → AddDocumentsModule
 ```

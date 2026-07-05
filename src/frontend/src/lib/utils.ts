@@ -9,6 +9,14 @@ export function cn(...inputs: ClassValue[]) {
 interface ProblemDetails {
   detail?: string;
   title?: string;
+  errorCode?: string;
+  extensions?: { errorCode?: string };
+}
+
+export function getApiErrorCode(error: unknown): string | undefined {
+  const axiosError = error as AxiosError<ProblemDetails>;
+  const data = axiosError.response?.data;
+  return data?.errorCode ?? data?.extensions?.errorCode;
 }
 
 export function getApiErrorMessage(error: unknown, fallback: string): string {

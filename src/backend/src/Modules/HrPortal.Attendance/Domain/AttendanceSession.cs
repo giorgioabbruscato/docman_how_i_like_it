@@ -26,6 +26,8 @@ public sealed class AttendanceSession : AuditableEntity
     public string? Browser { get; private set; }
     public int? WorkedMinutes { get; private set; }
     public AttendanceSessionStatus Status { get; private set; }
+    public Guid? MatchedGeofenceZoneId { get; private set; }
+    public bool GpsUnavailableAtCheckIn { get; private set; }
 
     private AttendanceSession() { }
 
@@ -39,6 +41,8 @@ public sealed class AttendanceSession : AuditableEntity
         double? accuracyCheckIn = null,
         string? device = null,
         string? browser = null,
+        Guid? matchedGeofenceZoneId = null,
+        bool gpsUnavailableAtCheckIn = false,
         Guid? createdBy = null)
     {
         return new AttendanceSession
@@ -52,6 +56,8 @@ public sealed class AttendanceSession : AuditableEntity
             Device = device,
             Browser = browser,
             Status = AttendanceSessionStatus.Open,
+            MatchedGeofenceZoneId = matchedGeofenceZoneId,
+            GpsUnavailableAtCheckIn = gpsUnavailableAtCheckIn,
             CreatedBy = createdBy
         }.Also(s => s.SetTenant(tenantId));
     }

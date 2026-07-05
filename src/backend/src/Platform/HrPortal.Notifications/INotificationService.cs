@@ -48,4 +48,22 @@ public interface INotificationService
         Guid recipientUserId,
         DateOnly date,
         CancellationToken cancellationToken = default);
+
+    Task NotifyTimesheetSubmittedAsync(
+        Guid recipientUserId,
+        DateOnly periodStart,
+        DateOnly periodEnd,
+        CancellationToken cancellationToken = default);
+
+    Task NotifyTimesheetApprovedAsync(
+        Guid recipientUserId,
+        DateOnly periodStart,
+        DateOnly periodEnd,
+        CancellationToken cancellationToken = default);
+
+    Task NotifyTimesheetRejectedAsync(
+        Guid recipientUserId,
+        DateOnly periodStart,
+        DateOnly periodEnd,
+        CancellationToken cancellationToken = default);
 }

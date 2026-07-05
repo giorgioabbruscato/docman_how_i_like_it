@@ -63,6 +63,21 @@ public static class Permissions
     public const string TimeEntryExportTeam = "time_entry.export:team";
     public const string TimeEntryExportTenant = "time_entry.export:tenant";
 
+    // Timesheets
+    public const string TimesheetSubmitSelf = "timesheet.submit:self";
+    public const string TimesheetReadSelf = "timesheet.read:self";
+    public const string TimesheetReadTeam = "timesheet.read:team";
+    public const string TimesheetApproveTeam = "timesheet.approve:team";
+
+    // Calendar
+    public const string CalendarReadSelf = "calendar.read:self";
+    public const string CalendarReadTeam = "calendar.read:team";
+    public const string CalendarManageTenant = "calendar.manage:tenant";
+
+    // Geofencing
+    public const string GeofenceReadTenant = "geofence.read:tenant";
+    public const string GeofenceManageTenant = "geofence.manage:tenant";
+
     // Projects
     public const string ProjectReadTenant = "project.read:tenant";
     public const string ProjectCreateTenant = "project.create:tenant";
@@ -111,6 +126,9 @@ public static class Permissions
         TimeEntryReadSelf, TimeEntryReadTeam, TimeEntryReadTenant,
         TimeEntryCreateSelf, TimeEntryUpdateSelf, TimeEntryDeleteSelf,
         TimeEntryExportTeam, TimeEntryExportTenant,
+        TimesheetSubmitSelf, TimesheetReadSelf, TimesheetReadTeam, TimesheetApproveTeam,
+        CalendarReadSelf, CalendarReadTeam, CalendarManageTenant,
+        GeofenceReadTenant, GeofenceManageTenant,
         AnalyticsReadTeam, AnalyticsReadTenant,
         ReportGenerateSelf, ReportGenerateTeam, ReportGenerateTenant,
         AuditReadTenant

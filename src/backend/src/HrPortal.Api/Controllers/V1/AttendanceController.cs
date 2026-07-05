@@ -123,6 +123,13 @@ public sealed class AttendanceController : ControllerBase
                 Title = "Forbidden",
                 Detail = result.Error
             }),
+            "GEOFENCE_VIOLATION" => BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Geofence violation",
+                Detail = result.Error,
+                Extensions = { ["errorCode"] = result.ErrorCode }
+            }),
             _ => BadRequest(new ProblemDetails
             {
                 Status = StatusCodes.Status400BadRequest,

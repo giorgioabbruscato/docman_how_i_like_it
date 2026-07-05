@@ -12,12 +12,16 @@ public sealed class ModuleDependencyTests
         {
             ["HrPortal.Departments"] = new HashSet<string>(StringComparer.Ordinal),
             ["HrPortal.Employees"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Departments" },
-            ["HrPortal.Leave"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees" },
+            ["HrPortal.Leave"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees", "HrPortal.Calendar" },
+            ["HrPortal.Calendar"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees", "HrPortal.Departments" },
             ["HrPortal.Attendance"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees" },
             ["HrPortal.Documents"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees" },
             ["HrPortal.Projects"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees" },
             ["HrPortal.Tasks"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees", "HrPortal.Projects" },
-            ["HrPortal.TimeTracking"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees", "HrPortal.Projects", "HrPortal.Tasks" },
+            ["HrPortal.TimeTracking"] = new HashSet<string>(StringComparer.Ordinal)
+            {
+                "HrPortal.Employees", "HrPortal.Projects", "HrPortal.Tasks"
+            },
             ["HrPortal.Analytics"] = new HashSet<string>(StringComparer.Ordinal)
             {
                 "HrPortal.Departments",

@@ -2,7 +2,7 @@
 
 > Status: **PENDING**
 
-Final audit: verify and update all agent documentation, memory files, evals, and API contracts after Tasks 00–21.
+Final audit: verify and update all agent documentation, memory files, evals, and API contracts after Tasks 00–30.
 
 ## Goal
 

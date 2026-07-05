@@ -9,11 +9,16 @@ internal sealed class TimeEntryAnalyticsProvider : ITimeEntryAnalyticsProvider
 {
     private readonly DbContext _dbContext;
     private readonly ITenantContextAccessor _accessor;
+    private readonly ITimesheetRepository _timesheetRepository;
 
-    public TimeEntryAnalyticsProvider(DbContext dbContext, ITenantContextAccessor accessor)
+    public TimeEntryAnalyticsProvider(
+        DbContext dbContext,
+        ITenantContextAccessor accessor,
+        ITimesheetRepository timesheetRepository)
     {
         _dbContext = dbContext;
         _accessor = accessor;
+        _timesheetRepository = timesheetRepository;
     }
 
     public async Task<int> GetTotalMinutesAsync(
@@ -24,7 +29,8 @@ internal sealed class TimeEntryAnalyticsProvider : ITimeEntryAnalyticsProvider
         IReadOnlyList<Guid>? allowedEmployeeIds,
         CancellationToken cancellationToken = default)
     {
-        var query = BuildFilteredQuery(from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true);
+        var query = await BuildFilteredQueryAsync(
+            from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true, cancellationToken);
         return await query.SumAsync(t => t.WorkedMinutes, cancellationToken);
     }
 
@@ -36,7 +42,8 @@ internal sealed class TimeEntryAnalyticsProvider : ITimeEntryAnalyticsProvider
         IReadOnlyList<Guid>? allowedEmployeeIds,
         CancellationToken cancellationToken = default)
     {
-        var query = BuildFilteredQuery(from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true);
+        var query = await BuildFilteredQueryAsync(
+            from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true, cancellationToken);
 
         return await query
             .GroupBy(t => t.EmployeeId)
@@ -52,7 +59,8 @@ internal sealed class TimeEntryAnalyticsProvider : ITimeEntryAnalyticsProvider
         IReadOnlyList<Guid>? allowedEmployeeIds,
         CancellationToken cancellationToken = default)
     {
-        var query = BuildFilteredQuery(from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true);
+        var query = await BuildFilteredQueryAsync(
+            from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true, cancellationToken);
 
         return await query
             .GroupBy(t => t.ProjectId)
@@ -68,7 +76,8 @@ internal sealed class TimeEntryAnalyticsProvider : ITimeEntryAnalyticsProvider
         IReadOnlyList<Guid>? allowedEmployeeIds,
         CancellationToken cancellationToken = default)
     {
-        var query = BuildFilteredQuery(from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true);
+        var query = await BuildFilteredQueryAsync(
+            from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true, cancellationToken);
         var entries = await query
             .Select(t => new { t.StartTime, t.WorkedMinutes })
             .ToListAsync(cancellationToken);
@@ -88,7 +97,8 @@ internal sealed class TimeEntryAnalyticsProvider : ITimeEntryAnalyticsProvider
         IReadOnlyList<Guid>? allowedEmployeeIds,
         CancellationToken cancellationToken = default)
     {
-        var query = BuildFilteredQuery(from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true);
+        var query = await BuildFilteredQueryAsync(
+            from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true, cancellationToken);
         var entries = await query
             .Select(t => new { t.StartTime, t.WorkedMinutes })
             .ToListAsync(cancellationToken);
@@ -110,7 +120,8 @@ internal sealed class TimeEntryAnalyticsProvider : ITimeEntryAnalyticsProvider
         int dailyStandardMinutes,
         CancellationToken cancellationToken = default)
     {
-        var query = BuildFilteredQuery(from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true);
+        var query = await BuildFilteredQueryAsync(
+            from, to, projectId, employeeId, allowedEmployeeIds, completedOnly: true, cancellationToken);
         var entries = await query
             .Select(t => new { t.EmployeeId, t.StartTime, t.WorkedMinutes })
             .ToListAsync(cancellationToken);
@@ -146,16 +157,20 @@ internal sealed class TimeEntryAnalyticsProvider : ITimeEntryAnalyticsProvider
             .ToListAsync(cancellationToken);
     }
 
-    private IQueryable<TimeEntry> BuildFilteredQuery(
+    private async Task<IQueryable<TimeEntry>> BuildFilteredQueryAsync(
         DateOnly from,
         DateOnly to,
         Guid? projectId,
         Guid? employeeId,
         IReadOnlyList<Guid>? allowedEmployeeIds,
-        bool completedOnly)
+        bool completedOnly,
+        CancellationToken cancellationToken)
     {
         var fromUtc = from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var toUtc = to.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+
+        var approvedEntryIds = await _timesheetRepository.GetApprovedTimeEntryIdsAsync(
+            employeeId, allowedEmployeeIds, from, to, cancellationToken);
 
         var query = _dbContext.Set<TimeEntry>()
             .ApplyTenantScope(_accessor.Current)
@@ -163,6 +178,11 @@ internal sealed class TimeEntryAnalyticsProvider : ITimeEntryAnalyticsProvider
 
         if (completedOnly)
             query = query.Where(t => t.EndTime != null);
+
+        if (approvedEntryIds.Count > 0)
+            query = query.Where(t => approvedEntryIds.Contains(t.Id));
+        else
+            query = query.Where(t => false);
 
         query = ApplyEmployeeScope(query, employeeId, allowedEmployeeIds);
 

@@ -17,6 +17,11 @@ import { SettingsPage } from '@/pages/settings-page';
 import { CalendarPage } from '@/pages/time-tracking/calendar-page';
 import { ManualEntryPage } from '@/pages/time-tracking/manual-entry-page';
 import { TimeTrackingPage } from '@/pages/time-tracking/time-tracking-page';
+import { TimesheetsPage } from '@/pages/time-tracking/timesheets/timesheets-page';
+import { TimesheetApprovalsPage } from '@/pages/time-tracking/timesheets/timesheet-approvals-page';
+import { TeamCalendarPage } from '@/pages/calendar/team-calendar-page';
+import { HolidaysPage } from '@/pages/calendar/holidays-page';
+import { GeofencingSettingsPage } from '@/pages/settings/geofencing-settings-page';
 import { AnalyticsPage } from '@/pages/analytics/analytics-page';
 
 export function App() {
@@ -26,7 +31,8 @@ export function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            <Route index element={<DashboardPage />} />
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="departments" element={<DepartmentsPage />} />
             <Route path="employees" element={<EmployeesPage />} />
             <Route path="leave-requests" element={<LeaveRequestsPage />} />
@@ -40,9 +46,14 @@ export function App() {
             <Route path="time-tracking" element={<TimeTrackingPage />} />
             <Route path="time-tracking/manual" element={<ManualEntryPage />} />
             <Route path="time-tracking/calendar" element={<CalendarPage />} />
+            <Route path="time-tracking/timesheets" element={<TimesheetsPage />} />
+            <Route path="time-tracking/timesheets/approvals" element={<TimesheetApprovalsPage />} />
+            <Route path="calendar/team" element={<TeamCalendarPage />} />
+            <Route path="calendar/holidays" element={<HolidaysPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="settings/geofencing" element={<GeofencingSettingsPage />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Route>
       </Routes>

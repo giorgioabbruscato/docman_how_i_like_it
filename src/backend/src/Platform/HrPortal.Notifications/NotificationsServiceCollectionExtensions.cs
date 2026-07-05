@@ -1,3 +1,4 @@
+using HrPortal.Notifications.Application;
 using HrPortal.Notifications.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,7 +8,9 @@ public static class NotificationsServiceCollectionExtensions
 {
     public static IServiceCollection AddHrPortalNotifications(this IServiceCollection services)
     {
-        services.AddSingleton<INotificationService, LoggingNotificationService>();
+        services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
+        services.AddScoped<INotificationInboxService, NotificationInboxService>();
+        services.AddScoped<INotificationService, LoggingNotificationService>();
         return services;
     }
 }

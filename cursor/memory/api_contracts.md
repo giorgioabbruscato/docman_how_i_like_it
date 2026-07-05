@@ -903,6 +903,72 @@ paginated table). Nav link in `app-layout.tsx` is visible only when
 
 ---
 
+## Timesheets — IMPLEMENTED (Task 23)
+
+**Base path:** `/api/v1/timesheets`  
+**Auth:** permission-scoped (see controller remarks)
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/v1/timesheets` | `timesheet.read:team` OR `timesheet.read:self` |
+| GET | `/api/v1/timesheets/{id}` | `timesheet.read:team` OR `timesheet.read:self` |
+| POST | `/api/v1/timesheets` | `timesheet.submit:self` |
+| POST | `/api/v1/timesheets/{id}/submit` | `timesheet.submit:self` |
+| POST | `/api/v1/timesheets/{id}/approve` | `timesheet.approve:team` (+ team resource scope) |
+| POST | `/api/v1/timesheets/{id}/reject` | `timesheet.approve:team` (+ team resource scope) |
+
+Create body: `{ "periodStart": "yyyy-MM-dd", "periodEnd": "yyyy-MM-dd", "notes": "..." }`  
+Reject body: `{ "comment": "..." }`
+
+**Analytics rule:** `TimeEntryAnalyticsProvider` and export include only entries linked to an **Approved** timesheet.
+
+---
+
+## Notifications inbox — IMPLEMENTED (Task 25)
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/v1/notifications` | authenticated (self-scoped to `ctx.UserId`) |
+| PATCH | `/api/v1/notifications/{id}/read` | authenticated (own notification only) |
+
+Query: `page`, `pageSize`, `unreadOnly`. Persists on every notification dispatch.
+
+---
+
+## Calendar — IMPLEMENTED (Task 24)
+
+**Base path:** `/api/v1/calendar`
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/v1/calendar/events` | `calendar.read:team` OR `calendar.read:self` |
+| GET | `/api/v1/calendar/holidays` | `calendar.manage:tenant` |
+| POST | `/api/v1/calendar/holidays` | `calendar.manage:tenant` |
+| PUT | `/api/v1/calendar/holidays/{id}` | `calendar.manage:tenant` |
+| DELETE | `/api/v1/calendar/holidays/{id}` | `calendar.manage:tenant` |
+
+Events query: `fromDate`, `toDate`, optional `departmentId`, `employeeId`.  
+Event types: `Leave`, `Permission` (Personal leave), `Holiday`, `SmartWorking`.
+
+---
+
+## Geofencing — IMPLEMENTED (Task 26)
+
+**Base path:** `/api/v1/geofence-zones`
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/v1/geofence-zones` | `geofence.read:tenant` |
+| POST | `/api/v1/geofence-zones` | `geofence.manage:tenant` |
+| PUT | `/api/v1/geofence-zones/{id}` | `geofence.manage:tenant` |
+| DELETE | `/api/v1/geofence-zones/{id}` | `geofence.manage:tenant` |
+| GET | `/api/v1/geofence-zones/settings` | `geofence.read:tenant` |
+| PUT | `/api/v1/geofence-zones/settings` | `geofence.manage:tenant` |
+
+Check-in validation (`POST /api/v1/attendance/check-in`): when geofencing enabled and active zones exist, coordinates must fall within a zone unless `AllowCheckInWithoutGps` permits missing GPS. Violations return `400` with `errorCode: GEOFENCE_VIOLATION`.
+
+---
+
 ## Analytics — IMPLEMENTED (Tasks 13–15)
 
 **Auth:** `[RequireAnyPermission(analytics.read:team, analytics.read:tenant)]` for most endpoints;  

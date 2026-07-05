@@ -41,6 +41,19 @@ export const Permission = {
   TimeEntryUpdateSelf: 'time_entry.update:self',
   TimeEntryDeleteSelf: 'time_entry.delete:self',
 
+  TimesheetSubmitSelf: 'timesheet.submit:self',
+  TimesheetReadSelf: 'timesheet.read:self',
+  TimesheetReadTeam: 'timesheet.read:team',
+  TimesheetApproveTeam: 'timesheet.approve:team',
+
+  CalendarReadSelf: 'calendar.read:self',
+  CalendarReadTeam: 'calendar.read:team',
+  CalendarManageTenant: 'calendar.manage:tenant',
+
+  GeofenceReadTenant: 'geofence.read:tenant',
+  GeofenceManageTenant: 'geofence.manage:tenant',
+
+  TaskReadSelf: 'task.read:self',
   DocumentReadTenant: 'document.read:tenant',
   DocumentReadSelf: 'document.read:self',
   DocumentUploadSelf: 'document.upload:self',

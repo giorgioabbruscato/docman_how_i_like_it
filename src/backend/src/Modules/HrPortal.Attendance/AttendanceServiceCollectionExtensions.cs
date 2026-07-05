@@ -16,6 +16,9 @@ public static class AttendanceServiceCollectionExtensions
     public static IServiceCollection AddAttendanceModule(this IServiceCollection services)
     {
         services.AddScoped<IAttendanceSessionRepository, AttendanceSessionRepository>();
+        services.AddScoped<IGeofenceRepository, GeofenceRepository>();
+        services.AddScoped<IGeofenceValidator, GeofenceValidator>();
+        services.AddScoped<IGeofenceService, GeofenceService>();
         services.AddScoped<IAttendanceAnalyticsProvider, AttendanceAnalyticsProvider>();
 
         services.AddScoped<CheckInCommandHandler>();

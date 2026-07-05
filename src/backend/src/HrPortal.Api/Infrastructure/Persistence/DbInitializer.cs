@@ -4,6 +4,7 @@ using HrPortal.Employees.Domain;
 using HrPortal.Tenancy;
 using HrPortal.Tenancy.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace HrPortal.Api.Infrastructure.Persistence;
 
@@ -21,14 +22,22 @@ public static class DbInitializer
         var dbContext = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
         var tenantContextAccessor = scope.ServiceProvider.GetRequiredService<ITenantContextAccessor>();
         var roleSeeder = scope.ServiceProvider.GetRequiredService<ISystemRoleSeeder>();
+        var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
-        var pending = await dbContext.Database.GetPendingMigrationsAsync();
-        var applied = await dbContext.Database.GetAppliedMigrationsAsync();
-
-        if (applied.Any() || pending.Any())
-            await dbContext.Database.MigrateAsync();
-        else
+        if (environment.IsEnvironment("Testing"))
+        {
             await dbContext.Database.EnsureCreatedAsync();
+        }
+        else
+        {
+            var pending = await dbContext.Database.GetPendingMigrationsAsync();
+            var applied = await dbContext.Database.GetAppliedMigrationsAsync();
+
+            if (applied.Any() || pending.Any())
+                await dbContext.Database.MigrateAsync();
+            else
+                await dbContext.Database.EnsureCreatedAsync();
+        }
 
         var demoTenant = await dbContext.Set<Tenant>()
             .FirstOrDefaultAsync(t => t.Slug == DemoTenantSlug);

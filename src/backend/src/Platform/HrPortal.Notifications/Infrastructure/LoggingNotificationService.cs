@@ -1,13 +1,29 @@
+using HrPortal.Notifications.Application;
+using HrPortal.Notifications.Domain;
+using HrPortal.SharedKernel.Persistence;
+using HrPortal.Tenancy;
 using Microsoft.Extensions.Logging;
 
 namespace HrPortal.Notifications.Infrastructure;
 
 internal sealed class LoggingNotificationService : INotificationService
 {
+    private readonly IUserNotificationRepository _notificationRepository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly TenantContext _tenantContext;
     private readonly ILogger<LoggingNotificationService> _logger;
 
-    public LoggingNotificationService(ILogger<LoggingNotificationService> logger) =>
+    public LoggingNotificationService(
+        IUserNotificationRepository notificationRepository,
+        IUnitOfWork unitOfWork,
+        TenantContext tenantContext,
+        ILogger<LoggingNotificationService> logger)
+    {
+        _notificationRepository = notificationRepository;
+        _unitOfWork = unitOfWork;
+        _tenantContext = tenantContext;
         _logger = logger;
+    }
 
     public Task SendAsync(NotificationMessage message, CancellationToken cancellationToken = default)
     {
@@ -94,7 +110,46 @@ internal sealed class LoggingNotificationService : INotificationService
             $"{{\"date\":\"{date:yyyy-MM-dd}\"}}"),
             cancellationToken);
 
-    private Task DispatchAsync(NotificationPayload payload, CancellationToken cancellationToken)
+    public Task NotifyTimesheetSubmittedAsync(
+        Guid recipientUserId,
+        DateOnly periodStart,
+        DateOnly periodEnd,
+        CancellationToken cancellationToken = default) =>
+        DispatchAsync(new NotificationPayload(
+            "timesheet.submitted",
+            recipientUserId,
+            "Timesheet submitted",
+            $"A timesheet for {periodStart:yyyy-MM-dd} to {periodEnd:yyyy-MM-dd} awaits your approval.",
+            $"{{\"periodStart\":\"{periodStart:yyyy-MM-dd}\",\"periodEnd\":\"{periodEnd:yyyy-MM-dd}\"}}"),
+            cancellationToken);
+
+    public Task NotifyTimesheetApprovedAsync(
+        Guid recipientUserId,
+        DateOnly periodStart,
+        DateOnly periodEnd,
+        CancellationToken cancellationToken = default) =>
+        DispatchAsync(new NotificationPayload(
+            "timesheet.approved",
+            recipientUserId,
+            "Timesheet approved",
+            $"Your timesheet for {periodStart:yyyy-MM-dd} to {periodEnd:yyyy-MM-dd} has been approved.",
+            $"{{\"periodStart\":\"{periodStart:yyyy-MM-dd}\",\"periodEnd\":\"{periodEnd:yyyy-MM-dd}\"}}"),
+            cancellationToken);
+
+    public Task NotifyTimesheetRejectedAsync(
+        Guid recipientUserId,
+        DateOnly periodStart,
+        DateOnly periodEnd,
+        CancellationToken cancellationToken = default) =>
+        DispatchAsync(new NotificationPayload(
+            "timesheet.rejected",
+            recipientUserId,
+            "Timesheet rejected",
+            $"Your timesheet for {periodStart:yyyy-MM-dd} to {periodEnd:yyyy-MM-dd} has been rejected.",
+            $"{{\"periodStart\":\"{periodStart:yyyy-MM-dd}\",\"periodEnd\":\"{periodEnd:yyyy-MM-dd}\"}}"),
+            cancellationToken);
+
+    private async Task DispatchAsync(NotificationPayload payload, CancellationToken cancellationToken)
     {
         _logger.LogInformation(
             "Notification dispatched: Type={Type}, RecipientUserId={RecipientUserId}, Title={Title}, Metadata={Metadata}",
@@ -103,6 +158,15 @@ internal sealed class LoggingNotificationService : INotificationService
             payload.Title,
             payload.MetadataJson);
 
-        return Task.CompletedTask;
+        var notification = UserNotification.Create(
+            _tenantContext.TenantId,
+            payload.RecipientUserId,
+            payload.Type,
+            payload.Title,
+            payload.Body,
+            payload.MetadataJson);
+
+        await _notificationRepository.AddAsync(notification, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

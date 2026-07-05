@@ -1,6 +1,6 @@
 # TASK 26 — GEOFENCING
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Add configurable geographic zones and enforce check-in only within allowed areas.
 

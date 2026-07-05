@@ -1,6 +1,6 @@
 # TASK 24 — TEAM CALENDAR
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create a shared team calendar showing leave, permissions, smart working days, and public holidays.
 

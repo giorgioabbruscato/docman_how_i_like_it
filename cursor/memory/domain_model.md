@@ -278,8 +278,11 @@ Platform service: `INotificationService` (`HrPortal.Notifications`). Current imp
 | Document uploaded | `document.uploaded` | After document upload | Document owner's user |
 | Forgotten check-in | `attendance.forgotten_check_in` | Hourly reminder job | Employee's user |
 | Forgotten check-out | `attendance.forgotten_check_out` | Hourly reminder job | Employee's user |
+| Timesheet submitted | `timesheet.submitted` | After timesheet submit | Department managers |
+| Timesheet approved | `timesheet.approved` | After timesheet approve | Submitting employee's user |
+| Timesheet rejected | `timesheet.rejected` | After timesheet reject | Submitting employee's user |
 
-Recipient resolution: `INotificationRecipientResolver` maps `EmployeeId` → `UserId` via active tenant membership; email used as log fallback when no membership.
+Recipient resolution: `INotificationRecipientResolver` maps `EmployeeId` → `UserId` via active tenant membership; email used as log fallback when no membership. Dispatches persist a `UserNotification` row for inbox APIs (Task 25).
 
 ---
 
@@ -304,6 +307,8 @@ Recipient resolution: `INotificationRecipientResolver` maps `EmployeeId` → `Us
 | Browser | string? | Browser metadata |
 | WorkedMinutes | int? | Computed on check-out |
 | Status | AttendanceSessionStatus | Open, Closed, AutoClosed |
+| MatchedGeofenceZoneId | Guid? | Zone matched at check-in when geofencing enabled |
+| GpsUnavailableAtCheckIn | bool | True when GPS missing but allowed by policy |
 
 **Enum:** `AttendanceSessionStatus`: Open, Closed, AutoClosed
 
@@ -312,6 +317,24 @@ Recipient resolution: `INotificationRecipientResolver` maps `EmployeeId` → `Us
 - CheckOut must be after CheckIn
 - WorkedMinutes = (CheckOut - CheckIn).TotalMinutes on close
 - Cannot close an already-closed session
+
+### GeofenceZone — IMPLEMENTED (Task 26)
+
+**Location:** `HrPortal.Attendance.Domain`  
+**Schema:** `attendance`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Name | string | Zone label |
+| Latitude | double | Center latitude |
+| Longitude | double | Center longitude |
+| RadiusMeters | double | Haversine radius |
+| IsActive | bool | Active flag |
+| Description | string? | Optional notes |
+
+### GeofenceSettings — IMPLEMENTED (Task 26)
+
+Tenant singleton (`attendance` schema): `GeofencingEnabled` (default false), `AllowCheckInWithoutGps` (default true).
 
 ---
 
@@ -445,6 +468,64 @@ Recipient resolution: `INotificationRecipientResolver` maps `EmployeeId` → `Us
 - No overlapping intervals for same employee
 - Manual entries: max 1440 minutes/day (UTC date), start at 09:00 UTC on given date
 - Read scope: self / team (department) / tenant via permissions
+
+### TimesheetSubmission — IMPLEMENTED (Task 23)
+
+**Location:** `HrPortal.TimeTracking.Domain`  
+**Schema:** `time_tracking`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| EmployeeId | Guid | Submitting employee |
+| PeriodStart | DateOnly | Inclusive period start |
+| PeriodEnd | DateOnly | Inclusive period end |
+| TotalWorkedMinutes | int | Snapshot sum at create |
+| Status | TimesheetStatus | Draft → Submitted → Approved/Rejected |
+| Notes | string? | Optional employee notes |
+| SubmittedAt | DateTime? | UTC submit timestamp |
+
+**Enums:** `TimesheetStatus` (Draft, Submitted, Approved, Rejected), `ApprovalDecision` (Approved, Rejected)
+
+**Related entities:** `TimesheetSubmissionEntry` (join to `TimeEntry`), `TimesheetApproval` (audit of decision)
+
+**Business rules:** Only draft can submit; only submitted can approve/reject. Analytics and export count hours only from entries linked to **Approved** timesheets.
+
+---
+
+### UserNotification — IMPLEMENTED (Task 25)
+
+**Location:** `HrPortal.Notifications.Domain`  
+**Schema:** `platform`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| RecipientUserId | Guid | Inbox owner |
+| Type | string | Event type key |
+| Title | string | Display title |
+| Body | string? | Optional body |
+| MetadataJson | string? | JSON payload |
+| IsRead | bool | Read flag |
+| CreatedAt | DateTime | UTC dispatch time |
+
+Persisted by `LoggingNotificationService` on every `DispatchAsync`.
+
+---
+
+### PublicHoliday — IMPLEMENTED (Task 24)
+
+**Location:** `HrPortal.Calendar.Domain`  
+**Schema:** `calendar`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Name | string | Holiday name |
+| Date | DateOnly | Calendar date |
+| IsRecurring | bool | Repeats yearly |
+| CountryCode | string? | Optional ISO country |
+
+### SmartWorkingSchedule — IMPLEMENTED (Task 24)
+
+Tenant weekday configuration for remote-work calendar events (`calendar` schema).
 
 ---
 

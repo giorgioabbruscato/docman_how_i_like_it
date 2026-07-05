@@ -54,3 +54,31 @@ public sealed record GetAttendanceHistoryQuery(
     DateTime? FromDate = null,
     DateTime? ToDate = null,
     Guid? EmployeeId = null);
+
+public sealed record GeofenceZoneDto(
+    Guid Id,
+    string Name,
+    double Latitude,
+    double Longitude,
+    double RadiusMeters,
+    bool IsActive,
+    string? Description);
+
+public sealed record CreateGeofenceZoneRequest(
+    string Name,
+    double Latitude,
+    double Longitude,
+    double RadiusMeters,
+    string? Description = null);
+
+public sealed record UpdateGeofenceZoneRequest(
+    string Name,
+    double Latitude,
+    double Longitude,
+    double RadiusMeters,
+    bool IsActive,
+    string? Description = null);
+
+public sealed record GeofenceSettingsDto(bool GeofencingEnabled, bool AllowCheckInWithoutGps);
+
+public sealed record UpdateGeofenceSettingsRequest(bool GeofencingEnabled, bool AllowCheckInWithoutGps);

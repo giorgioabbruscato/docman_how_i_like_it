@@ -19,6 +19,7 @@ namespace HrPortal.TimeTracking.Infrastructure.Export;
 internal sealed class TimeEntryExportService : ITimeEntryExportService
 {
     private readonly ITimeEntryRepository _repository;
+    private readonly ITimesheetRepository _timesheetRepository;
     private readonly IEmployeeLookup _employeeLookup;
     private readonly IProjectLookup _projectLookup;
     private readonly ITaskLookup _taskLookup;
@@ -26,12 +27,14 @@ internal sealed class TimeEntryExportService : ITimeEntryExportService
 
     public TimeEntryExportService(
         ITimeEntryRepository repository,
+        ITimesheetRepository timesheetRepository,
         IEmployeeLookup employeeLookup,
         IProjectLookup projectLookup,
         ITaskLookup taskLookup,
         TenantContext tenantContext)
     {
         _repository = repository;
+        _timesheetRepository = timesheetRepository;
         _employeeLookup = employeeLookup;
         _projectLookup = projectLookup;
         _taskLookup = taskLookup;
@@ -61,6 +64,28 @@ internal sealed class TimeEntryExportService : ITimeEntryExportService
             effectiveQuery,
             filter.AllowedEmployeeIds,
             cancellationToken);
+
+        var approvedEntryIds = await _timesheetRepository.GetApprovedTimeEntryIdsAsync(
+            effectiveQuery.EmployeeId,
+            filter.AllowedEmployeeIds,
+            effectiveQuery.FromDate,
+            effectiveQuery.ToDate,
+            cancellationToken);
+
+        entries = entries.Where(e => approvedEntryIds.Contains(e.Id)).ToList();
+
+        if (effectiveQuery.Month.HasValue && effectiveQuery.Year.HasValue && !effectiveQuery.FromDate.HasValue)
+        {
+            var from = new DateOnly(effectiveQuery.Year.Value, effectiveQuery.Month.Value, 1);
+            var to = from.AddMonths(1).AddDays(-1);
+            approvedEntryIds = await _timesheetRepository.GetApprovedTimeEntryIdsAsync(
+                effectiveQuery.EmployeeId,
+                filter.AllowedEmployeeIds,
+                from,
+                to,
+                cancellationToken);
+            entries = entries.Where(e => approvedEntryIds.Contains(e.Id)).ToList();
+        }
 
         var rows = await MapRowsAsync(entries, includeEmployeeName, cancellationToken);
 

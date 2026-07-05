@@ -79,8 +79,9 @@ public sealed class SupervisorDashboardEndpointTests : IntegrationTestBase
     {
         using var client = CreateAuthenticatedClient("hr");
         var projectId = await TenantIsolationFixture.CreateProjectAsync(client);
-        var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(client, "analytics-top");
-        await CreateTimeEntryForEmployeeAsync(client, employeeId, projectId);
+        var departmentId = await TenantIsolationFixture.CreateDepartmentAsync(client);
+        var employeeId = await TenantIsolationFixture.CreateEmployeeInDepartmentAsync(client, departmentId, "analytics-top");
+        await CreateTimeEntryForEmployeeAsync(client, employeeId, projectId, departmentId);
 
         var inRange = await client.GetAsync(
             $"/api/v1/analytics/supervisor/top-employees?fromDate={CurrentMonthFrom}&toDate={CurrentMonthTo}");
@@ -105,8 +106,9 @@ public sealed class SupervisorDashboardEndpointTests : IntegrationTestBase
     private static async Task SeedAnalyticsDataAsync(HttpClient hrClient)
     {
         var projectId = await TenantIsolationFixture.CreateProjectAsync(hrClient, "analytics");
-        var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(hrClient, "analytics-seed");
-        await CreateTimeEntryForEmployeeAsync(hrClient, employeeId, projectId);
+        var departmentId = await TenantIsolationFixture.CreateDepartmentAsync(hrClient);
+        var employeeId = await TenantIsolationFixture.CreateEmployeeInDepartmentAsync(hrClient, departmentId, "analytics-seed");
+        await CreateTimeEntryForEmployeeAsync(hrClient, employeeId, projectId, departmentId);
         await TenantIsolationFixture.CheckInAsync(hrClient, employeeId);
     }
 
@@ -114,6 +116,7 @@ public sealed class SupervisorDashboardEndpointTests : IntegrationTestBase
         HttpClient hrClient,
         Guid employeeId,
         Guid projectId,
+        Guid departmentId,
         int hoursAgo = 1)
     {
         var userId = Guid.NewGuid();
@@ -135,5 +138,53 @@ public sealed class SupervisorDashboardEndpointTests : IntegrationTestBase
 
         var response = await hrClient.SendAsync(request);
         response.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        await ApproveTimesheetForEmployeeAsync(hrClient, userId, employeeId, departmentId);
     }
+
+    private static async Task ApproveTimesheetForEmployeeAsync(
+        HttpClient hrClient,
+        Guid employeeUserId,
+        Guid employeeId,
+        Guid departmentId)
+    {
+        var from = new DateOnly(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+        var to = from.AddMonths(1).AddDays(-1);
+
+        using var createRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/timesheets")
+        {
+            Content = System.Net.Http.Json.JsonContent.Create(new { periodStart = from.ToString("yyyy-MM-dd"), periodEnd = to.ToString("yyyy-MM-dd") })
+        };
+        createRequest.Headers.Add("X-Tenant-Id", hrClient.DefaultRequestHeaders.GetValues("X-Tenant-Id").First());
+        createRequest.Headers.Add(TestAuthHandler.RoleHeaderName, "guest");
+        createRequest.Headers.Add(TestAuthHandler.UserIdHeaderName, employeeUserId.ToString());
+
+        var createResponse = await hrClient.SendAsync(createRequest);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var timesheet = await createResponse.Content.ReadFromJsonAsync<TimesheetIdResponse>(JsonOptions);
+
+        using var submitRequest = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/timesheets/{timesheet!.Id}/submit");
+        submitRequest.Headers.Add("X-Tenant-Id", hrClient.DefaultRequestHeaders.GetValues("X-Tenant-Id").First());
+        submitRequest.Headers.Add(TestAuthHandler.RoleHeaderName, "guest");
+        submitRequest.Headers.Add(TestAuthHandler.UserIdHeaderName, employeeUserId.ToString());
+        (await hrClient.SendAsync(submitRequest)).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var managerUserId = Guid.NewGuid();
+        var managerRoleId = await TenantIsolationFixture.GetRoleIdBySlugAsync(
+            hrClient, SystemRoleTemplates.ManagerSlug);
+        await TenantIsolationFixture.CreateMembershipAsync(
+            hrClient,
+            managerUserId,
+            managerRoleId,
+            attributes: new Dictionary<string, string> { ["departmentId"] = departmentId.ToString() });
+
+        using var approveRequest = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/timesheets/{timesheet.Id}/approve");
+        approveRequest.Headers.Add("X-Tenant-Id", hrClient.DefaultRequestHeaders.GetValues("X-Tenant-Id").First());
+        approveRequest.Headers.Add(TestAuthHandler.RoleHeaderName, "guest");
+        approveRequest.Headers.Add(TestAuthHandler.UserIdHeaderName, managerUserId.ToString());
+        var approveResponse = await hrClient.SendAsync(approveRequest);
+        approveResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    private sealed record TimesheetIdResponse(Guid Id);
 }

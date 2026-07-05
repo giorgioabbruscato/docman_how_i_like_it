@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { getDeviceInfo } from '@/lib/device-info';
 import { getCurrentPosition, type GeoError } from '@/lib/geolocation';
 import { useCheckIn } from '@/hooks/use-attendance';
-import { getApiErrorMessage } from '@/lib/utils';
+import { getApiErrorMessage, getApiErrorCode } from '@/lib/utils';
 import { useAttendanceStore } from '@/stores/attendance-store';
 
 interface CheckInButtonProps {
@@ -46,6 +46,12 @@ export function CheckInButton({ onSuccess, onError }: CheckInButtonProps) {
       setSuccessMessage('Checked in successfully.');
       onSuccess();
     } catch (err) {
+      if (getApiErrorCode(err) === 'GEOFENCE_VIOLATION') {
+        onError(
+          'Check-in blocked: you are outside the allowed work location. Move closer to an office zone or contact HR.',
+        );
+        return;
+      }
       onError(getApiErrorMessage(err, 'Failed to check in.'));
     }
   };

@@ -1,6 +1,6 @@
 # TASK 25 — PERSONAL DASHBOARD
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create a unified employee home page aggregating worked hours, leave balance, documents, tasks, and notifications.
 
