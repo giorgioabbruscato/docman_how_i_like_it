@@ -36,10 +36,95 @@ Interface requiring `TenantId` — enables EF global query filters.
 | Name | string | Display name |
 | Slug | string | URL-safe identifier (lowercase) |
 | IsActive | bool | Active flag |
+| Plan | string? | Subscription plan (default: `standard`) |
+| FeaturesJson | string? | JSON array of enabled module features |
+| SuspendedAt | DateTime? | Suspension timestamp |
 | CreatedAt | DateTime | Creation timestamp |
 
 **Factory:** `Tenant.Create(name, slug)`  
-**Methods:** `Deactivate()`, `Activate()`
+**Methods:** `Deactivate()`, `Activate()`, `SetPlan()`, `SetFeatures()`, `Suspend()`, `Unsuspend()`, `GetFeatures()`
+
+---
+
+### Access Control entities — IMPLEMENTED
+
+**Module:** `HrPortal.AccessControl.Domain`  
+**Schema:** `platform`
+
+#### TenantRole
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Slug | string | URL-safe role identifier (e.g. `admin`, `hr`, `manager`, `employee`) |
+| PermissionsJson | string | JSON array of permission strings |
+| IsSystem | bool | System-defined role (cannot be deleted) |
+| IsActive | bool | Active flag |
+
+**Factory:** `TenantRole.Create(tenantId, slug, permissions, isSystem)`  
+**Methods:** `UpdatePermissions(...)`, `Deactivate()`
+
+#### TenantMembership
+
+| Field | Type | Description |
+|-------|------|-------------|
+| UserId | Guid | Keycloak user ID |
+| RoleIdsJson | string | JSON array of TenantRole IDs |
+| EmployeeId | Guid? | Optional link to Employee record |
+| AttributesJson | string? | JSON key-value attributes for ABAC |
+| IsActive | bool | Active membership flag |
+
+**Factory:** `TenantMembership.Create(tenantId, userId, roleIds, employeeId?, attributes?)`  
+**Methods:** `UpdateRoles(...)`, `Deactivate()`
+
+#### UserProfile
+
+| Field | Type | Description |
+|-------|------|-------------|
+| UserId | Guid | Keycloak user ID (unique) |
+| Email | string | User email (lowercase) |
+| IsPlatformAdmin | bool | Platform-level admin flag |
+
+**Factory:** `UserProfile.Create(userId, email, isPlatformAdmin?)`
+
+#### Permissions catalog
+
+Canonical permission strings in `Permissions.cs`:
+
+- Format: `{resource}.{action}:{scope}` (e.g. `employee.read:tenant`, `leave.approve:team`)
+- Scopes: `Self`, `Department`, `Team`, `Tenant`, `All`
+
+System role templates in `SystemRoleTemplates.cs`: `admin`, `hr`, `manager`, `employee` with default permission sets.
+
+Legacy Keycloak realm roles mapped via `LegacyRoleMapper` during migration period.
+
+---
+
+### TenantContext — IMPLEMENTED
+
+**Location:** `HrPortal.Tenancy`  
+**Type:** Request-scoped record implementing `ITenantContext` (not a database entity)
+
+Sole identity object for application services. Enriched per request by `TenantContextFactory` (AccessControl). See ADR-012 for full field list.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| TenantId | Guid | Resolved tenant primary key |
+| TenantSlug | string | URL-safe tenant identifier |
+| UserId | Guid? | Authenticated user (Keycloak sub) |
+| Email | string? | User email |
+| Mode | TenantDeploymentMode | `Single` or `Multi` |
+| Roles | IReadOnlyList\<string\> | Legacy Keycloak realm roles |
+| RoleSlugs | IReadOnlyList\<string\> | Tenant role slugs from membership |
+| Permissions | IReadOnlyList\<string\> | Resolved permission strings |
+| EmployeeId | Guid? | Linked employee record |
+| DepartmentId | Guid? | Linked department (ABAC scope) |
+| Attributes | IReadOnlyDictionary\<string, string\> | Membership attributes |
+| Features | IReadOnlyList\<string\> | Tenant feature flags |
+| IsPlatformAdmin | bool | Platform-level admin flag |
+| IsResolved | bool | Tenant successfully resolved |
+
+**Factory methods:** `Empty`, `CreateTenantOnly()`, `CreateSingleTenantDefault()`  
+**Helper:** `HasPermission(string permission)`
 
 ---
 
@@ -183,6 +268,10 @@ Interface requiring `TenantId` — enables EF global query filters.
 ```
 Tenant (platform)
   │
+  ├── TenantRole (platform) — PLANNED
+  ├── TenantMembership (platform) — PLANNED
+  │       └── EmployeeId? → Employee
+  │
   ├── Employee (employees) ──→ Department (departments)
   │       │
   │       ├── LeaveRequest (leave)
@@ -191,6 +280,8 @@ Tenant (platform)
   │
   └── Department (departments)
         └── ParentDepartmentId → Department (self-ref)
+
+UserProfile (platform, global) — PLANNED
 ```
 
 ## Cross-module lookup interfaces

@@ -1,6 +1,6 @@
 # TASK 13 — UNIFIED TENANT CONTEXT
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Extend `TenantContext` into the single request-scoped identity object combining tenant, user, permissions, and deployment mode.
 
@@ -66,40 +66,40 @@ Read before starting:
 
 ### TenantContext record
 
-- [ ] Convert `TenantContext` to a record with fields:
+- [x] Convert `TenantContext` to a record with fields:
   - `TenantId`, `TenantSlug`, `UserId`, `Email`
   - `Mode` (`TenantDeploymentMode`: Single | Multi)
   - `Roles`, `Permissions`, `RoleSlugs`
   - `EmployeeId?`, `DepartmentId?`, `Attributes`
   - `Features`, `IsPlatformAdmin`, `IsResolved`
-- [ ] Factory methods: `Empty`, `CreateTenantOnly()`, `CreateSingleTenantDefault()`
-- [ ] Helper: `HasPermission(string permission)`
+- [x] Factory methods: `Empty`, `CreateTenantOnly()`, `CreateSingleTenantDefault()`
+- [x] Helper: `HasPermission(string permission)`
 
 ### Interfaces
 
-- [ ] `ITenantContext` interface mirroring the record contract
-- [ ] Clarify `ITenantContextAccessor` — scoped per request, set by middleware
+- [x] `ITenantContext` interface mirroring the record contract
+- [x] Clarify `ITenantContextAccessor` — scoped per request, set by middleware
 
 ### TenantContextFactory
 
-- [ ] `TenantContextFactory.CreateAsync(tenantContext, userContext)` enriches from:
+- [x] `TenantContextFactory.EnrichAsync(tenantContext, userContext)` enriches from:
   - `TenantMembership` + `TenantRole` permissions
   - Legacy Keycloak roles via `LegacyRoleMapper` (fallback)
   - Platform admin flag from `UserProfile`
-- [ ] Set `IsResolved = false` when user has no membership and no legacy permissions
+- [x] Set `IsResolved = false` when user has no membership and no legacy permissions
 
 ### Deprecation path
 
-- [ ] Document that `UserContext` remains for Identity layer only (JWT parsing)
-- [ ] Application services will migrate to `TenantContext` only in task 26
+- [x] Document that `UserContext` remains for Identity layer only (JWT parsing)
+- [x] Application services will migrate to `TenantContext` only in task 26
 
 ### Unit tests
 
-- [ ] Anonymous user → minimal context
-- [ ] Legacy Keycloak roles only → permissions mapped, resolved
-- [ ] Active membership → permissions from tenant roles
-- [ ] Platform admin → elevated permissions
-- [ ] No membership + no legacy roles → not resolved
+- [x] Anonymous user → minimal context
+- [x] Legacy Keycloak roles only → permissions mapped, resolved
+- [x] Active membership → permissions from tenant roles
+- [x] Platform admin → elevated permissions
+- [x] No membership + no legacy roles → not resolved
 
 ## Files to touch
 
@@ -112,10 +112,10 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] `TenantContext` contains all fields from ADR-012
-- [ ] Factory correctly merges membership + legacy role permissions
-- [ ] Unit tests cover all resolution permutations
-- [ ] `dotnet test` passes
+- [x] `TenantContext` contains all fields from ADR-012
+- [x] Factory correctly merges membership + legacy role permissions
+- [x] Unit tests cover all resolution permutations
+- [x] `dotnet test` passes
 
 ## Next task
 

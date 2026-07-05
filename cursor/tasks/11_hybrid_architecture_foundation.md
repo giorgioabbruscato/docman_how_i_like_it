@@ -1,6 +1,6 @@
 # TASK 11 — HYBRID ARCHITECTURE FOUNDATION
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Document the hybrid single/multi-tenant architecture before any implementation begins.
 
@@ -68,24 +68,24 @@ Read before starting:
 
 ### ADR-012: Hybrid Single/Multi-Tenancy
 
-- [ ] Write ADR in `cursor/memory/architecture_decisions.md`
-- [ ] Document decision: single-tenant is a special case of multi-tenant, not a separate architecture
-- [ ] Document `TenantDeploymentMode` (`Single` | `Multi`) and config surface
-- [ ] Document unified `TenantContext` as sole request-scoped identity object
-- [ ] Document `ApplyTenantScope` rules per mode
-- [ ] Document policy engine `can(ctx, action, resource)` layering
+- [x] Write ADR in `cursor/memory/architecture_decisions.md`
+- [x] Document decision: single-tenant is a special case of multi-tenant, not a separate architecture
+- [x] Document `TenantDeploymentMode` (`Single` | `Multi`) and config surface
+- [x] Document unified `TenantContext` as sole request-scoped identity object
+- [x] Document `ApplyTenantScope` rules per mode
+- [x] Document policy engine `can(ctx, action, resource)` layering
 
 ### Memory updates
 
-- [ ] Update `cursor/memory/domain_model.md` — add AccessControl entities (stub section if not yet implemented)
-- [ ] Update `cursor/memory/module_dependencies.md` — add `HrPortal.AccessControl` to platform services
-- [ ] Update `cursor/memory/api_contracts.md` if new endpoints are planned (me, roles, memberships)
+- [x] Update `cursor/memory/domain_model.md` — add AccessControl entities (stub section if not yet implemented)
+- [x] Update `cursor/memory/module_dependencies.md` — add `HrPortal.AccessControl` to platform services
+- [x] Update `cursor/memory/api_contracts.md` if new endpoints are planned (me, roles, memberships)
 
 ### Core rules updates
 
-- [ ] Update `cursor/prompts/00_master_prompt.md` — mention hybrid deployment modes
-- [ ] Update `cursor/core/03_architecture.md` — new request pipeline diagram (Auth → RequestContext → Authorization)
-- [ ] Revise `cursor/core/02_guardrails.md`:
+- [x] Update `cursor/prompts/00_master_prompt.md` — mention hybrid deployment modes
+- [x] Update `cursor/core/03_architecture.md` — new request pipeline diagram (Auth → RequestContext → Authorization)
+- [x] Revise `cursor/core/02_guardrails.md`:
   - Repositories **must** call `ApplyTenantScope()` on every query
   - Forbid raw `Set<T>()` queries without tenant scoping helper
   - Services must not read HTTP/JWT directly; use `TenantContext` only
@@ -93,7 +93,7 @@ Read before starting:
 
 ### Eval updates
 
-- [ ] Add hybrid mode checklist to `cursor/evals/01_backend_quality_checks.md`:
+- [x] Add hybrid mode checklist to `cursor/evals/01_backend_quality_checks.md`:
   - Single-tenant mode works without `X-Tenant-Id`
   - Multi-tenant mode enforces tenant isolation
   - All repositories use `ApplyTenantScope`
@@ -101,7 +101,7 @@ Read before starting:
 
 ### Task chain
 
-- [ ] Update `cursor/tasks/10_docs.md` — Next task → `11_hybrid_architecture_foundation.md`
+- [x] Update `cursor/tasks/10_docs.md` — Next task → `11_hybrid_architecture_foundation.md` (already present)
 
 ## Files to touch
 
@@ -118,10 +118,10 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] ADR-012 accepted and complete
-- [ ] No conflicting guidance between guardrails and hybrid requirements
-- [ ] Agent system docs accurately describe target architecture from plan
-- [ ] No application code changed in this task (documentation only)
+- [x] ADR-012 accepted and complete
+- [x] No conflicting guidance between guardrails and hybrid requirements
+- [x] Agent system docs accurately describe target architecture from plan
+- [x] No application code changed in this task (documentation only)
 
 ## Next task
 

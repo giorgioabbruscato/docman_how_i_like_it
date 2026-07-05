@@ -1,5 +1,8 @@
 namespace HrPortal.Identity;
 
+/// <summary>
+/// Identity-layer JWT parsing only. Not for injection into application services — use TenantContext instead.
+/// </summary>
 public sealed class UserContext
 {
     public Guid UserId { get; init; }

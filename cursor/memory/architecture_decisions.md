@@ -204,3 +204,142 @@
 - No JWT in `localStorage`
 - Page reload re-authenticates silently when Keycloak session is valid
 - API client retries once with `keycloak.updateToken()` on 401 before logout
+
+---
+
+## ADR-012: Hybrid Single/Multi-Tenancy
+
+**Status:** Accepted  
+**Date:** 2026-07
+
+**Context:** The platform must support both OSS single-tenant deployments (one organization, no `X-Tenant-Id` header) and SaaS multi-tenant deployments (many organizations, strict isolation). A separate architecture per mode would duplicate entities, repositories, and authorization paths.
+
+**Decision:** Single-tenant is a **special case of multi-tenant**, not a separate architecture. One codebase, one data model (`ITenantEntity` on all business entities), one `TenantContext`, one `ApplyTenantScope` helper, and one policy engine. Deployment mode is selected via configuration only.
+
+### TenantDeploymentMode
+
+```csharp
+enum TenantDeploymentMode { Single = 0, Multi = 1 }
+```
+
+Configuration surface (`IOptions<TenantResolverOptions>`):
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `Mode` | `Multi` | Backward-compatible default for existing deployments |
+| `DefaultTenantSlug` | `"demo"` | Auto-resolved tenant in Single mode |
+
+Environment variables: `TENANCY__MODE`, `TENANCY__DEFAULTTENANTSLUG`  
+Frontend counterpart (task 32): `VITE_TENANCY_MODE`
+
+### Mode behavior
+
+| Aspect | Single | Multi |
+|--------|--------|-------|
+| Tenant resolution | Auto-resolve `DefaultTenantSlug` when header/subdomain absent | Require `X-Tenant-Id` header or subdomain; `400` if missing |
+| `TenantContext.Mode` | `Single` | `Multi` |
+| `ApplyTenantScope` | No-op (no filter applied) | `Where(e => e.TenantId == ctx.TenantId)`; throw `TenantNotResolvedException` if `!ctx.IsResolved` |
+| DbContext global filter | Aligned with `TenantScopingRules` (task 17) | No `!IsResolved` bypass — prevents cross-tenant leaks |
+
+### Unified TenantContext
+
+`TenantContext` is the **sole request-scoped identity object** in the application layer. It replaces the split `TenantContext` + `UserContext` injection pattern in services.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `TenantId` | Guid | Resolved tenant primary key |
+| `TenantSlug` | string | URL-safe tenant identifier |
+| `UserId` | Guid? | Authenticated user (Keycloak sub) |
+| `Email` | string? | User email |
+| `Mode` | `TenantDeploymentMode` | Current deployment mode |
+| `Roles` | IReadOnlyList\<string\> | Legacy Keycloak realm roles |
+| `RoleSlugs` | IReadOnlyList\<string\> | Tenant role slugs from membership |
+| `Permissions` | IReadOnlyList\<string\> | Resolved permission strings |
+| `EmployeeId` | Guid? | Linked employee record |
+| `DepartmentId` | Guid? | Linked department (ABAC scope) |
+| `Attributes` | IReadOnlyDictionary\<string, string\> | Membership attributes |
+| `Features` | IReadOnlyList\<string\> | Tenant feature flags |
+| `IsPlatformAdmin` | bool | Platform-level admin flag |
+| `IsResolved` | bool | Tenant (and membership, if required) successfully resolved |
+
+Factory methods: `Empty`, `CreateTenantOnly()`, `CreateSingleTenantDefault()`  
+Helper: `HasPermission(string permission)`
+
+`UserContext` remains in the Identity layer for JWT parsing only — **not** injected into application services.
+
+### Request pipeline
+
+```
+Request
+  → GlobalExceptionMiddleware
+  → Serilog request logging
+  → CORS
+  → Authentication (JWT / Keycloak)
+  → RequestContextMiddleware          ← replaces TenantResolverMiddleware
+  → Authorization (PolicyEngine)
+  → Controller → Application Service → Repository → DbContext
+```
+
+`RequestContextMiddleware` (in `HrPortal.AccessControl`, task 15):
+
+1. Resolve tenant slug (mode-aware)
+2. Load tenant from DB; reject inactive/suspended tenants
+3. Set base `TenantContext` on `ITenantContextAccessor`
+4. If authenticated: enrich via `TenantContextFactory` (membership + legacy Keycloak roles via `LegacyRoleMapper`)
+5. Validate membership in Multi mode → `403` if no access
+6. Validate `IsPlatformAdmin` for `/api/v1/platform/*` routes
+
+Excluded paths (no tenant required): `/health`, `/ready`, `/swagger`, `/api/v1/tenants`, `/api/v1/platform/*`
+
+### ApplyTenantScope
+
+Every repository query on `ITenantEntity` **must** call `ApplyTenantScope(ctx)`:
+
+```csharp
+_dbContext.Set<Employee>()
+    .ApplyTenantScope(_accessor.Current)
+    .Where(...)
+```
+
+Rules:
+
+| Mode | Behavior |
+|------|----------|
+| `Single` | Return query unchanged (no-op) |
+| `Multi` + `!ctx.IsResolved` | Throw `TenantNotResolvedException` |
+| `Multi` + resolved | Filter `Where(e => e.TenantId == ctx.TenantId)` |
+
+DbContext global filters must mirror `TenantScopingRules.ShouldApplyTenantFilter(ctx)` (task 17). The current `!IsResolved ||` bypass in `HrPortalDbContext` is technical debt to be removed.
+
+Seeding/background jobs use explicit `TenantScopingContext.ForSeeding(tenantId)` — no silent bypass.
+
+### Policy engine
+
+Authorization belongs in the **Policy layer only**. Application services and controllers must not contain authorization logic.
+
+```csharp
+bool IPolicyEngine.Can(TenantContext ctx, string action, ResourceContext? resource)
+```
+
+- Single authorization decision point (task 20)
+- Permission format: `{resource}.{action}:{scope}` (e.g. `employee.read:tenant`, `leave.approve:team`)
+- ABAC scopes: `Self`, `Department`, `Team`, `Tenant`, `All`
+- Controllers use declarative `[RequirePermission("employee.read:tenant")]` — zero inline `if (role...)` checks
+- `ResourceContext` carries `EmployeeId?`, `DepartmentId?`, `TenantId?` for scope resolution
+
+### Relationship to prior ADRs
+
+- **ADR-002** (Shared DB multi-tenancy): Confirmed. ADR-012 adds mode-aware scoping on top of `TenantId` columns and global filters.
+- **ADR-003** (Keycloak identity): Keycloak remains the identity provider. Realm roles are mapped to permissions via `LegacyRoleMapper` during migration to tenant-scoped RBAC (`HrPortal.AccessControl`, task 12). Legacy ASP.NET role policies (`ManagerOrAbove`, etc.) are deprecated in task 23.
+
+**Rationale:**
+- One architecture reduces drift between OSS and SaaS deployments
+- Explicit `ApplyTenantScope` in repositories makes tenant filtering auditable (static guard test, task 19)
+- Centralized policy engine enables ABAC without scattering role checks
+- Unified `TenantContext` keeps services framework-agnostic
+
+**Consequences:**
+- New platform module `HrPortal.AccessControl` owns memberships, roles, and permission catalog (task 12)
+- All repositories migrated to `ApplyTenantScope` (task 18)
+- Legacy role policies sunset after controller migration (tasks 22–23)
+- `00_acceptance_criteria.md` multi-tenancy section evolves in tasks 14/19/34

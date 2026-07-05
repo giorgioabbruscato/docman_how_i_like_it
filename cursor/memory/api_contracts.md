@@ -6,11 +6,23 @@
 
 - Base path: `/api/v1/`
 - Auth: `Authorization: Bearer {jwt_token}`
-- Tenant: `X-Tenant-Id: {tenant_slug}` (required on all business endpoints)
+- Tenant header: `X-Tenant-Id: {tenant_slug}` — behavior depends on deployment mode (see below)
 - Errors: RFC 7807 `ProblemDetails`
 - Health: `/health`, `/ready` (no auth, no tenant)
 
+### Tenant header by deployment mode (ADR-012)
+
+| Mode | `X-Tenant-Id` | Resolution |
+|------|---------------|------------|
+| **Multi** (default) | Required on all business endpoints | Header or subdomain; `400` if missing |
+| **Single** | Optional | Auto-resolve `DefaultTenantSlug` (default: `demo`) when absent |
+
+Configuration: `Tenancy:Mode` (`Single` \| `Multi`), `Tenancy:DefaultTenantSlug`  
+Frontend: `VITE_TENANCY_MODE` (task 32)
+
 ## Authorization policies
+
+### Legacy policies (DEPRECATED — migrate in tasks 22–23)
 
 | Policy | Roles |
 |--------|-------|
@@ -18,6 +30,10 @@
 | `ManagerOrAbove` | manager, hr, admin |
 | `HrOrAdmin` | hr, admin |
 | `AdminOnly` | admin |
+
+### Target: permission-based authorization (ADR-012)
+
+Endpoints will migrate to `[RequirePermission("{resource}.{action}:{scope}")]` via `IPolicyEngine.Can(ctx, action, resource)`. See Access Control section below.
 
 ---
 
@@ -297,18 +313,116 @@
 
 ---
 
+## Access Control — IMPLEMENTED
+
+Centralized RBAC replacing Keycloak-only role checks. Permissions resolved from `TenantMembership` + `TenantRole`, with `LegacyRoleMapper` fallback when no active membership exists.
+
+**Interim auth:** `/roles` and `/memberships` use legacy `AdminOnly` policy until task 22 migrates to `[RequirePermission]`.
+
+### GET /api/v1/me
+
+**Auth:** Authenticated  
+**Tenant:** Required (`X-Tenant-Id`)  
+**Response:** `200 OK`
+
+```json
+{
+  "userId": "uuid",
+  "email": "mario.rossi@demo.local",
+  "tenantId": "uuid",
+  "tenantSlug": "demo",
+  "employeeId": "uuid-or-null",
+  "roleSlugs": ["employee"],
+  "permissions": ["employee.read:self", "leave.create:self"],
+  "features": ["leave", "attendance"],
+  "isPlatformAdmin": false
+}
+```
+
+### GET /api/v1/roles
+
+**Auth:** AdminOnly (interim; target: `role.read:tenant`)  
+**Response:** `200 OK` — array of TenantRoleDto
+
+### POST /api/v1/roles
+
+**Auth:** AdminOnly (interim; target: `role.create:tenant`)  
+**Request:**
+
+```json
+{
+  "slug": "team-lead",
+  "permissions": ["employee.read:team", "leave.approve:team"]
+}
+```
+
+**Response:** `201 Created` — TenantRoleDto
+
+### PUT /api/v1/roles/{id}
+
+**Auth:** AdminOnly (interim; target: `role.update:tenant`)  
+**Request:** Same as POST  
+**Response:** `200 OK` — TenantRoleDto  
+**Errors:** `404` if not found; `409` if system role
+
+### DELETE /api/v1/roles/{id}
+
+**Auth:** AdminOnly (interim; target: `role.delete:tenant`)  
+**Action:** Soft delete (deactivate)  
+**Response:** `204 No Content`  
+**Errors:** `409` if system role
+
+### GET /api/v1/memberships
+
+**Auth:** AdminOnly (interim; target: `membership.read:tenant`)  
+**Response:** `200 OK` — array of TenantMembershipDto
+
+### POST /api/v1/memberships
+
+**Auth:** AdminOnly (interim; target: `membership.create:tenant`)  
+**Request:**
+
+```json
+{
+  "userId": "uuid",
+  "roleIds": ["uuid"],
+  "employeeId": "uuid-or-null",
+  "attributes": {}
+}
+```
+
+**Response:** `201 Created` — TenantMembershipDto
+
+### PUT /api/v1/memberships/{id}
+
+**Auth:** AdminOnly (interim; target: `membership.update:tenant`)  
+**Request:** Same as POST (partial update)  
+**Response:** `200 OK` — TenantMembershipDto
+
+### DELETE /api/v1/memberships/{id}
+
+**Auth:** AdminOnly (interim; target: `membership.delete:tenant`)  
+**Action:** Soft delete (deactivate)  
+**Response:** `204 No Content`
+
+---
+
 ## Auth flow
 
 ```
 1. User → Keycloak login (OIDC authorization code + PKCE)
 2. Keycloak → JWT access token + refresh token
-3. Frontend stores token in Zustand auth store
-4. Frontend → API with Authorization: Bearer {token} + X-Tenant-Id: demo
+3. Frontend stores token in Zustand auth store (memory only)
+4. Frontend → API with Authorization: Bearer {token}
+   + X-Tenant-Id: {slug} (Multi mode) or omitted (Single mode)
 5. Backend validates JWT against Keycloak authority
-6. Backend extracts roles from JWT claims
-7. Backend applies authorization policy
-8. Backend resolves tenant from X-Tenant-Id header
-9. Backend executes request with tenant-scoped data
+6. RequestContextMiddleware resolves tenant (mode-aware)
+7. TenantContextFactory enriches context:
+   - TenantMembership + TenantRole permissions
+   - Legacy Keycloak roles via LegacyRoleMapper (fallback)
+8. Policy engine (IPolicyEngine.Can) authorizes request
+9. Application service executes with TenantContext (no HTTP/JWT access)
+10. Repository applies ApplyTenantScope(ctx) on all queries
 ```
 
 ## Error response format

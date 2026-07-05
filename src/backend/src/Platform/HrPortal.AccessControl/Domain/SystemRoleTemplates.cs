@@ -1,0 +1,71 @@
+namespace HrPortal.AccessControl.Domain;
+
+public static class SystemRoleTemplates
+{
+    public const string AdminSlug = "admin";
+    public const string HrSlug = "hr";
+    public const string ManagerSlug = "manager";
+    public const string EmployeeSlug = "employee";
+
+    public static readonly IReadOnlyList<string> AllSlugs =
+        [AdminSlug, HrSlug, ManagerSlug, EmployeeSlug];
+
+    public static IReadOnlyList<string> GetPermissions(string slug) =>
+        slug.ToLowerInvariant() switch
+        {
+            AdminSlug => Permissions.AllTenantScoped,
+            HrSlug => HrPermissions,
+            ManagerSlug => ManagerPermissions,
+            EmployeeSlug => EmployeePermissions,
+            _ => []
+        };
+
+    private static readonly IReadOnlyList<string> HrPermissions =
+    [
+        Permissions.EmployeeReadTenant,
+        Permissions.EmployeeCreateTenant,
+        Permissions.EmployeeUpdateTenant,
+        Permissions.EmployeeDeleteTenant,
+        Permissions.DepartmentReadTenant,
+        Permissions.DepartmentWriteTenant,
+        Permissions.DepartmentDeleteTenant,
+        Permissions.LeaveReadTenant,
+        Permissions.LeaveApproveTeam,
+        Permissions.AttendanceReadTenant,
+        Permissions.DocumentReadTenant,
+        Permissions.DocumentDeleteTenant,
+        Permissions.MembershipReadTenant,
+        Permissions.MembershipCreateTenant,
+        Permissions.MembershipUpdateTenant,
+        Permissions.RoleReadTenant
+    ];
+
+    private static readonly IReadOnlyList<string> ManagerPermissions =
+    [
+        Permissions.EmployeeReadTeam,
+        Permissions.LeaveReadTeam,
+        Permissions.LeaveApproveTeam,
+        Permissions.AttendanceReadTeam,
+        Permissions.DocumentReadTenant,
+        Permissions.EmployeeReadSelf,
+        Permissions.LeaveReadSelf,
+        Permissions.LeaveCreateSelf,
+        Permissions.AttendanceReadSelf,
+        Permissions.AttendanceWriteSelf,
+        Permissions.DocumentReadSelf,
+        Permissions.DocumentUploadSelf
+    ];
+
+    private static readonly IReadOnlyList<string> EmployeePermissions =
+    [
+        Permissions.EmployeeReadSelf,
+        Permissions.LeaveReadSelf,
+        Permissions.LeaveCreateSelf,
+        Permissions.LeaveDeleteSelf,
+        Permissions.AttendanceReadSelf,
+        Permissions.AttendanceWriteSelf,
+        Permissions.DocumentReadSelf,
+        Permissions.DocumentUploadSelf
+    ];
+
+}

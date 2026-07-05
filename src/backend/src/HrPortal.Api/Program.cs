@@ -4,6 +4,7 @@ using HrPortal.Api.Infrastructure.Middleware;
 using HrPortal.Api.Infrastructure.OpenApi;
 using System.Reflection;
 using HrPortal.Api.Infrastructure.Persistence;
+using HrPortal.AccessControl;
 using HrPortal.Attendance;
 using HrPortal.Audit;
 using HrPortal.Authorization;
@@ -94,6 +95,7 @@ builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 
 builder.Services.AddTenancy(builder.Configuration);
 builder.Services.AddHrPortalIdentity(builder.Configuration);
+builder.Services.AddHrPortalAccessControl();
 builder.Services.AddHrPortalAuthorization();
 builder.Services.AddHrPortalStorage(builder.Configuration);
 builder.Services.AddHrPortalNotifications();

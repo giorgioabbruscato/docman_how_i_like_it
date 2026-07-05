@@ -57,7 +57,7 @@ public sealed class TenantResolverMiddleware
             return;
         }
 
-        var tenantContext = TenantContext.Create(tenant.Id, tenant.Slug);
+        var tenantContext = TenantContext.CreateTenantOnly(tenant.Id, tenant.Slug);
         tenantContextAccessor.Set(tenantContext);
         context.Items[nameof(TenantContext)] = tenantContext;
 

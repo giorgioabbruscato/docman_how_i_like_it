@@ -1,4 +1,6 @@
 using HrPortal.Api.Infrastructure.Persistence;
+using HrPortal.AccessControl.Domain;
+using HrPortal.AccessControl.Infrastructure.Seeding;
 using HrPortal.Employees.Domain;
 using HrPortal.Tenancy.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +12,14 @@ public static class DbInitializer
     private const string DemoTenantSlug = "demo";
     private const string DemoEmployeeEmail = "employee@demo.local";
 
+    private static readonly string[] DemoFeatures =
+        ["employees", "departments", "leave", "attendance", "documents"];
+
     public static async Task InitializeAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
+        var roleSeeder = scope.ServiceProvider.GetRequiredService<ISystemRoleSeeder>();
 
         var pending = await dbContext.Database.GetPendingMigrationsAsync();
         var applied = await dbContext.Database.GetAppliedMigrationsAsync();
@@ -33,12 +39,22 @@ public static class DbInitializer
             await dbContext.SaveChangesAsync();
         }
 
-        var demoEmployeeExists = await dbContext.Set<Employee>()
-            .AnyAsync(e => e.TenantId == demoTenant.Id && e.Email == DemoEmployeeEmail);
-
-        if (!demoEmployeeExists)
+        if (demoTenant.GetFeatures().Count == 0)
         {
-            var demoEmployee = Employee.Create(
+            demoTenant.SetFeatures(DemoFeatures);
+            dbContext.Set<Tenant>().Update(demoTenant);
+            await dbContext.SaveChangesAsync();
+        }
+
+        await roleSeeder.SeedAsync(demoTenant.Id);
+
+        var demoEmployee = await dbContext.Set<Employee>()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(e => e.TenantId == demoTenant.Id && e.Email == DemoEmployeeEmail);
+
+        if (demoEmployee is null)
+        {
+            demoEmployee = Employee.Create(
                 demoTenant.Id,
                 "Employee",
                 "User",
@@ -49,5 +65,77 @@ public static class DbInitializer
             await dbContext.Set<Employee>().AddAsync(demoEmployee);
             await dbContext.SaveChangesAsync();
         }
+
+        await SeedDemoUsersAndMembershipsAsync(dbContext, demoTenant.Id, demoEmployee.Id);
+    }
+
+    private static async Task SeedDemoUsersAndMembershipsAsync(
+        HrPortalDbContext dbContext,
+        Guid tenantId,
+        Guid demoEmployeeId)
+    {
+        var roles = await dbContext.Set<TenantRole>()
+            .IgnoreQueryFilters()
+            .Where(r => r.TenantId == tenantId && r.IsActive)
+            .ToListAsync();
+
+        var roleBySlug = roles.ToDictionary(r => r.Slug, StringComparer.Ordinal);
+
+        await EnsureUserProfileAsync(dbContext, DemoUsers.Admin, DemoUsers.AdminEmail);
+        await EnsureUserProfileAsync(dbContext, DemoUsers.Hr, DemoUsers.HrEmail);
+        await EnsureUserProfileAsync(dbContext, DemoUsers.Employee, DemoUsers.EmployeeEmail);
+
+        await EnsureMembershipAsync(
+            dbContext,
+            tenantId,
+            DemoUsers.Admin,
+            [roleBySlug[SystemRoleTemplates.AdminSlug].Id]);
+
+        await EnsureMembershipAsync(
+            dbContext,
+            tenantId,
+            DemoUsers.Hr,
+            [roleBySlug[SystemRoleTemplates.HrSlug].Id]);
+
+        await EnsureMembershipAsync(
+            dbContext,
+            tenantId,
+            DemoUsers.Employee,
+            [roleBySlug[SystemRoleTemplates.EmployeeSlug].Id],
+            demoEmployeeId);
+    }
+
+    private static async Task EnsureUserProfileAsync(
+        HrPortalDbContext dbContext,
+        Guid userId,
+        string email)
+    {
+        var exists = await dbContext.Set<UserProfile>()
+            .AnyAsync(p => p.UserId == userId);
+
+        if (exists)
+            return;
+
+        await dbContext.Set<UserProfile>().AddAsync(UserProfile.Create(userId, email));
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task EnsureMembershipAsync(
+        HrPortalDbContext dbContext,
+        Guid tenantId,
+        Guid userId,
+        IReadOnlyList<Guid> roleIds,
+        Guid? employeeId = null)
+    {
+        var exists = await dbContext.Set<TenantMembership>()
+            .IgnoreQueryFilters()
+            .AnyAsync(m => m.TenantId == tenantId && m.UserId == userId && m.IsActive);
+
+        if (exists)
+            return;
+
+        var membership = TenantMembership.Create(tenantId, userId, roleIds, employeeId);
+        await dbContext.Set<TenantMembership>().AddAsync(membership);
+        await dbContext.SaveChangesAsync();
     }
 }

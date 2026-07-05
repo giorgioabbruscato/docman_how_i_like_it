@@ -1,4 +1,5 @@
 using HrPortal.Api.Infrastructure.OpenApi;
+using HrPortal.AccessControl.Infrastructure.Seeding;
 using HrPortal.Audit.Application;
 using HrPortal.Tenancy.Application;
 using HrPortal.Tenancy.Application.Dtos;
@@ -19,15 +20,18 @@ public sealed class TenantsController : ControllerBase
     private readonly ITenantRepository _tenantRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditService _auditService;
+    private readonly ISystemRoleSeeder _systemRoleSeeder;
 
     public TenantsController(
         ITenantRepository tenantRepository,
         IUnitOfWork unitOfWork,
-        IAuditService auditService)
+        IAuditService auditService,
+        ISystemRoleSeeder systemRoleSeeder)
     {
         _tenantRepository = tenantRepository;
         _unitOfWork = unitOfWork;
         _auditService = auditService;
+        _systemRoleSeeder = systemRoleSeeder;
     }
 
     /// <summary>List all tenants.</summary>
@@ -60,6 +64,9 @@ public sealed class TenantsController : ControllerBase
             cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await _systemRoleSeeder.SeedAsync(tenant.Id, cancellationToken);
+
         return CreatedAtAction(
             nameof(GetAll),
             new { id = tenant.Id },

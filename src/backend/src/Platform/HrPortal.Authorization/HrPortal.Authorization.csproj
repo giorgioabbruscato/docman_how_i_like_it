@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HrPortal.Identity\HrPortal.Identity.csproj" />
+    <ProjectReference Include="..\HrPortal.AccessControl\HrPortal.AccessControl.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,6 @@
 # TASK 12 — ACCESS CONTROL FOUNDATION
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create the `HrPortal.AccessControl` platform module with tenant-scoped RBAC entities, permission catalog, and base API endpoints.
 
@@ -75,48 +75,48 @@ Read before starting:
 
 ### Platform module structure
 
-- [ ] Create `src/backend/src/Platform/HrPortal.AccessControl/` following Clean Architecture
-- [ ] Add project to `HrPortal.sln`
-- [ ] Reference from `HrPortal.Api` and `HrPortal.Authorization`
-- [ ] `AccessControlServiceCollectionExtensions.cs` with `AddHrPortalAccessControl()`
+- [x] Create `src/backend/src/Platform/HrPortal.AccessControl/` following Clean Architecture
+- [x] Add project to `HrPortal.sln`
+- [x] Reference from `HrPortal.Api` and `HrPortal.Authorization`
+- [x] `AccessControlServiceCollectionExtensions.cs` with `AddHrPortalAccessControl()`
 
 ### Domain entities
 
-- [ ] `TenantRole` — slug, permissions JSON, isSystem, isActive, tenantId
-- [ ] `TenantMembership` — userId, tenantId, roleIds JSON, employeeId?, attributesJson, isActive
-- [ ] `UserProfile` — userId, email, isPlatformAdmin
-- [ ] Extend `Tenant` entity: `Plan`, `FeaturesJson`, `SuspendedAt?`
-- [ ] `Permissions.cs` — canonical permission string constants (e.g. `employee.read:tenant`)
-- [ ] `SystemRoleTemplates.cs` — default roles (admin, hr, manager, employee) with permission sets
-- [ ] `LegacyRoleMapper.cs` — map Keycloak realm roles → system permissions during migration
+- [x] `TenantRole` — slug, permissions JSON, isSystem, isActive, tenantId
+- [x] `TenantMembership` — userId, tenantId, roleIds JSON, employeeId?, attributesJson, isActive
+- [x] `UserProfile` — userId, email, isPlatformAdmin
+- [x] Extend `Tenant` entity: `Plan`, `FeaturesJson`, `SuspendedAt?`
+- [x] `Permissions.cs` — canonical permission string constants (e.g. `employee.read:tenant`)
+- [x] `SystemRoleTemplates.cs` — default roles (admin, hr, manager, employee) with permission sets
+- [x] `LegacyRoleMapper.cs` — map Keycloak realm roles → system permissions during migration
 
 ### Persistence
 
-- [ ] EF configurations for all AccessControl entities
-- [ ] Migration `AccessControlEnterprise` in `HrPortal.Api/Infrastructure/Persistence/Migrations/`
-- [ ] Register configurations in `HrPortalDbContext`
+- [x] EF configurations for all AccessControl entities
+- [x] Migration `AccessControlEnterprise` in `HrPortal.Api/Infrastructure/Persistence/Migrations/`
+- [x] Register configurations in `HrPortalDbContext`
 
 ### Application services
 
-- [ ] `IMeService` — return current user profile + permissions + features for tenant
-- [ ] `ITenantRoleService` — CRUD tenant roles (gated later by feature flag)
-- [ ] `ITenantMembershipService` — manage memberships
-- [ ] Repository interfaces + implementations
+- [x] `IMeService` — return current user profile + permissions + features for tenant
+- [x] `ITenantRoleService` — CRUD tenant roles (gated later by feature flag)
+- [x] `ITenantMembershipService` — manage memberships
+- [x] Repository interfaces + implementations
 
 ### Infrastructure
 
-- [ ] `SystemRoleSeeder` — seed system roles per tenant on creation
-- [ ] Demo seed: memberships linking demo users to demo tenant with roles
+- [x] `SystemRoleSeeder` — seed system roles per tenant on creation
+- [x] Demo seed: memberships linking demo users to demo tenant with roles
 
 ### API endpoints
 
-- [ ] `GET /api/v1/me` — current user context (permissions, employeeId, features)
-- [ ] `GET/POST/PUT/DELETE /api/v1/roles` — tenant role management
-- [ ] `GET/POST/PUT/DELETE /api/v1/memberships` — membership management
+- [x] `GET /api/v1/me` — current user context (permissions, employeeId, features)
+- [x] `GET/POST/PUT/DELETE /api/v1/roles` — tenant role management
+- [x] `GET/POST/PUT/DELETE /api/v1/memberships` — membership management
 
 ### Registration
 
-- [ ] Register `AddHrPortalAccessControl()` in `Program.cs`
+- [x] Register `AddHrPortalAccessControl()` in `Program.cs`
 
 ## Files to touch
 
@@ -131,12 +131,12 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] `dotnet build` succeeds
-- [ ] Migration applies cleanly
-- [ ] Demo seed creates system roles + memberships for demo tenant
-- [ ] `GET /api/v1/me` returns permissions for authenticated demo user
-- [ ] Module has no dependency on business domain modules (Employees, Leave, etc.)
-- [ ] Integration tests for `/me` endpoint
+- [x] `dotnet build` succeeds
+- [x] Migration applies cleanly
+- [x] Demo seed creates system roles + memberships for demo tenant
+- [x] `GET /api/v1/me` returns permissions for authenticated demo user
+- [x] Module has no dependency on business domain modules (Employees, Leave, etc.)
+- [x] Integration tests for `/me` endpoint
 
 ## Next task
 

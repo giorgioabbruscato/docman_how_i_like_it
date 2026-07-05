@@ -17,7 +17,7 @@ public sealed class EmployeeServiceTests
     private readonly Mock<IDepartmentLookup> _departmentLookup = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAuditService> _auditService = new();
-    private readonly TenantContext _tenantContext = TenantContext.Create(Guid.NewGuid(), "demo");
+    private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo");
     private readonly UserContext _userContext = new() { UserId = Guid.NewGuid(), IsAuthenticated = true };
     private readonly EmployeeService _service;
 
