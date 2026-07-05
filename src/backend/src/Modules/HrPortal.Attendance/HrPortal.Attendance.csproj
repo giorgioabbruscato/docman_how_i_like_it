@@ -9,10 +9,14 @@
     <ProjectReference Include="..\..\Platform\HrPortal.Tenancy\HrPortal.Tenancy.csproj" />
     <ProjectReference Include="..\..\Platform\HrPortal.Identity\HrPortal.Identity.csproj" />
     <ProjectReference Include="..\..\Platform\HrPortal.Audit\HrPortal.Audit.csproj" />
+    <ProjectReference Include="..\..\Platform\HrPortal.Notifications\HrPortal.Notifications.csproj" />
+    <ProjectReference Include="..\..\Platform\HrPortal.AccessControl\HrPortal.AccessControl.csproj" />
     <ProjectReference Include="..\HrPortal.Employees\HrPortal.Employees.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
     <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />

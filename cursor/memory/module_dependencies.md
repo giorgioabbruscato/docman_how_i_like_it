@@ -19,6 +19,8 @@ Employees
     ├── Documents    (+ Storage)
     └── Analytics    (read-only; aggregates via provider interfaces)
             ↑ depends on: Departments, Employees, TimeTracking, Attendance, Leave, Projects, Tasks
+    └── Reporting    (export; reuses analytics/time-tracking data sources)
+            ↑ depends on: Departments, Employees, TimeTracking, Attendance, Projects
 ```
 
 The graph is a DAG: no module references another module transitively back to itself.
@@ -44,13 +46,18 @@ The graph is a DAG: no module references another module transitively back to its
 | Analytics | Leave | `ILeaveAnalyticsProvider` | Leave rate, monthly leave trend |
 | Analytics | Projects | `IProjectAnalyticsProvider` | Budget snapshots, member hourly rates |
 | Analytics | Tasks | `ITaskAnalyticsProvider` | Task spent hours by project |
+| Reporting | Departments | `IDepartmentRepository`, `IDepartmentLookup` | Department report rows |
+| Reporting | Employees | `IEmployeeRepository`, `IEmployeeLookup` | Employee report rows, scope |
+| Reporting | Attendance | `IAttendanceSessionRepository` | Attendance report rows |
+| Reporting | Projects | `IProjectRepository`, `IProjectMemberRepository` | Project report rows |
+| Reporting | TimeTracking | `ITimeEntryExportService`, `ITimeEntryAnalyticsProvider` | Worked-hours export, spent hours |
 
 ## Lookup interface contracts
 
 | Interface | Provider module | Method |
 |-----------|-----------------|--------|
 | `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync`, `GetNameAsync` |
-| `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync`, `GetActiveEmployeeIdsInDepartmentAsync`, `GetFullNameAsync`, `GetDepartmentIdsAsync`, `CountActiveEmployeesAsync` |
+| `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync`, `GetActiveEmployeeIdsInDepartmentAsync`, `GetFullNameAsync`, `GetEmailAsync`, `GetDepartmentIdsAsync`, `CountActiveEmployeesAsync` |
 | `IProjectLookup` | Projects | `ExistsAsync`, `GetNameAsync` |
 | `ITaskLookup` | Tasks | `ExistsAsync`, `GetTitleAsync` |
 | `ITimeEntryAnalyticsProvider` | TimeTracking | Aggregated minutes, overtime, active timers |
@@ -70,6 +77,11 @@ Implementations live in the provider's application service (`IDepartmentService`
 | HrPortal.Api | AccessControl | `IMeService`, `ITenantRoleService`, `ITenantMembershipService`, `IPolicyEngine` |
 | HrPortal.Authorization | AccessControl | `IPolicyEngine`, `IPermissionEvaluator` |
 | Leave | Notifications | `INotificationService` |
+| Projects | Notifications | `INotificationService` (project/task assignment hooks) |
+| Tasks | Notifications | `INotificationService` (task assignment hooks) |
+| Documents | Notifications | `INotificationService` (document upload hook) |
+| Attendance | Notifications | `INotificationService` (forgotten check-in/out reminders) |
+| Projects, Tasks, Leave, Documents, Attendance | AccessControl | `INotificationRecipientResolver` (employee → user mapping) |
 | Documents | Storage | `IStorageProvider` |
 
 `HrPortal.AccessControl` must not reference business domain modules (Employees, Leave, etc.).
@@ -87,5 +99,5 @@ Implementations live in the provider's application service (`IDepartmentService`
 AddTenancy → AddHrPortalIdentity → AddHrPortalAccessControl
 → AddHrPortalAuthorization → AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalAudit
 → AddDepartmentsModule → AddEmployeesModule → AddProjectsModule → AddTasksModule
-→ AddTimeTrackingModule → AddLeaveModule → AddAttendanceModule → AddAnalyticsModule → AddDocumentsModule
+→ AddTimeTrackingModule → AddLeaveModule → AddAttendanceModule → AddAnalyticsModule → AddReportingModule → AddDocumentsModule
 ```

@@ -1,3 +1,4 @@
+using HrPortal.AccessControl.Application;
 using HrPortal.Audit.Application;
 using HrPortal.Employees.Application;
 using HrPortal.Leave.Application.Dtos;
@@ -29,6 +30,7 @@ internal sealed class LeaveRequestService : ILeaveRequestService
     private readonly TenantContext _tenantContext;
     private readonly IAuditService _auditService;
     private readonly INotificationService _notificationService;
+    private readonly INotificationRecipientResolver _recipientResolver;
     private readonly ILogger<LeaveRequestService> _logger;
 
     public LeaveRequestService(
@@ -38,6 +40,7 @@ internal sealed class LeaveRequestService : ILeaveRequestService
         TenantContext tenantContext,
         IAuditService auditService,
         INotificationService notificationService,
+        INotificationRecipientResolver recipientResolver,
         ILogger<LeaveRequestService> logger)
     {
         _repository = repository;
@@ -46,6 +49,7 @@ internal sealed class LeaveRequestService : ILeaveRequestService
         _tenantContext = tenantContext;
         _auditService = auditService;
         _notificationService = notificationService;
+        _recipientResolver = recipientResolver;
         _logger = logger;
     }
 
@@ -160,11 +164,23 @@ internal sealed class LeaveRequestService : ILeaveRequestService
         await _repository.UpdateAsync(leaveRequest, cancellationToken);
         await LogAndSaveAsync("leave_request.approved", leaveRequest, cancellationToken);
 
-        await _notificationService.SendAsync(new NotificationMessage(
-            leaveRequest.EmployeeId.ToString(),
-            "Leave request approved",
-            $"Your leave request from {leaveRequest.StartDate} to {leaveRequest.EndDate} has been approved."),
+        var email = await _employeeLookup.GetEmailAsync(leaveRequest.EmployeeId, cancellationToken)
+            ?? leaveRequest.EmployeeId.ToString();
+        var recipient = await _recipientResolver.ResolveForEmployeeAsync(
+            leaveRequest.EmployeeId,
+            email,
             cancellationToken);
+
+        if (recipient.UserId.HasValue)
+        {
+            NotificationHelper.FireAndForget(
+                _logger,
+                ct => _notificationService.NotifyLeaveApprovedAsync(
+                    recipient.UserId.Value,
+                    leaveRequest.StartDate,
+                    leaveRequest.EndDate,
+                    ct));
+        }
 
         _logger.LogInformation("Leave request {LeaveRequestId} approved", id);
         return Result.Success(MapToDto(leaveRequest));

@@ -1,5 +1,7 @@
+using HrPortal.AccessControl.Application;
 using HrPortal.Audit.Application;
 using HrPortal.Employees.Application;
+using HrPortal.Notifications;
 using HrPortal.Projects.Application;
 using HrPortal.Tasks.Application;
 using HrPortal.Tasks.Application.Commands;
@@ -19,6 +21,8 @@ public sealed class CreateProjectTaskCommandHandlerTests
     private readonly Mock<IEmployeeLookup> _employeeLookup = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAuditService> _auditService = new();
+    private readonly Mock<INotificationService> _notificationService = new();
+    private readonly Mock<INotificationRecipientResolver> _recipientResolver = new();
     private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo") with
     {
         UserId = Guid.NewGuid()
@@ -37,6 +41,8 @@ public sealed class CreateProjectTaskCommandHandlerTests
             _unitOfWork.Object,
             _tenantContext,
             _auditService.Object,
+            _notificationService.Object,
+            _recipientResolver.Object,
             NullLogger<CreateProjectTaskCommandHandler>.Instance);
     }
 

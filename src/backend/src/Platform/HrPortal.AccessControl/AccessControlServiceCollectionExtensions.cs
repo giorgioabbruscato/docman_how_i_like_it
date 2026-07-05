@@ -24,6 +24,7 @@ public static class AccessControlServiceCollectionExtensions
         services.AddScoped<IMeService, MeService>();
         services.AddScoped<ITenantRoleService, TenantRoleService>();
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();
+        services.AddScoped<INotificationRecipientResolver, NotificationRecipientResolver>();
         services.AddScoped<ISystemRoleSeeder, SystemRoleSeeder>();
 
         services.AddValidatorsFromAssemblyContaining<CreateTenantRoleRequestValidator>();

@@ -262,6 +262,25 @@ Sole identity object for application services. Enriched per request by `TenantCo
 
 - Max 25 annual leave days per employee per year (Annual type only)
 
+**Notifications:** On approval, `NotifyLeaveApprovedAsync` fires fire-and-forget to the requesting employee's user (via `INotificationRecipientResolver`).
+
+---
+
+### Notification events — IMPLEMENTED (Task 20)
+
+Platform service: `INotificationService` (`HrPortal.Notifications`). Current implementation logs structured events (no email/SMS).
+
+| Event | Type string | Trigger | Recipient |
+|-------|-------------|---------|-----------|
+| Project assigned | `project.assigned` | After `AddProjectMemberCommand` succeeds | Assigned employee's user |
+| Task assigned | `task.assigned` | Task create/update when assignee set/changed | Assigned employee's user |
+| Leave approved | `leave.approved` | After leave approval | Requesting employee's user |
+| Document uploaded | `document.uploaded` | After document upload | Document owner's user |
+| Forgotten check-in | `attendance.forgotten_check_in` | Hourly reminder job | Employee's user |
+| Forgotten check-out | `attendance.forgotten_check_out` | Hourly reminder job | Employee's user |
+
+Recipient resolution: `INotificationRecipientResolver` maps `EmployeeId` → `UserId` via active tenant membership; email used as log fallback when no membership.
+
 ---
 
 ### AttendanceSession — IMPLEMENTED

@@ -34,6 +34,37 @@ export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function toDateString(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+export function getTodayDateRange(): { fromDate: string; toDate: string } {
+  const today = todayDateString();
+  return { fromDate: today, toDate: today };
+}
+
+export function getThisWeekDateRange(): { fromDate: string; toDate: string } {
+  const now = new Date();
+  const day = now.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diffToMonday);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return { fromDate: toDateString(monday), toDate: toDateString(sunday) };
+}
+
+export function getThisMonthDateRange(): { fromDate: string; toDate: string } {
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return { fromDate: toDateString(first), toDate: toDateString(last) };
+}
+
+export function formatPercent(value: number, decimals = 0): string {
+  return `${(value * 100).toFixed(decimals)}%`;
+}
+
 export function currentTimeString(): string {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;

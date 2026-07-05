@@ -27,6 +27,14 @@ public sealed class ModuleDependencyTests
                 "HrPortal.Leave",
                 "HrPortal.Projects",
                 "HrPortal.Tasks"
+            },
+            ["HrPortal.Reporting"] = new HashSet<string>(StringComparer.Ordinal)
+            {
+                "HrPortal.Departments",
+                "HrPortal.Employees",
+                "HrPortal.TimeTracking",
+                "HrPortal.Attendance",
+                "HrPortal.Projects"
             }
         };
 

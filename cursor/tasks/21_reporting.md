@@ -1,6 +1,6 @@
 # TASK 21 — REPORTING
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Implement report generation for attendance, projects, worked hours, employees, and departments.
 

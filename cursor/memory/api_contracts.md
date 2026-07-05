@@ -967,6 +967,35 @@ Empty data returns `{ "labels": [], "datasets": [] }` (never null).
 
 ---
 
+## Reports — IMPLEMENTED (Task 21)
+
+**Auth:** `[RequireAnyPermission(report.generate:self, report.generate:team, report.generate:tenant)]`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/reports/{type}` | Download report file |
+
+**Report types (`type` path segment):** `attendance`, `projects`, `worked-hours`, `employees`, `departments`
+
+**Query params:**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `format` | string | Required: `csv`, `xlsx`, or `pdf` |
+| `fromDate` | DateOnly? | Range start |
+| `toDate` | DateOnly? | Range end |
+| `departmentId` | Guid? | Filter |
+| `projectId` | Guid? | Filter |
+| `employeeId` | Guid? | Filter |
+
+**Scope:** `ReportGenerateScope` mirrors analytics/time-entry scoping — tenant (all), team (department members), self (caller employee only; `employeeId` query param ignored).
+
+**Response:** Binary file (`text/csv`, XLSX MIME, or `application/pdf`) with `Content-Disposition` filename.
+
+**Permissions by system role:** Employee → `report.generate:self`; Manager → `report.generate:team`; HR Admin → `report.generate:tenant`.
+
+---
+
 ## Auth flow
 
 ```

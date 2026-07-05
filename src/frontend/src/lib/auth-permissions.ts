@@ -57,6 +57,13 @@ export const Permission = {
 
   AuditReadTenant: 'audit.read:tenant',
 
+  AnalyticsReadTeam: 'analytics.read:team',
+  AnalyticsReadTenant: 'analytics.read:tenant',
+
+  ReportGenerateSelf: 'report.generate:self',
+  ReportGenerateTeam: 'report.generate:team',
+  ReportGenerateTenant: 'report.generate:tenant',
+
   TenantManageAll: 'tenant.manage:all',
   BillingManageAll: 'billing.manage:all',
   SupportAccessAll: 'support.access:all',

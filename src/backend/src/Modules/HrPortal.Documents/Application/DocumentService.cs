@@ -1,7 +1,9 @@
+using HrPortal.AccessControl.Application;
 using HrPortal.Audit.Application;
 using HrPortal.Documents.Application.Dtos;
 using HrPortal.Documents.Domain;
 using HrPortal.Employees.Application;
+using HrPortal.Notifications;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.SharedKernel.Results;
 using HrPortal.Storage;
@@ -33,6 +35,8 @@ internal sealed class DocumentService : IDocumentService
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
     private readonly IAuditService _auditService;
+    private readonly INotificationService _notificationService;
+    private readonly INotificationRecipientResolver _recipientResolver;
     private readonly ILogger<DocumentService> _logger;
 
     public DocumentService(
@@ -42,6 +46,8 @@ internal sealed class DocumentService : IDocumentService
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
         IAuditService auditService,
+        INotificationService notificationService,
+        INotificationRecipientResolver recipientResolver,
         ILogger<DocumentService> logger)
     {
         _repository = repository;
@@ -50,6 +56,8 @@ internal sealed class DocumentService : IDocumentService
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
         _auditService = auditService;
+        _notificationService = notificationService;
+        _recipientResolver = recipientResolver;
         _logger = logger;
     }
 
@@ -114,6 +122,21 @@ internal sealed class DocumentService : IDocumentService
             document.Id.ToString()), cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var email = await _employeeLookup.GetEmailAsync(request.EmployeeId, cancellationToken)
+            ?? request.EmployeeId.ToString();
+        var recipient = await _recipientResolver.ResolveForEmployeeAsync(request.EmployeeId, email, cancellationToken);
+        if (recipient.UserId.HasValue)
+        {
+            await NotificationHelper.TryNotifyAsync(
+                _logger,
+                ct => _notificationService.NotifyDocumentUploadedAsync(
+                    recipient.UserId.Value,
+                    document.FileName,
+                    ct),
+                cancellationToken);
+        }
+
         _logger.LogInformation("Document {DocumentId} uploaded for employee {EmployeeId}", document.Id, request.EmployeeId);
 
         return Result.Success(MapToDto(document));

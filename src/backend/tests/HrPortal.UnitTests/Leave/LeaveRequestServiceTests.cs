@@ -1,3 +1,4 @@
+using HrPortal.AccessControl.Application;
 using HrPortal.Audit.Application;
 using HrPortal.Employees.Application;
 using HrPortal.Leave.Application;
@@ -18,6 +19,7 @@ public sealed class LeaveRequestServiceTests
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAuditService> _auditService = new();
     private readonly Mock<INotificationService> _notificationService = new();
+    private readonly Mock<INotificationRecipientResolver> _recipientResolver = new();
     private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo") with
     {
         UserId = Guid.NewGuid()
@@ -33,6 +35,7 @@ public sealed class LeaveRequestServiceTests
             _tenantContext,
             _auditService.Object,
             _notificationService.Object,
+            _recipientResolver.Object,
             NullLogger<LeaveRequestService>.Instance);
     }
 

@@ -406,3 +406,26 @@ the settings page; it is not used for any access-control decision.
 - Frontend attendance page deferred to task 18 (API contracts updated)
 - `AttendanceResourceLoader` removed (self-scope via `TenantContext.EmployeeId`)
 - Audit actions: `attendance_session.check_in`, `attendance_session.check_out`
+
+---
+
+## ADR-014: Attendance Reminders via BackgroundService
+
+**Status:** Accepted  
+**Date:** 2026-07
+
+**Context:** Users may forget to check in or check out. Reminders must fire even when the user never opens the SPA (login hook would miss offline employees).
+
+**Decision:** Run `AttendanceReminderHostedService` (`BackgroundService`) hourly. For each tenant it sets `ITenantContextAccessor` via `TenantScopingContext.ForSeeding`, then `IAttendanceReminderService` evaluates:
+
+- **Check-in:** after configurable `CheckInReminderHour` (default 10:00 local), active employees with no session today
+- **Check-out:** after configurable `CheckOutReminderHour` (default 18:00 local), employees with an open session started today
+
+Dedup via in-process `ConcurrentDictionary` keyed by `tenantId:employeeId:date:type`. Notifications use `INotificationService` typed methods; recipient resolved via `INotificationRecipientResolver` (employee → user membership).
+
+**Alternatives rejected:** Login/`GET /me` hook — misses users who never sign in.
+
+**Consequences:**
+- Options bound from `AttendanceReminders` configuration section
+- Notification failures logged via `NotificationHelper`; never affect attendance data
+- MVP dedup resets on process restart (acceptable for logging-only notification backend)

@@ -16,6 +16,7 @@ import {
   Settings,
   Timer,
   Users,
+  BarChart3,
 } from 'lucide-react';
 
 interface NavItem {
@@ -96,6 +97,14 @@ const navItems: NavItem[] = [
     icon: ScrollText,
     isVisible: (permissions, planFeatures) =>
       hasAnyPermission(permissions, Permission.AuditReadTenant) && planFeatures.auditLog,
+  },
+  {
+    to: '/analytics',
+    label: 'Analytics',
+    icon: BarChart3,
+    isVisible: (permissions, planFeatures) =>
+      hasAnyPermission(permissions, Permission.AnalyticsReadTeam, Permission.AnalyticsReadTenant) &&
+      planFeatures.advancedReports,
   },
   { to: '/settings', label: 'Settings', icon: Settings, isVisible: () => true },
 ];

@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\Platform\HrPortal.Identity\HrPortal.Identity.csproj" />
     <ProjectReference Include="..\..\Platform\HrPortal.Audit\HrPortal.Audit.csproj" />
     <ProjectReference Include="..\..\Platform\HrPortal.Notifications\HrPortal.Notifications.csproj" />
+    <ProjectReference Include="..\..\Platform\HrPortal.AccessControl\HrPortal.AccessControl.csproj" />
     <ProjectReference Include="..\HrPortal.Employees\HrPortal.Employees.csproj" />
   </ItemGroup>
 

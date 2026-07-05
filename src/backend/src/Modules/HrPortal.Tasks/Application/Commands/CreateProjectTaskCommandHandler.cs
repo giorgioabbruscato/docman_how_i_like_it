@@ -1,5 +1,7 @@
+using HrPortal.AccessControl.Application;
 using HrPortal.Audit.Application;
 using HrPortal.Employees.Application;
+using HrPortal.Notifications;
 using HrPortal.Projects.Application;
 using HrPortal.Tasks.Application.Dtos;
 using HrPortal.Tasks.Domain;
@@ -19,6 +21,8 @@ public sealed class CreateProjectTaskCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
     private readonly IAuditService _auditService;
+    private readonly INotificationService _notificationService;
+    private readonly INotificationRecipientResolver _recipientResolver;
     private readonly ILogger<CreateProjectTaskCommandHandler> _logger;
 
     public CreateProjectTaskCommandHandler(
@@ -28,6 +32,8 @@ public sealed class CreateProjectTaskCommandHandler
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
         IAuditService auditService,
+        INotificationService notificationService,
+        INotificationRecipientResolver recipientResolver,
         ILogger<CreateProjectTaskCommandHandler> logger)
     {
         _repository = repository;
@@ -36,6 +42,8 @@ public sealed class CreateProjectTaskCommandHandler
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
         _auditService = auditService;
+        _notificationService = notificationService;
+        _recipientResolver = recipientResolver;
         _logger = logger;
     }
 
@@ -75,6 +83,9 @@ public sealed class CreateProjectTaskCommandHandler
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            if (request.AssignedEmployeeId.HasValue)
+                await NotifyAssigneeAsync(request.AssignedEmployeeId.Value, request.ProjectId, task.Title, cancellationToken);
+
             _logger.LogInformation("Task {TaskId} created", task.Id);
             return Result.Success(TaskMapping.ToDto(task));
         }
@@ -82,5 +93,27 @@ public sealed class CreateProjectTaskCommandHandler
         {
             return Result.Failure<ProjectTaskDto>(ex.Message, ex.ErrorCode ?? "VALIDATION_ERROR");
         }
+    }
+
+    private async Task NotifyAssigneeAsync(
+        Guid employeeId,
+        Guid projectId,
+        string taskTitle,
+        CancellationToken cancellationToken)
+    {
+        var email = await _employeeLookup.GetEmailAsync(employeeId, cancellationToken) ?? employeeId.ToString();
+        var recipient = await _recipientResolver.ResolveForEmployeeAsync(employeeId, email, cancellationToken);
+        if (!recipient.UserId.HasValue)
+            return;
+
+        var projectName = await _projectLookup.GetNameAsync(projectId, cancellationToken) ?? "Unknown";
+        await NotificationHelper.TryNotifyAsync(
+            _logger,
+            ct => _notificationService.NotifyTaskAssignedAsync(
+                recipient.UserId.Value,
+                taskTitle,
+                projectName,
+                ct),
+            cancellationToken);
     }
 }

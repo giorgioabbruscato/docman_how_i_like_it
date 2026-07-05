@@ -1,5 +1,7 @@
+using HrPortal.AccessControl.Application;
 using HrPortal.Audit.Application;
 using HrPortal.Employees.Application;
+using HrPortal.Notifications;
 using HrPortal.Projects.Application.Dtos;
 using HrPortal.Projects.Domain;
 using HrPortal.SharedKernel.Exceptions;
@@ -18,6 +20,8 @@ public sealed class AddProjectMemberCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
     private readonly IAuditService _auditService;
+    private readonly INotificationService _notificationService;
+    private readonly INotificationRecipientResolver _recipientResolver;
     private readonly ILogger<AddProjectMemberCommandHandler> _logger;
 
     public AddProjectMemberCommandHandler(
@@ -27,6 +31,8 @@ public sealed class AddProjectMemberCommandHandler
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
         IAuditService auditService,
+        INotificationService notificationService,
+        INotificationRecipientResolver recipientResolver,
         ILogger<AddProjectMemberCommandHandler> logger)
     {
         _projectRepository = projectRepository;
@@ -35,6 +41,8 @@ public sealed class AddProjectMemberCommandHandler
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
         _auditService = auditService;
+        _notificationService = notificationService;
+        _recipientResolver = recipientResolver;
         _logger = logger;
     }
 
@@ -71,6 +79,20 @@ public sealed class AddProjectMemberCommandHandler
                 $"{{\"projectId\":\"{projectId}\"}}"), cancellationToken);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var project = await _projectRepository.GetByIdAsync(projectId, cancellationToken);
+            var email = await _employeeLookup.GetEmailAsync(request.EmployeeId, cancellationToken) ?? request.EmployeeId.ToString();
+            var recipient = await _recipientResolver.ResolveForEmployeeAsync(request.EmployeeId, email, cancellationToken);
+            if (recipient.UserId.HasValue && project is not null)
+            {
+                await NotificationHelper.TryNotifyAsync(
+                    _logger,
+                    ct => _notificationService.NotifyProjectAssignedAsync(
+                        recipient.UserId.Value,
+                        project.Name,
+                        ct),
+                    cancellationToken);
+            }
 
             _logger.LogInformation("Member {MemberId} added to project {ProjectId}", member.Id, projectId);
             return Result.Success(ProjectMapping.ToDto(member));

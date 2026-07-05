@@ -17,6 +17,7 @@ import { SettingsPage } from '@/pages/settings-page';
 import { CalendarPage } from '@/pages/time-tracking/calendar-page';
 import { ManualEntryPage } from '@/pages/time-tracking/manual-entry-page';
 import { TimeTrackingPage } from '@/pages/time-tracking/time-tracking-page';
+import { AnalyticsPage } from '@/pages/analytics/analytics-page';
 
 export function App() {
   return (
@@ -39,6 +40,7 @@ export function App() {
             <Route path="time-tracking" element={<TimeTrackingPage />} />
             <Route path="time-tracking/manual" element={<ManualEntryPage />} />
             <Route path="time-tracking/calendar" element={<CalendarPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

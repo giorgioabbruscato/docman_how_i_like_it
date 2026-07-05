@@ -179,6 +179,12 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
         return employee is null ? null : $"{employee.FirstName} {employee.LastName}";
     }
 
+    public async Task<string?> GetEmailAsync(Guid employeeId, CancellationToken cancellationToken = default)
+    {
+        var employee = await _repository.GetByIdAsync(employeeId, cancellationToken);
+        return employee?.Email;
+    }
+
     public Task<IReadOnlyDictionary<Guid, Guid?>> GetDepartmentIdsAsync(
         IReadOnlyList<Guid> employeeIds,
         CancellationToken cancellationToken = default) =>

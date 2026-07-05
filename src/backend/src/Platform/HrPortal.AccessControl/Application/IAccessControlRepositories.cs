@@ -18,6 +18,7 @@ public interface ITenantMembershipRepository
 {
     Task<TenantMembership?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<TenantMembership?> GetActiveByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<TenantMembership?> GetActiveByEmployeeIdAsync(Guid employeeId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<TenantMembership>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<bool> ActiveMembershipExistsAsync(Guid userId, Guid? excludeId = null, CancellationToken cancellationToken = default);
     Task AddAsync(TenantMembership membership, CancellationToken cancellationToken = default);

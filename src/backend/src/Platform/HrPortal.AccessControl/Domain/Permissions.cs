@@ -74,6 +74,11 @@ public static class Permissions
     public const string AnalyticsReadTeam = "analytics.read:team";
     public const string AnalyticsReadTenant = "analytics.read:tenant";
 
+    // Reports
+    public const string ReportGenerateSelf = "report.generate:self";
+    public const string ReportGenerateTeam = "report.generate:team";
+    public const string ReportGenerateTenant = "report.generate:tenant";
+
     // Audit
     public const string AuditReadTenant = "audit.read:tenant";
 
@@ -107,6 +112,7 @@ public static class Permissions
         TimeEntryCreateSelf, TimeEntryUpdateSelf, TimeEntryDeleteSelf,
         TimeEntryExportTeam, TimeEntryExportTenant,
         AnalyticsReadTeam, AnalyticsReadTenant,
+        ReportGenerateSelf, ReportGenerateTeam, ReportGenerateTenant,
         AuditReadTenant
     ];
 }

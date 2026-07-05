@@ -104,6 +104,13 @@ internal sealed class TenantMembershipRepository : ITenantMembershipRepository
             .ApplyTenantScope(_accessor.Current)
             .FirstOrDefaultAsync(m => m.UserId == userId && m.IsActive, cancellationToken);
 
+    public async Task<TenantMembership?> GetActiveByEmployeeIdAsync(
+        Guid employeeId,
+        CancellationToken cancellationToken = default) =>
+        await _dbContext.Set<TenantMembership>()
+            .ApplyTenantScope(_accessor.Current)
+            .FirstOrDefaultAsync(m => m.EmployeeId == employeeId && m.IsActive, cancellationToken);
+
     public async Task<IReadOnlyList<TenantMembership>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await _dbContext.Set<TenantMembership>()
             .ApplyTenantScope(_accessor.Current)

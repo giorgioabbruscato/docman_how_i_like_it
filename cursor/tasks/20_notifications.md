@@ -1,6 +1,6 @@
 # TASK 20 — NOTIFICATIONS
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Implement user notifications for key HR events using the existing `INotificationService`.
 

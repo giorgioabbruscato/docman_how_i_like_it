@@ -1,7 +1,9 @@
+using HrPortal.AccessControl.Application;
 using HrPortal.Audit.Application;
 using HrPortal.Documents.Application;
 using HrPortal.Documents.Application.Dtos;
 using HrPortal.Employees.Application;
+using HrPortal.Notifications;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.Storage;
 using HrPortal.Tenancy;
@@ -17,6 +19,8 @@ public sealed class DocumentServiceTests
     private readonly Mock<IStorageProvider> _storageProvider = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAuditService> _auditService = new();
+    private readonly Mock<INotificationService> _notificationService = new();
+    private readonly Mock<INotificationRecipientResolver> _recipientResolver = new();
     private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo") with
     {
         UserId = Guid.NewGuid()
@@ -41,6 +45,8 @@ public sealed class DocumentServiceTests
             _unitOfWork.Object,
             _tenantContext,
             _auditService.Object,
+            _notificationService.Object,
+            _recipientResolver.Object,
             NullLogger<DocumentService>.Instance);
     }
 
@@ -105,6 +111,13 @@ public sealed class DocumentServiceTests
         var employeeId = Guid.NewGuid();
         _employeeLookup.Setup(e => e.ExistsAndIsActiveAsync(employeeId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
+        _employeeLookup.Setup(e => e.GetEmailAsync(employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync("employee@demo.local");
+        _recipientResolver.Setup(r => r.ResolveForEmployeeAsync(
+                employeeId,
+                "employee@demo.local",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new NotificationRecipient(null, "employee@demo.local"));
 
         await using var stream = new MemoryStream("content"u8.ToArray());
 

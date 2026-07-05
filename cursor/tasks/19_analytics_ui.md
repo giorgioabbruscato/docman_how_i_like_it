@@ -1,6 +1,6 @@
 # TASK 19 — ANALYTICS UI
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create analytics dashboard with bar, line, and pie charts, KPI cards, filters, and export buttons.
 
@@ -64,42 +64,42 @@ Read before starting:
 
 ### API client
 
-- [ ] `src/frontend/src/api/analytics.ts`
-- [ ] Methods: getSupervisorSummary, getChartData (per chart type)
+- [x] `src/frontend/src/api/analytics.ts`
+- [x] Methods: getSupervisorSummary, getChartData (per chart type)
 
 ### Types
 
-- [ ] `src/frontend/src/types/analytics.ts` — ChartData, DashboardSummary, widget DTOs
+- [x] `src/frontend/src/types/analytics.ts` — ChartData, DashboardSummary, widget DTOs
 
 ### Pages
 
-- [ ] `/analytics` — Supervisor dashboard
+- [x] `/analytics` — Supervisor dashboard
 
 ### Components
 
-- [ ] `KpiCards` — total hours, attendance rate, overtime, late arrivals
-- [ ] `HoursByProjectChart` — bar chart
-- [ ] `HoursByDepartmentChart` — bar chart
-- [ ] `HoursByEmployeeChart` — bar chart
-- [ ] `MonthlyTrendChart` — line chart
-- [ ] `AttendanceTrendChart` — line chart
-- [ ] `LeaveTrendChart` — line chart
-- [ ] `BudgetConsumptionChart` — pie or stacked bar
-- [ ] `AnalyticsFilters` — department, project, employee, date range pickers
-- [ ] `EmployeesWorkingNow` — widget list
-- [ ] `TopEmployeesWidget` / `TopProjectsWidget`
-- [ ] `ExportButtons` — quick export actions
+- [x] `KpiCards` — total hours, attendance rate, overtime, late arrivals
+- [x] `HoursByProjectChart` — bar chart
+- [x] `HoursByDepartmentChart` — bar chart
+- [x] `HoursByEmployeeChart` — bar chart
+- [x] `MonthlyTrendChart` — line chart
+- [x] `AttendanceTrendChart` — line chart
+- [x] `LeaveTrendChart` — line chart
+- [x] `BudgetConsumptionChart` — pie or stacked bar
+- [x] `AnalyticsFilters` — department, project, employee, date range pickers
+- [x] `EmployeesWorkingNow` — widget list
+- [x] `TopEmployeesWidget` / `TopProjectsWidget`
+- [x] `ExportButtons` — quick export actions
 
 ### Filters
 
-- [ ] Department dropdown (from departments API)
-- [ ] Project dropdown (from projects API)
-- [ ] Employee dropdown (from employees API)
-- [ ] Date range picker with presets (today, this week, this month, custom)
+- [x] Department dropdown (from departments API)
+- [x] Project dropdown (from projects API)
+- [x] Employee dropdown (from employees API)
+- [x] Date range picker with presets (today, this week, this month, custom)
 
 ### Navigation
 
-- [ ] Add "Analytics" to sidebar (gated by `analytics.read:team`)
+- [x] Add "Analytics" to sidebar (gated by `analytics.read:team`)
 
 ## Files to touch
 
@@ -113,12 +113,12 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] All chart types render with real API data
-- [ ] KPI cards show supervisor summary
-- [ ] Filters update all charts/widgets
-- [ ] Responsive grid layout
-- [ ] Permission-gated page access
-- [ ] `npm run build` passes
+- [x] All chart types render with real API data
+- [x] KPI cards show supervisor summary
+- [x] Filters update all charts/widgets
+- [x] Responsive grid layout
+- [x] Permission-gated page access
+- [x] `npm run build` passes
 
 ## Next task
 

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HrPortal.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform\HrPortal.SharedKernel\HrPortal.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Platform\HrPortal.Tenancy\HrPortal.Tenancy.csproj" />
+    <ProjectReference Include="..\HrPortal.Departments\HrPortal.Departments.csproj" />
+    <ProjectReference Include="..\HrPortal.Employees\HrPortal.Employees.csproj" />
+    <ProjectReference Include="..\HrPortal.Projects\HrPortal.Projects.csproj" />
+    <ProjectReference Include="..\HrPortal.Attendance\HrPortal.Attendance.csproj" />
+    <ProjectReference Include="..\HrPortal.TimeTracking\HrPortal.TimeTracking.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="CsvHelper" Version="33.0.1" />
+    <PackageReference Include="QuestPDF" Version="2024.12.3" />
+  </ItemGroup>
+
+</Project>
