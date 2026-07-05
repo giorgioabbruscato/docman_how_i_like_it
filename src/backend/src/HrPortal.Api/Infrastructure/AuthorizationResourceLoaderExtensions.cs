@@ -14,6 +14,7 @@ public static class AuthorizationResourceLoaderExtensions
         services.AddScoped<IEndpointResourceLoader, DocumentResourceLoader>();
         services.AddScoped<IEndpointResourceLoader, AttendanceResourceLoader>();
         services.AddScoped<IEndpointResourceLoader, ProjectResourceLoader>();
+        services.AddScoped<IEndpointResourceLoader, TaskResourceLoader>();
         services.AddScoped<IResourceLoader, CompositeResourceLoader>();
 
         return services;

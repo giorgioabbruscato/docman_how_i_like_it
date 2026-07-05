@@ -1,6 +1,6 @@
 # TASK 03 — TASKS MODULE
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create the `HrPortal.Tasks` module with `ProjectTask` entity, CRUD, validation, audit, and tenant isolation.
 
@@ -68,9 +68,9 @@ Read before starting:
 
 ### Module scaffold
 
-- [ ] Create `HrPortal.Tasks` under `src/backend/src/Modules/`
-- [ ] Register in `Program.cs` after `AddProjectsModule()`
-- [ ] EF schema: `tasks`
+- [x] Create `HrPortal.Tasks` under `src/backend/src/Modules/`
+- [x] Register in `Program.cs` after `AddProjectsModule()`
+- [x] EF schema: `tasks`
 
 ### Domain entity: `ProjectTask`
 
@@ -96,8 +96,8 @@ Read before starting:
 | `TaskDeleteTenant` | `task.delete:tenant` |
 | `TaskUpdateStatusSelf` | `task.update_status:self` |
 
-- [ ] `ITaskLookup` for cross-module use (TimeTracking)
-- [ ] `TaskResourceLoader` registered
+- [x] `ITaskLookup` for cross-module use (TimeTracking)
+- [x] `TaskResourceLoader` registered
 
 ### API endpoints
 
@@ -111,15 +111,15 @@ Read before starting:
 
 ### List filters
 
-- [ ] `projectId`, `status`, `priority`, `assignedEmployeeId`
-- [ ] Pagination: `page`, `pageSize`
-- [ ] Search by title
+- [x] `projectId`, `status`, `priority`, `assignedEmployeeId`
+- [x] Pagination: `page`, `pageSize`
+- [x] Search by title
 
 ### Tests
 
-- [ ] Domain unit tests
-- [ ] Validator tests
-- [ ] Integration tests: CRUD + filters + tenant isolation
+- [x] Domain unit tests
+- [x] Validator tests
+- [x] Integration tests: CRUD + filters + tenant isolation
 
 ## Files to touch
 
@@ -134,11 +134,11 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] Module builds, migrates, and registers
-- [ ] CRUD endpoints documented in Swagger
-- [ ] Filters and pagination work
-- [ ] Audit on mutations
-- [ ] `dotnet test` green
+- [x] Module builds, migrates, and registers
+- [x] CRUD endpoints documented in Swagger
+- [x] Filters and pagination work
+- [x] Audit on mutations
+- [x] `dotnet test` green
 
 ## Next task
 

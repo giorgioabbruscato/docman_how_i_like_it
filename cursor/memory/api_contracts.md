@@ -318,6 +318,80 @@ only as constants to avoid breaking references while call sites are cleaned up; 
 
 ---
 
+## Tasks — IMPLEMENTED
+
+### GET /api/v1/tasks
+
+**Auth:** `task.read:tenant`  
+**Query params:** `page` (default 1), `pageSize` (default 20, max 100), `search`, `projectId`, `status`, `priority`, `assignedEmployeeId`  
+**Response:** `200 OK`
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "projectId": "uuid",
+      "title": "Implement login",
+      "description": "OAuth integration",
+      "assignedEmployeeId": "uuid-or-null",
+      "priority": "High",
+      "status": "Todo",
+      "estimatedHours": 8,
+      "spentHours": 0,
+      "dueDate": "2025-12-31"
+    }
+  ],
+  "totalCount": 1,
+  "page": 1,
+  "pageSize": 20
+}
+```
+
+### GET /api/v1/tasks/{id}
+
+**Auth:** `task.read:tenant`  
+**Response:** `200 OK` — single ProjectTaskDto  
+**Errors:** `404` if not found
+
+### POST /api/v1/tasks
+
+**Auth:** `task.create:tenant`  
+**Request:**
+
+```json
+{
+  "projectId": "uuid",
+  "title": "Implement login",
+  "priority": "High",
+  "status": "Todo",
+  "description": "OAuth integration",
+  "assignedEmployeeId": "uuid-or-null",
+  "estimatedHours": 8,
+  "dueDate": "2025-12-31"
+}
+```
+
+**Response:** `201 Created` — ProjectTaskDto  
+**Errors:** `404` if project or employee not found/inactive  
+**Audit:** `task.created`
+
+### PUT /api/v1/tasks/{id}
+
+**Auth:** `task.update:tenant`  
+**Request:** same shape as POST plus `spentHours`  
+**Response:** `200 OK` — ProjectTaskDto  
+**Audit:** `task.updated`
+
+### DELETE /api/v1/tasks/{id}
+
+**Auth:** `task.delete:tenant`  
+**Action:** Hard delete  
+**Response:** `204 No Content`  
+**Audit:** `task.deleted`
+
+---
+
 ## Leave Requests
 
 ### GET /api/v1/leave-requests

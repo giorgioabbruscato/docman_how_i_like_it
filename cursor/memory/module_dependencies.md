@@ -12,6 +12,7 @@ Departments  (no module dependencies)
 Employees
     ↑
     ├── Projects
+    │       └── Tasks
     ├── Leave        (+ Notifications)
     ├── Attendance
     └── Documents    (+ Storage)
@@ -25,6 +26,8 @@ The graph is a DAG: no module references another module transitively back to its
 |----------|----------|-----------|---------|
 | Employees | Departments | `IDepartmentLookup` | Validate department on create/update |
 | Projects | Employees | `IEmployeeLookup` | Validate employee on project member assignment |
+| Tasks | Projects | `IProjectLookup` | Validate project on task create/update |
+| Tasks | Employees | `IEmployeeLookup` | Validate assignee on task create/update |
 | Leave | Employees | `IEmployeeLookup` | Validate employee on leave request |
 | Attendance | Employees | `IEmployeeLookup` | Validate employee on clock-in/out |
 | Documents | Employees | `IEmployeeLookup` | Validate employee on document upload |
@@ -36,6 +39,7 @@ The graph is a DAG: no module references another module transitively back to its
 | `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync(Guid departmentId)` |
 | `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync(Guid employeeId)` |
 | `IProjectLookup` | Projects | `ExistsAsync(Guid projectId)` |
+| `ITaskLookup` | Tasks | `ExistsAsync(Guid taskId)` |
 
 Implementations live in the provider's application service (`IDepartmentService`, `IEmployeeService`) or dedicated lookup class (`ProjectLookup`) and are registered in `{Module}ServiceCollectionExtensions`.
 
@@ -64,6 +68,6 @@ Implementations live in the provider's application service (`IDepartmentService`
 ```
 AddTenancy → AddHrPortalIdentity → AddHrPortalAccessControl
 → AddHrPortalAuthorization → AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalAudit
-→ AddDepartmentsModule → AddEmployeesModule → AddProjectsModule
+→ AddDepartmentsModule → AddEmployeesModule → AddProjectsModule → AddTasksModule
 → AddLeaveModule → AddAttendanceModule → AddDocumentsModule
 ```

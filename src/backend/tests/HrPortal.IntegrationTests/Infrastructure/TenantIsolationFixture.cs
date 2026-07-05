@@ -121,6 +121,22 @@ public static class TenantIsolationFixture
         return body!.Id;
     }
 
+    public static async Task<Guid> CreateProjectTaskAsync(HttpClient client, string? titlePrefix = null)
+    {
+        var projectId = await CreateProjectAsync(client, titlePrefix);
+        var title = $"{titlePrefix ?? "task"}-{Guid.NewGuid():N}"[..30];
+        var response = await client.PostAsJsonAsync("/api/v1/tasks", new
+        {
+            projectId,
+            title,
+            priority = "Medium",
+            status = "Todo"
+        });
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<IdResponse>();
+        return body!.Id;
+    }
+
     public static async Task<Guid> CreateLeaveRequestAsync(HttpClient client, Guid employeeId)
     {
         var employeeUserId = Guid.NewGuid();

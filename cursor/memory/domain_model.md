@@ -359,6 +359,39 @@ Sole identity object for application services. Enriched per request by `TenantCo
 
 ---
 
+### ProjectTask — IMPLEMENTED
+
+**Location:** `HrPortal.Tasks.Domain`  
+**Schema:** `tasks`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| ProjectId | Guid | Validated via `IProjectLookup` |
+| Title | string | Required, max 300 |
+| Description | string? | Optional |
+| AssignedEmployeeId | Guid? | Validated via `IEmployeeLookup` when set |
+| Priority | TaskPriority | Low, Medium, High, Critical |
+| Status | TaskStatus | Todo, InProgress, Review, Done |
+| EstimatedHours | decimal? | >= 0 |
+| SpentHours | decimal | >= 0, default 0 |
+| DueDate | DateOnly? | Optional |
+
+**Factory:** `ProjectTask.Create(tenantId, projectId, title, priority, status?, ...)`  
+**Methods:** `Update(...)`
+
+**Enums:**
+- `TaskPriority`: Low, Medium, High, Critical
+- `TaskStatus`: Todo, InProgress, Review, Done
+
+**Business rules:**
+- ProjectId validated via `IProjectLookup.ExistsAsync`
+- AssignedEmployeeId validated via `IEmployeeLookup.ExistsAndIsActiveAsync` when set
+- Delete is hard delete (no soft-delete flag)
+
+**Cross-module interface:** `ITaskLookup.ExistsAsync(taskId)`
+
+---
+
 ## Entity relationship diagram
 
 ```
@@ -376,8 +409,10 @@ Tenant (platform)
   │       ├── AttendanceRecord (attendance)
   │       ├── Document (documents)
   │       └── ProjectMember (projects) ──→ Project (projects)
+  │               └── ProjectTask (tasks) ──→ Project (via IProjectLookup)
   │
   ├── Project (projects)
+  │       └── ProjectTask (tasks)
   │
   └── Department (departments)
         └── ParentDepartmentId → Department (self-ref)
@@ -394,3 +429,4 @@ See also: `cursor/memory/module_dependencies.md` for the full dependency graph.
 | `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync(Guid departmentId)` |
 | `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync(Guid employeeId)` |
 | `IProjectLookup` | Projects | `ExistsAsync(Guid projectId)` |
+| `ITaskLookup` | Tasks | `ExistsAsync(Guid taskId)` |

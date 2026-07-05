@@ -45,6 +45,13 @@ public static class Permissions
     public const string MembershipUpdateTenant = "membership.update:tenant";
     public const string MembershipDeleteTenant = "membership.delete:tenant";
 
+    // Tasks
+    public const string TaskReadTenant = "task.read:tenant";
+    public const string TaskCreateTenant = "task.create:tenant";
+    public const string TaskUpdateTenant = "task.update:tenant";
+    public const string TaskDeleteTenant = "task.delete:tenant";
+    public const string TaskUpdateStatusSelf = "task.update_status:self";
+
     // Projects
     public const string ProjectReadTenant = "project.read:tenant";
     public const string ProjectCreateTenant = "project.create:tenant";
@@ -79,6 +86,7 @@ public static class Permissions
         RoleReadTenant, RoleCreateTenant, RoleUpdateTenant, RoleDeleteTenant,
         MembershipReadTenant, MembershipCreateTenant, MembershipUpdateTenant, MembershipDeleteTenant,
         ProjectReadTenant, ProjectCreateTenant, ProjectUpdateTenant, ProjectDeleteTenant, ProjectManageMembersTenant,
+        TaskReadTenant, TaskCreateTenant, TaskUpdateTenant, TaskDeleteTenant, TaskUpdateStatusSelf,
         AuditReadTenant
     ];
 }

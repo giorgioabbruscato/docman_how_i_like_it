@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Modules\HrPortal.Employees\HrPortal.Employees.csproj" />
     <ProjectReference Include="..\..\src\Modules\HrPortal.Projects\HrPortal.Projects.csproj" />
+    <ProjectReference Include="..\..\src\Modules\HrPortal.Tasks\HrPortal.Tasks.csproj" />
     <ProjectReference Include="..\..\src\Modules\HrPortal.Departments\HrPortal.Departments.csproj" />
     <ProjectReference Include="..\..\src\Modules\HrPortal.Leave\HrPortal.Leave.csproj" />
     <ProjectReference Include="..\..\src\Modules\HrPortal.Attendance\HrPortal.Attendance.csproj" />
