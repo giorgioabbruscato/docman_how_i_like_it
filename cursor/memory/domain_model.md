@@ -469,3 +469,26 @@ See also: `cursor/memory/module_dependencies.md` for the full dependency graph.
 | `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync`, `GetActiveEmployeeIdsInDepartmentAsync`, `GetFullNameAsync` |
 | `IProjectLookup` | Projects | `ExistsAsync`, `GetNameAsync` |
 | `ITaskLookup` | Tasks | `ExistsAsync`, `GetTitleAsync` |
+
+---
+
+## Analytics query models (read-only, not entities) — IMPLEMENTED (Tasks 13–15)
+
+**Module:** `HrPortal.Analytics.Application.Dtos`  
+No EF entities — KPI/chart/supervisor DTOs only.
+
+| DTO | Purpose |
+|-----|---------|
+| `AnalyticsQueryParams` | Shared filters: departmentId, projectId, employeeId, fromDate, toDate |
+| `AnalyticsFilter` | Resolved scope + date range + allowed employee IDs |
+| `NamedHoursRow`, `DateHoursRow`, `MonthHoursRow` | KPI breakdown rows |
+| `SupervisorSummaryDto` | All supervisor widget sections in one response |
+| `EmployeeWorkingDto`, `AttendanceTodayDto`, `TopEmployeeDto`, `TopProjectDto` | Supervisor widgets |
+| `BudgetUsageDto`, `LateArrivalDto`, `OvertimeEmployeeDto` | Supervisor widgets |
+| `ChartResponseDto` / `ChartDatasetDto` | `{ labels, datasets }` chart JSON |
+
+**Options:** `AnalyticsOptions` — `DailyStandardMinutes` (480), `LateCheckInTime` (09:00 UTC), Mon–Fri workdays.
+
+**Permissions:** `analytics.read:team` (Manager), `analytics.read:tenant` (HR/Admin).
+
+**Feature gate:** `FeatureKeys.AdvancedReports` (Enterprise plan; mirrored from audit log pattern).

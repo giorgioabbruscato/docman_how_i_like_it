@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HrPortal.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform\HrPortal.SharedKernel\HrPortal.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Platform\HrPortal.Tenancy\HrPortal.Tenancy.csproj" />
+    <ProjectReference Include="..\HrPortal.Departments\HrPortal.Departments.csproj" />
+    <ProjectReference Include="..\HrPortal.Employees\HrPortal.Employees.csproj" />
+    <ProjectReference Include="..\HrPortal.TimeTracking\HrPortal.TimeTracking.csproj" />
+    <ProjectReference Include="..\HrPortal.Attendance\HrPortal.Attendance.csproj" />
+    <ProjectReference Include="..\HrPortal.Leave\HrPortal.Leave.csproj" />
+    <ProjectReference Include="..\HrPortal.Projects\HrPortal.Projects.csproj" />
+    <ProjectReference Include="..\HrPortal.Tasks\HrPortal.Tasks.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+  </ItemGroup>
+
+</Project>

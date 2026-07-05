@@ -903,6 +903,70 @@ paginated table). Nav link in `app-layout.tsx` is visible only when
 
 ---
 
+## Analytics — IMPLEMENTED (Tasks 13–15)
+
+**Auth:** `[RequireAnyPermission(analytics.read:team, analytics.read:tenant)]` for most endpoints;  
+`GET .../supervisor/budget-usage` requires `analytics.read:tenant` only.  
+**Feature gate:** `FeatureKeys.AdvancedReports` (Enterprise) — returns `403` when disabled.
+
+**Shared query params (all endpoints):** `departmentId`, `projectId`, `employeeId`, `fromDate`, `toDate`  
+Default date range when omitted: current calendar month (UTC).
+
+### Supervisor dashboard
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/v1/analytics/supervisor/summary` | team or tenant |
+| GET | `/api/v1/analytics/supervisor/employees-working` | team or tenant |
+| GET | `/api/v1/analytics/supervisor/attendance-today` | team or tenant |
+| GET | `/api/v1/analytics/supervisor/top-employees` | team or tenant |
+| GET | `/api/v1/analytics/supervisor/top-projects` | team or tenant |
+| GET | `/api/v1/analytics/supervisor/budget-usage` | tenant only |
+| GET | `/api/v1/analytics/supervisor/late-arrivals` | team or tenant |
+| GET | `/api/v1/analytics/supervisor/overtime` | team or tenant |
+
+**Summary response (`SupervisorSummaryDto`):**
+
+```json
+{
+  "employeesWorking": [{ "employeeId": "uuid", "employeeName": "Jane Doe", "projectId": null, "projectName": null, "checkInTime": "2026-07-05T08:00:00Z" }],
+  "attendanceToday": [{ "employeeId": "uuid", "employeeName": "Jane Doe", "checkInTime": "2026-07-05T08:00:00Z" }],
+  "topEmployees": [{ "employeeId": "uuid", "employeeName": "Jane Doe", "hours": 40.0 }],
+  "topProjects": [{ "projectId": "uuid", "projectName": "Portal", "hours": 120.0 }],
+  "budgetUsage": [{ "projectId": "uuid", "projectName": "Portal", "budgetHours": 200, "spentHours": 80, "budgetCost": 10000, "actualCost": 4000 }],
+  "lateArrivals": [],
+  "overtime": [{ "employeeId": "uuid", "employeeName": "Jane Doe", "overtimeHours": 2.5 }],
+  "totalWorkedHours": 160.0,
+  "attendanceRate": 0.85,
+  "leaveRate": 0.05
+}
+```
+
+### Charts
+
+| Method | Path | Chart type |
+|--------|------|------------|
+| GET | `/api/v1/analytics/charts/hours-by-project` | Bar |
+| GET | `/api/v1/analytics/charts/hours-by-department` | Bar |
+| GET | `/api/v1/analytics/charts/hours-by-employee` | Bar |
+| GET | `/api/v1/analytics/charts/hours-by-month` | Line |
+| GET | `/api/v1/analytics/charts/attendance-trend` | Line |
+| GET | `/api/v1/analytics/charts/leave-trend` | Line |
+| GET | `/api/v1/analytics/charts/budget-consumption` | Bar (used vs remaining) |
+
+**Chart response shape:**
+
+```json
+{
+  "labels": ["Jan 2026", "Feb 2026"],
+  "datasets": [{ "label": "Hours", "data": [120, 150] }]
+}
+```
+
+Empty data returns `{ "labels": [], "datasets": [] }` (never null).
+
+---
+
 ## Auth flow
 
 ```

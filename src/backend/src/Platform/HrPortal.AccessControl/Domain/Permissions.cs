@@ -70,6 +70,10 @@ public static class Permissions
     public const string ProjectDeleteTenant = "project.delete:tenant";
     public const string ProjectManageMembersTenant = "project.manage_members:tenant";
 
+    // Analytics
+    public const string AnalyticsReadTeam = "analytics.read:team";
+    public const string AnalyticsReadTenant = "analytics.read:tenant";
+
     // Audit
     public const string AuditReadTenant = "audit.read:tenant";
 
@@ -102,6 +106,7 @@ public static class Permissions
         TimeEntryReadSelf, TimeEntryReadTeam, TimeEntryReadTenant,
         TimeEntryCreateSelf, TimeEntryUpdateSelf, TimeEntryDeleteSelf,
         TimeEntryExportTeam, TimeEntryExportTenant,
+        AnalyticsReadTeam, AnalyticsReadTenant,
         AuditReadTenant
     ];
 }

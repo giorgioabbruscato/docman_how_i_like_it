@@ -85,6 +85,18 @@ public sealed class ExamplesOperationFilter : IOperationFilter
             case ("/api/v1/documents", "POST"):
                 SetResponseExample(operation, "201", OpenApiExamples.Document);
                 break;
+            case ("/api/v1/analytics/supervisor/summary", "GET"):
+                SetResponseExample(operation, "200", OpenApiExamples.AnalyticsSupervisorSummary);
+                break;
+            case ("/api/v1/analytics/charts/hours-by-project", "GET"):
+            case ("/api/v1/analytics/charts/hours-by-department", "GET"):
+            case ("/api/v1/analytics/charts/hours-by-employee", "GET"):
+            case ("/api/v1/analytics/charts/hours-by-month", "GET"):
+            case ("/api/v1/analytics/charts/attendance-trend", "GET"):
+            case ("/api/v1/analytics/charts/leave-trend", "GET"):
+            case ("/api/v1/analytics/charts/budget-consumption", "GET"):
+                SetResponseExample(operation, "200", OpenApiExamples.AnalyticsChart);
+                break;
         }
     }
 

@@ -3,6 +3,7 @@ using HrPortal.TimeTracking.Application;
 using HrPortal.TimeTracking.Application.Commands;
 using HrPortal.TimeTracking.Application.Queries;
 using HrPortal.TimeTracking.Application.Validators;
+using HrPortal.TimeTracking.Infrastructure.Analytics;
 using HrPortal.TimeTracking.Infrastructure.Export;
 using HrPortal.TimeTracking.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ public static class TimeTrackingServiceCollectionExtensions
     {
         services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
         services.AddScoped<ITimeEntryExportService, TimeEntryExportService>();
+        services.AddScoped<ITimeEntryAnalyticsProvider, TimeEntryAnalyticsProvider>();
 
         services.AddScoped<CreateTimeEntryCommandHandler>();
         services.AddScoped<UpdateTimeEntryCommandHandler>();

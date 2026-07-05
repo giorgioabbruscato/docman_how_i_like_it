@@ -59,6 +59,34 @@ internal sealed class EmployeeRepository : IEmployeeRepository
             .Select(e => e.Id)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, Guid?>> GetDepartmentIdsByEmployeeIdsAsync(
+        IReadOnlyList<Guid> employeeIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (employeeIds.Count == 0)
+            return new Dictionary<Guid, Guid?>();
+
+        return await _dbContext.Set<Employee>()
+            .ApplyTenantScope(_accessor.Current)
+            .Where(e => employeeIds.Contains(e.Id))
+            .Select(e => new { e.Id, e.DepartmentId })
+            .ToDictionaryAsync(e => e.Id, e => e.DepartmentId, cancellationToken);
+    }
+
+    public async Task<int> CountActiveEmployeesAsync(
+        IReadOnlyList<Guid>? restrictToEmployeeIds,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.Set<Employee>()
+            .ApplyTenantScope(_accessor.Current)
+            .Where(e => e.IsActive);
+
+        if (restrictToEmployeeIds is not null)
+            query = query.Where(e => restrictToEmployeeIds.Contains(e.Id));
+
+        return await query.CountAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Employee employee, CancellationToken cancellationToken = default) =>
         await _dbContext.Set<Employee>().AddAsync(employee, cancellationToken);
 

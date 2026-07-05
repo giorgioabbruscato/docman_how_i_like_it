@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using HrPortal.Api.Infrastructure.Persistence;
 using HrPortal.AccessControl;
+using HrPortal.Analytics;
 using HrPortal.AccessControl.Infrastructure;
 using HrPortal.Attendance;
 using HrPortal.Audit;
@@ -115,6 +116,7 @@ builder.Services.AddTasksModule();
 builder.Services.AddTimeTrackingModule();
 builder.Services.AddLeaveModule();
 builder.Services.AddAttendanceModule();
+builder.Services.AddAnalyticsModule();
 builder.Services.AddDocumentsModule();
 
 var corsOptions = builder.Configuration

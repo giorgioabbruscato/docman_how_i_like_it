@@ -4,6 +4,7 @@ using HrPortal.Tasks.Application.Commands;
 using HrPortal.Tasks.Application.Queries;
 using HrPortal.Tasks.Application.Validators;
 using HrPortal.Tasks.Infrastructure;
+using HrPortal.Tasks.Infrastructure.Analytics;
 using HrPortal.Tasks.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +16,7 @@ public static class TasksServiceCollectionExtensions
     {
         services.AddScoped<IProjectTaskRepository, ProjectTaskRepository>();
         services.AddScoped<ITaskLookup, TaskLookup>();
+        services.AddScoped<ITaskAnalyticsProvider, TaskAnalyticsProvider>();
 
         services.AddScoped<CreateProjectTaskCommandHandler>();
         services.AddScoped<UpdateProjectTaskCommandHandler>();

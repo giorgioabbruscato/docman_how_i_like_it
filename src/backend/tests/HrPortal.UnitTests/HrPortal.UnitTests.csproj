@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\HrPortal.Analytics\HrPortal.Analytics.csproj" />
     <ProjectReference Include="..\..\src\Modules\HrPortal.Employees\HrPortal.Employees.csproj" />
     <ProjectReference Include="..\..\src\Modules\HrPortal.Projects\HrPortal.Projects.csproj" />
     <ProjectReference Include="..\..\src\Modules\HrPortal.Tasks\HrPortal.Tasks.csproj" />

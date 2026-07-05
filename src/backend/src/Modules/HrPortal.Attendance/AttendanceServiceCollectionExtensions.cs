@@ -2,6 +2,7 @@ using HrPortal.Attendance.Application;
 using HrPortal.Attendance.Application.Commands;
 using HrPortal.Attendance.Application.Queries;
 using HrPortal.Attendance.Application.Validators;
+using HrPortal.Attendance.Infrastructure.Analytics;
 using HrPortal.Attendance.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ public static class AttendanceServiceCollectionExtensions
     public static IServiceCollection AddAttendanceModule(this IServiceCollection services)
     {
         services.AddScoped<IAttendanceSessionRepository, AttendanceSessionRepository>();
+        services.AddScoped<IAttendanceAnalyticsProvider, AttendanceAnalyticsProvider>();
 
         services.AddScoped<CheckInCommandHandler>();
         services.AddScoped<CheckOutCommandHandler>();

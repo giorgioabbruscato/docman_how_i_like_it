@@ -1,5 +1,6 @@
 using HrPortal.Leave.Application;
 using HrPortal.Leave.Application.Validators;
+using HrPortal.Leave.Infrastructure.Analytics;
 using HrPortal.Leave.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,7 @@ public static class LeaveServiceCollectionExtensions
     {
         services.AddScoped<ILeaveRequestRepository, LeaveRequestRepository>();
         services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+        services.AddScoped<ILeaveAnalyticsProvider, LeaveAnalyticsProvider>();
         services.AddValidatorsFromAssemblyContaining<CreateLeaveRequestValidator>();
         return services;
     }

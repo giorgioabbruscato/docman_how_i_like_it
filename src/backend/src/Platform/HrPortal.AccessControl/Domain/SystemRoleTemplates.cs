@@ -56,7 +56,8 @@ public static class SystemRoleTemplates
         Permissions.TimeEntryCreateSelf,
         Permissions.TimeEntryUpdateSelf,
         Permissions.TimeEntryDeleteSelf,
-        Permissions.TimeEntryExportTenant
+        Permissions.TimeEntryExportTenant,
+        Permissions.AnalyticsReadTenant
     ];
 
     private static readonly IReadOnlyList<string> ManagerPermissions =
@@ -81,7 +82,8 @@ public static class SystemRoleTemplates
         Permissions.TimeEntryCreateSelf,
         Permissions.TimeEntryUpdateSelf,
         Permissions.TimeEntryDeleteSelf,
-        Permissions.TimeEntryExportTeam
+        Permissions.TimeEntryExportTeam,
+        Permissions.AnalyticsReadTeam
     ];
 
     private static readonly IReadOnlyList<string> EmployeePermissions =

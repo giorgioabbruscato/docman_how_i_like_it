@@ -242,4 +242,39 @@ internal static class OpenApiExamples
         ["uploadedAt"] = SampleDateTime,
         ["uploadedBy"] = SampleUuid
     };
+
+    public static readonly OpenApiObject AnalyticsSupervisorSummary = new()
+    {
+        ["employeesWorking"] = new OpenApiArray(),
+        ["attendanceToday"] = new OpenApiArray(),
+        ["topEmployees"] = new OpenApiArray
+        {
+            new OpenApiObject
+            {
+                ["employeeId"] = SampleUuid,
+                ["employeeName"] = new OpenApiString("Jane Doe"),
+                ["hours"] = new OpenApiDouble(40)
+            }
+        },
+        ["topProjects"] = new OpenApiArray(),
+        ["budgetUsage"] = new OpenApiArray(),
+        ["lateArrivals"] = new OpenApiArray(),
+        ["overtime"] = new OpenApiArray(),
+        ["totalWorkedHours"] = new OpenApiDouble(160),
+        ["attendanceRate"] = new OpenApiDouble(0.85),
+        ["leaveRate"] = new OpenApiDouble(0.05)
+    };
+
+    public static readonly OpenApiObject AnalyticsChart = new()
+    {
+        ["labels"] = new OpenApiArray { new OpenApiString("Jan 2026"), new OpenApiString("Feb 2026") },
+        ["datasets"] = new OpenApiArray
+        {
+            new OpenApiObject
+            {
+                ["label"] = new OpenApiString("Hours"),
+                ["data"] = new OpenApiArray { new OpenApiDouble(120), new OpenApiDouble(150) }
+            }
+        }
+    };
 }

@@ -1,6 +1,6 @@
 # TASK 15 — CHARTS API
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create analytics chart endpoints returning JSON ready for frontend chart libraries.
 

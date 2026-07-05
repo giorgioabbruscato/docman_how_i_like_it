@@ -1,6 +1,6 @@
 # TASK 14 — SUPERVISOR DASHBOARD
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create supervisor dashboard API endpoints with widget data and filters.
 

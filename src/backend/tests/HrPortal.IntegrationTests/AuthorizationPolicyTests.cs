@@ -367,6 +367,28 @@ public sealed class AuthorizationPolicyTests : IntegrationTestBase
         response.StatusCode.Should().Be(expectedStatus);
     }
 
+    [Theory]
+    [MemberData(nameof(AnalyticsSummaryPolicyCases))]
+    public async Task GetAnalyticsSummary_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync("/api/v1/analytics/supervisor/summary");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
+    [Theory]
+    [MemberData(nameof(AnalyticsBudgetPolicyCases))]
+    public async Task GetAnalyticsBudgetUsage_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync("/api/v1/analytics/supervisor/budget-usage");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
     public static TheoryData<string?, HttpStatusCode> GetEmployeesPolicyCases() => new()
     {
         { null, HttpStatusCode.Unauthorized },
@@ -503,6 +525,24 @@ public sealed class AuthorizationPolicyTests : IntegrationTestBase
     };
 
     public static TheoryData<string?, HttpStatusCode> TimeEntryListPolicyCases() => new()
+    {
+        { null, HttpStatusCode.Unauthorized },
+        { "employee", HttpStatusCode.Forbidden },
+        { "manager", HttpStatusCode.Forbidden },
+        { "hr", HttpStatusCode.OK },
+        { "admin", HttpStatusCode.OK }
+    };
+
+    public static TheoryData<string?, HttpStatusCode> AnalyticsSummaryPolicyCases() => new()
+    {
+        { null, HttpStatusCode.Unauthorized },
+        { "employee", HttpStatusCode.Forbidden },
+        { "manager", HttpStatusCode.Forbidden },
+        { "hr", HttpStatusCode.OK },
+        { "admin", HttpStatusCode.OK }
+    };
+
+    public static TheoryData<string?, HttpStatusCode> AnalyticsBudgetPolicyCases() => new()
     {
         { null, HttpStatusCode.Unauthorized },
         { "employee", HttpStatusCode.Forbidden },

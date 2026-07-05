@@ -16,7 +16,9 @@ Employees
     │               └── TimeTracking
     ├── Leave        (+ Notifications)
     ├── Attendance
-    └── Documents    (+ Storage)
+    ├── Documents    (+ Storage)
+    └── Analytics    (read-only; aggregates via provider interfaces)
+            ↑ depends on: Departments, Employees, TimeTracking, Attendance, Leave, Projects, Tasks
 ```
 
 The graph is a DAG: no module references another module transitively back to itself.
@@ -35,15 +37,27 @@ The graph is a DAG: no module references another module transitively back to its
 | Leave | Employees | `IEmployeeLookup` | Validate employee on leave request |
 | Attendance | Employees | `IEmployeeLookup` | Validate employee on clock-in/out |
 | Documents | Employees | `IEmployeeLookup` | Validate employee on document upload |
+| Analytics | Departments | `IDepartmentLookup` | Enrich department breakdown labels |
+| Analytics | Employees | `IEmployeeLookup` | Read scope, names, department batch lookup |
+| Analytics | TimeTracking | `ITimeEntryAnalyticsProvider` | Hours KPIs, overtime, active timers |
+| Analytics | Attendance | `IAttendanceAnalyticsProvider` | Attendance rate, late check-ins, open sessions |
+| Analytics | Leave | `ILeaveAnalyticsProvider` | Leave rate, monthly leave trend |
+| Analytics | Projects | `IProjectAnalyticsProvider` | Budget snapshots, member hourly rates |
+| Analytics | Tasks | `ITaskAnalyticsProvider` | Task spent hours by project |
 
 ## Lookup interface contracts
 
 | Interface | Provider module | Method |
 |-----------|-----------------|--------|
-| `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync(Guid departmentId)` |
-| `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync`, `GetActiveEmployeeIdsInDepartmentAsync`, `GetFullNameAsync` |
+| `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync`, `GetNameAsync` |
+| `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync`, `GetActiveEmployeeIdsInDepartmentAsync`, `GetFullNameAsync`, `GetDepartmentIdsAsync`, `CountActiveEmployeesAsync` |
 | `IProjectLookup` | Projects | `ExistsAsync`, `GetNameAsync` |
 | `ITaskLookup` | Tasks | `ExistsAsync`, `GetTitleAsync` |
+| `ITimeEntryAnalyticsProvider` | TimeTracking | Aggregated minutes, overtime, active timers |
+| `IAttendanceAnalyticsProvider` | Attendance | Sessions, late check-ins, present employee-days |
+| `ILeaveAnalyticsProvider` | Leave | Approved leave days, monthly trend |
+| `IProjectAnalyticsProvider` | Projects | Budget snapshots, member hourly rates |
+| `ITaskAnalyticsProvider` | Tasks | Task spent hours by project |
 
 Implementations live in the provider's application service (`IDepartmentService`, `IEmployeeService`) or dedicated lookup class (`ProjectLookup`, `TaskLookup`) and are registered in `{Module}ServiceCollectionExtensions`.
 
@@ -73,5 +87,5 @@ Implementations live in the provider's application service (`IDepartmentService`
 AddTenancy → AddHrPortalIdentity → AddHrPortalAccessControl
 → AddHrPortalAuthorization → AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalAudit
 → AddDepartmentsModule → AddEmployeesModule → AddProjectsModule → AddTasksModule
-→ AddTimeTrackingModule → AddLeaveModule → AddAttendanceModule → AddDocumentsModule
+→ AddTimeTrackingModule → AddLeaveModule → AddAttendanceModule → AddAnalyticsModule → AddDocumentsModule
 ```

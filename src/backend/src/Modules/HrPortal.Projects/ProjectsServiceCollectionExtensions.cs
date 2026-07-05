@@ -4,6 +4,7 @@ using HrPortal.Projects.Application.Commands;
 using HrPortal.Projects.Application.Queries;
 using HrPortal.Projects.Application.Validators;
 using HrPortal.Projects.Infrastructure;
+using HrPortal.Projects.Infrastructure.Analytics;
 using HrPortal.Projects.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,7 @@ public static class ProjectsServiceCollectionExtensions
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
         services.AddScoped<IProjectLookup, ProjectLookup>();
+        services.AddScoped<IProjectAnalyticsProvider, ProjectAnalyticsProvider>();
 
         services.AddScoped<CreateProjectCommandHandler>();
         services.AddScoped<UpdateProjectCommandHandler>();

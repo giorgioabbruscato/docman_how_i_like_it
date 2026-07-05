@@ -6,4 +6,5 @@ namespace HrPortal.Departments.Application;
 public interface IDepartmentLookup
 {
     Task<bool> ExistsAndIsActiveAsync(Guid departmentId, CancellationToken cancellationToken = default);
+    Task<string?> GetNameAsync(Guid departmentId, CancellationToken cancellationToken = default);
 }

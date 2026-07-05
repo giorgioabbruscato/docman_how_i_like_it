@@ -149,6 +149,12 @@ internal sealed class DepartmentService : IDepartmentService, IDepartmentLookup
         return department is not null && department.IsActive;
     }
 
+    public async Task<string?> GetNameAsync(Guid departmentId, CancellationToken cancellationToken = default)
+    {
+        var department = await _repository.GetByIdAsync(departmentId, cancellationToken);
+        return department?.Name;
+    }
+
     private async Task<Result> ValidateParentDepartmentAsync(
         Guid? parentDepartmentId,
         Guid? currentDepartmentId,
