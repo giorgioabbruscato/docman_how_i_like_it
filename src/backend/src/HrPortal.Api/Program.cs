@@ -5,6 +5,7 @@ using HrPortal.Api.Infrastructure.OpenApi;
 using System.Reflection;
 using HrPortal.Api.Infrastructure.Persistence;
 using HrPortal.AccessControl;
+using HrPortal.AccessControl.Infrastructure;
 using HrPortal.Attendance;
 using HrPortal.Audit;
 using HrPortal.Authorization;
@@ -18,7 +19,6 @@ using HrPortal.Notifications;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.Storage;
 using HrPortal.Tenancy;
-using HrPortal.Tenancy.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -195,7 +195,7 @@ if (!app.Environment.IsEnvironment("Testing"))
     app.UseRateLimiter();
 
 app.UseAuthentication();
-app.UseMiddleware<TenantResolverMiddleware>();
+app.UseMiddleware<RequestContextMiddleware>();
 app.UseAuthorization();
 
 if (app.Environment.IsEnvironment("Testing"))

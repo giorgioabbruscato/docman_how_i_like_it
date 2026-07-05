@@ -1,6 +1,6 @@
 # TASK 15 — REQUEST PIPELINE INTEGRATION
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Wire the unified request context middleware and replace the legacy tenant-only middleware pipeline.
 
@@ -69,14 +69,14 @@ Read before starting:
 
 ### Middleware
 
-- [ ] Create `RequestContextMiddleware` (or extend `TenantResolverMiddleware`):
+- [x] Create `RequestContextMiddleware` (or extend `TenantResolverMiddleware`):
   1. Resolve tenant slug (respecting single/multi mode)
   2. Load tenant from DB; reject inactive/suspended
   3. Set base `TenantContext` on accessor
   4. If authenticated: enrich via `TenantContextFactory`
   5. Validate membership (multi mode): 403 if no access
   6. Platform admin routes: validate `IsPlatformAdmin`
-- [ ] `MembershipMiddleware` logic merged or chained as needed
+- [x] `MembershipMiddleware` logic merged or chained as needed
 
 ### Pipeline order (Program.cs)
 
@@ -87,23 +87,23 @@ Authentication
 → Controllers
 ```
 
-- [ ] Remove standalone `TenantResolverMiddleware` if superseded
-- [ ] Register `AddHrPortalAccessControl()` before pipeline wiring
+- [x] Remove standalone `TenantResolverMiddleware` if superseded
+- [x] Register `AddHrPortalAccessControl()` before pipeline wiring
 
 ### Excluded paths (no tenant required)
 
-- [ ] `/health`, `/ready`, `/swagger`
-- [ ] `/api/v1/tenants` (registration/listing)
-- [ ] `/api/v1/platform/*` (platform admin — tenant optional)
+- [x] `/health`, `/ready`, `/swagger`
+- [x] `/api/v1/tenants` (registration/listing)
+- [x] `/api/v1/platform/*` (platform admin — tenant optional)
 
 ### HttpContext.Items
 
-- [ ] Store enriched `TenantContext` in `HttpContext.Items` for debugging/tests
+- [x] Store enriched `TenantContext` in `HttpContext.Items` for debugging/tests
 
 ### DI
 
-- [ ] `services.AddScoped<TenantContext>(sp => accessor.Current)` remains valid
-- [ ] Scoped `TenantContext` reflects enriched context after middleware
+- [x] `services.AddScoped<TenantContext>(sp => accessor.Current)` remains valid
+- [x] Scoped `TenantContext` reflects enriched context after middleware
 
 ## Files to touch
 
@@ -116,11 +116,11 @@ Authentication
 
 ## Acceptance criteria
 
-- [ ] Pipeline order matches ADR-012 diagram
-- [ ] Authenticated user without tenant membership gets 403 in multi mode
-- [ ] Platform admin can access `/api/v1/platform/tenants`
-- [ ] Existing integration tests pass (update test setup if needed)
-- [ ] `dotnet build && dotnet test` green
+- [x] Pipeline order matches ADR-012 diagram
+- [x] Authenticated user without tenant membership gets 403 in multi mode
+- [x] Platform admin can access `/api/v1/platform/tenants`
+- [x] Existing integration tests pass (update test setup if needed)
+- [x] `dotnet build && dotnet test` green
 
 ## Next task
 
