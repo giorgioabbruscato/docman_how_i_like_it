@@ -59,6 +59,8 @@ services:
       Keycloak__ValidIssuers__0: http://keycloak:8080/realms/hrportal
       Keycloak__ValidIssuers__1: http://localhost:8080/realms/hrportal
       Keycloak__ValidIssuers__2: http://localhost/realms/hrportal
+      Tenancy__Mode: ${TENANCY__MODE:-Multi}
+      Tenancy__DefaultTenantSlug: ${TENANCY__DEFAULTTENANTSLUG:-demo}
       Tenancy__TenantHeaderName: X-Tenant-Id
       Tenancy__UseSubdomainResolution: "false"
       Storage__RootPath: /app/storage

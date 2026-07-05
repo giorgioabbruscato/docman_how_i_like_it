@@ -1,3 +1,4 @@
+using HrPortal.Tenancy;
 using HrPortal.Tenancy.Infrastructure;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
@@ -7,23 +8,27 @@ namespace HrPortal.Api.Infrastructure.OpenApi;
 
 public sealed class TenantHeaderOperationFilter : IOperationFilter
 {
-    private readonly string _tenantHeaderName;
+    private readonly TenantResolverOptions _options;
 
     public TenantHeaderOperationFilter(IOptions<TenantResolverOptions> options) =>
-        _tenantHeaderName = options.Value.TenantHeaderName;
+        _options = options.Value;
 
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         if (IsExcludedPath(context.ApiDescription.RelativePath))
             return;
 
+        var isSingleMode = _options.Mode == TenantDeploymentMode.Single;
+
         operation.Parameters ??= [];
         operation.Parameters.Add(new OpenApiParameter
         {
-            Name = _tenantHeaderName,
+            Name = _options.TenantHeaderName,
             In = ParameterLocation.Header,
-            Required = true,
-            Description = "Tenant slug (e.g. demo). Required on all business endpoints.",
+            Required = !isSingleMode,
+            Description = isSingleMode
+                ? "Tenant slug (e.g. demo). Optional in single-tenant mode — defaults to configured tenant when omitted."
+                : "Tenant slug (e.g. demo). Required on all business endpoints.",
             Schema = new OpenApiSchema { Type = "string", Example = new Microsoft.OpenApi.Any.OpenApiString("demo") }
         });
     }

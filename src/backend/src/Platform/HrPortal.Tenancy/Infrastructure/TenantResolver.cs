@@ -33,6 +33,13 @@ public sealed class TenantResolver : ITenantResolver
                 return Task.FromResult<string?>(value.ToLowerInvariant());
         }
 
+        if (_options.Mode == TenantDeploymentMode.Single)
+        {
+            var defaultSlug = _options.DefaultTenantSlug.Trim().ToLowerInvariant();
+            if (!string.IsNullOrWhiteSpace(defaultSlug))
+                return Task.FromResult<string?>(defaultSlug);
+        }
+
         return Task.FromResult<string?>(null);
     }
 }

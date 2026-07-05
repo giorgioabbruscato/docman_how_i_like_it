@@ -1,6 +1,7 @@
 using HrPortal.Tenancy.Application;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace HrPortal.Tenancy.Infrastructure;
 
@@ -19,7 +20,8 @@ public sealed class TenantResolverMiddleware
         HttpContext context,
         ITenantResolver tenantResolver,
         ITenantRepository tenantRepository,
-        ITenantContextAccessor tenantContextAccessor)
+        ITenantContextAccessor tenantContextAccessor,
+        IOptions<TenantResolverOptions> options)
     {
         if (IsExcludedPath(context.Request.Path))
         {
@@ -57,7 +59,11 @@ public sealed class TenantResolverMiddleware
             return;
         }
 
-        var tenantContext = TenantContext.CreateTenantOnly(tenant.Id, tenant.Slug);
+        var tenantContext = TenantContext.CreateTenantOnly(
+            tenant.Id,
+            tenant.Slug,
+            options.Value.Mode,
+            tenant.GetFeatures());
         tenantContextAccessor.Set(tenantContext);
         context.Items[nameof(TenantContext)] = tenantContext;
 

@@ -1,6 +1,6 @@
 # TASK 14 — SINGLE-TENANT DEPLOYMENT MODE
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Add `TenantDeploymentMode` configuration so the platform supports OSS single-tenant deployments without requiring `X-Tenant-Id` on every request.
 
@@ -68,32 +68,32 @@ Read before starting:
 
 ### Configuration
 
-- [ ] `TenantDeploymentMode` enum: `Single = 0`, `Multi = 1`
-- [ ] Extend `TenantResolverOptions`:
+- [x] `TenantDeploymentMode` enum: `Single = 0`, `Multi = 1`
+- [x] Extend `TenantResolverOptions`:
   - `Mode` (default: `Multi` for backward compat)
   - `DefaultTenantSlug` (default: `"demo"`)
-- [ ] `appsettings.json` — document both modes
-- [ ] `appsettings.Development.json` — `Multi` mode with header resolution
-- [ ] Add `appsettings.SingleTenant.json` or env profile for OSS: `Mode: Single`
-- [ ] Docker Compose: `TENANCY__MODE=Single` env var for OSS profile
+- [x] `appsettings.json` — document both modes
+- [x] `appsettings.Development.json` — `Multi` mode with header resolution
+- [x] Add `appsettings.SingleTenant.json` or env profile for OSS: `Mode: Single`
+- [x] Docker Compose: `TENANCY__MODE=Single` env var for OSS profile
 
 ### Resolution logic
 
-- [ ] In single mode: when header/subdomain absent, resolve `DefaultTenantSlug` automatically
-- [ ] In single mode: `TenantContext.Mode = Single`
-- [ ] In multi mode: require header/subdomain (existing behavior); 400 if missing
-- [ ] Set `TenantContext.Mode` from options on every resolved context
+- [x] In single mode: when header/subdomain absent, resolve `DefaultTenantSlug` automatically
+- [x] In single mode: `TenantContext.Mode = Single`
+- [x] In multi mode: require header/subdomain (existing behavior); 400 if missing
+- [x] Set `TenantContext.Mode` from options on every resolved context
 
 ### Frontend alignment (stub — full work in task 32)
 
-- [ ] Document expected `VITE_TENANCY_MODE` env var in memory/api_contracts
+- [x] Document expected `VITE_TENANCY_MODE` env var in memory/api_contracts
 
 ### Integration tests
 
-- [ ] Single mode: requests work without `X-Tenant-Id` header
-- [ ] Single mode: data scoped to default tenant on write
-- [ ] Multi mode: missing tenant header → 400
-- [ ] Multi mode: invalid tenant slug → 404
+- [x] Single mode: requests work without `X-Tenant-Id` header
+- [x] Single mode: data scoped to default tenant on write
+- [x] Multi mode: missing tenant header → 400
+- [x] Multi mode: invalid tenant slug → 404
 
 ## Files to touch
 
@@ -108,10 +108,10 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] Single-tenant Docker profile runs without tenant header
-- [ ] Multi-tenant mode unchanged for existing tests
-- [ ] `TenantContext.Mode` correctly set in both modes
-- [ ] Integration tests pass for both modes
+- [x] Single-tenant Docker profile runs without tenant header
+- [x] Multi-tenant mode unchanged for existing tests
+- [x] `TenantContext.Mode` correctly set in both modes
+- [x] Integration tests pass for both modes
 
 ## Next task
 

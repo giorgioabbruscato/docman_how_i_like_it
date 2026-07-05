@@ -44,7 +44,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "HR Portal API",
         Version = "v1",
-        Description = "Modular monolith HR platform API. Business endpoints require Bearer JWT and X-Tenant-Id header."
+        Description = "Modular monolith HR platform API. Business endpoints require Bearer JWT. Tenant header (X-Tenant-Id) is required in multi-tenant mode and optional in single-tenant mode."
     });
 
     var xmlPath = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
