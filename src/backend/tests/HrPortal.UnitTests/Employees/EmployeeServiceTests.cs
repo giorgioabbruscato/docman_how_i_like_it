@@ -114,4 +114,29 @@ public sealed class EmployeeServiceTests
         result.Value!.Email.Should().Be("mario@demo.local");
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task UpdateAsync_ReturnsNotFound_WhenMissing()
+    {
+        _repository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Employee?)null);
+
+        var result = await _service.UpdateAsync(Guid.NewGuid(), new UpdateEmployeeRequest(
+            "Mario", "Rossi", "mario@demo.local", null, null));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorCode.Should().Be("NOT_FOUND");
+    }
+
+    [Fact]
+    public async Task DeactivateAsync_ReturnsNotFound_WhenMissing()
+    {
+        _repository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Employee?)null);
+
+        var result = await _service.DeactivateAsync(Guid.NewGuid());
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorCode.Should().Be("NOT_FOUND");
+    }
 }

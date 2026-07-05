@@ -131,20 +131,10 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
     {
         using var client = CreateAuthenticatedClient("hr", includeTenantHeader: false);
         var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(client, "single-leave");
-
-        var response = await client.PostAsJsonAsync("/api/v1/leave-requests", new
-        {
-            employeeId,
-            startDate = "2025-08-01",
-            endDate = "2025-08-05",
-            type = "Annual"
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<IdResponse>(JsonOptions);
+        var leaveId = await TenantIsolationFixture.CreateLeaveRequestAsync(client, employeeId);
 
         var demoTenantId = await GetDemoTenantIdAsync();
-        var leaveRequest = await LoadEntityAsync<LeaveRequest>(body!.Id);
+        var leaveRequest = await LoadEntityAsync<LeaveRequest>(leaveId);
         leaveRequest.TenantId.Should().Be(demoTenantId);
     }
 

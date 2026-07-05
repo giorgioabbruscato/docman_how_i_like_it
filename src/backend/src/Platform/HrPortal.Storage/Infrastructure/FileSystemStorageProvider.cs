@@ -86,9 +86,11 @@ public sealed class FileSystemStorageProvider : IStorageProvider
     // tenant so callers (e.g. DocumentService) always pass a concrete tenantId, not Guid.Empty.
     private static string BuildPath(Guid tenantId, string category, string fileName)
     {
-        var safeCategory = SanitizeSegment(category);
+        var categoryPath = string.Join('/',
+            category.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Select(SanitizeSegment));
         var safeFileName = SanitizeSegment(fileName);
-        return $"{tenantId}/{safeCategory}/{safeFileName}";
+        return $"{tenantId}/{categoryPath}/{safeFileName}";
     }
 
     private static string SanitizeSegment(string value) =>

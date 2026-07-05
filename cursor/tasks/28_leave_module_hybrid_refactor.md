@@ -1,6 +1,6 @@
 # TASK 28 — LEAVE MODULE HYBRID REFACTOR
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Refactor the Leave module following the Employees reference pattern (task 27).
 

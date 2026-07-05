@@ -19,12 +19,28 @@ internal sealed class LeaveRequestResourceLoader : IEndpointResourceLoader
     }
 
     public bool CanLoad(HttpContext httpContext) =>
-        ResourceLoaderHelpers.MatchesResourcePath(httpContext, "/api/v1/leave-requests");
+        ResourceLoaderHelpers.MatchesResourcePath(httpContext, "/api/v1/leave-requests") ||
+        ResourceLoaderHelpers.MatchesPostCollectionPath(httpContext, "/api/v1/leave-requests");
 
     public async Task<ResourceContext?> LoadAsync(
         HttpContext httpContext,
         CancellationToken cancellationToken = default)
     {
+        if (ResourceLoaderHelpers.MatchesPostCollectionPath(httpContext, "/api/v1/leave-requests"))
+        {
+            var employeeId = await ResourceLoaderHelpers.TryGetEmployeeIdFromJsonBodyAsync(
+                httpContext, "employeeId", cancellationToken);
+
+            if (!employeeId.HasValue)
+                return null;
+
+            return await ResourceLoaderHelpers.LoadEmployeeContextAsync(
+                _dbContext,
+                _accessor,
+                employeeId.Value,
+                cancellationToken);
+        }
+
         if (!ResourceLoaderHelpers.TryGetRouteId(httpContext, out var id))
             return null;
 

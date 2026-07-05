@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\src\Platform\HrPortal.SharedKernel\HrPortal.SharedKernel.csproj" />
     <ProjectReference Include="..\..\src\Platform\HrPortal.AccessControl\HrPortal.AccessControl.csproj" />
     <ProjectReference Include="..\..\src\Platform\HrPortal.Authorization\HrPortal.Authorization.csproj" />
+    <ProjectReference Include="..\..\src\Platform\HrPortal.Notifications\HrPortal.Notifications.csproj" />
   </ItemGroup>
 
   <ItemGroup>
