@@ -17,6 +17,9 @@ public static class AccessControlServiceCollectionExtensions
         services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 
         services.AddScoped<IPermissionResolver, PermissionResolver>();
+        services.AddScoped<IScopeResolver, ScopeResolver>();
+        services.AddScoped<IPolicyEngine, PolicyEngine>();
+        services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
         services.AddScoped<ITenantContextFactory, TenantContextFactory>();
         services.AddScoped<IMeService, MeService>();
         services.AddScoped<ITenantRoleService, TenantRoleService>();

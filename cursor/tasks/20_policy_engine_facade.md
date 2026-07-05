@@ -1,6 +1,6 @@
 # TASK 20 — POLICY ENGINE FACADE
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Introduce `IPolicyEngine` with `Can(ctx, action, resource)` as the single authorization decision point.
 

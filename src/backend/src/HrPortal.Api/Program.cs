@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using HrPortal.Api.Infrastructure;
 using HrPortal.Api.Infrastructure.Filters;
 using HrPortal.Api.Infrastructure.Middleware;
 using HrPortal.Api.Infrastructure.OpenApi;
@@ -97,6 +98,7 @@ builder.Services.AddTenancy(builder.Configuration);
 builder.Services.AddHrPortalIdentity(builder.Configuration);
 builder.Services.AddHrPortalAccessControl();
 builder.Services.AddHrPortalAuthorization();
+builder.Services.AddAuthorizationResourceLoaders();
 builder.Services.AddHrPortalStorage(builder.Configuration);
 builder.Services.AddHrPortalNotifications();
 builder.Services.AddHrPortalAudit();

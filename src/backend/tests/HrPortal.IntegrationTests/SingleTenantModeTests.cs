@@ -3,8 +3,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using HrPortal.Api.Infrastructure.Persistence;
+using HrPortal.Attendance.Domain;
+using HrPortal.Departments.Domain;
+using HrPortal.Documents.Domain;
 using HrPortal.Employees.Domain;
 using HrPortal.IntegrationTests.Infrastructure;
+using HrPortal.Leave.Domain;
 using HrPortal.Tenancy.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +40,50 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
     }
 
     [Fact]
+    public async Task GetDepartments_Succeeds_WithoutTenantHeader()
+    {
+        using var client = CreateAuthenticatedClient(includeTenantHeader: false);
+
+        var response = await client.GetAsync("/api/v1/departments");
+
+        response.StatusCode.Should().NotBe(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetLeaveRequests_Succeeds_WithoutTenantHeader()
+    {
+        using var client = CreateAuthenticatedClient("manager", includeTenantHeader: false);
+
+        var response = await client.GetAsync("/api/v1/leave-requests");
+
+        response.StatusCode.Should().NotBe(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetAttendance_Succeeds_WithoutTenantHeader()
+    {
+        using var client = CreateAuthenticatedClient("manager", includeTenantHeader: false);
+
+        var response = await client.GetAsync("/api/v1/attendance");
+
+        response.StatusCode.Should().NotBe(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetDocuments_Succeeds_WithoutTenantHeader()
+    {
+        using var client = CreateAuthenticatedClient("manager", includeTenantHeader: false);
+
+        var response = await client.GetAsync("/api/v1/documents");
+
+        response.StatusCode.Should().NotBe(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task CreateEmployee_ScopesDataToDefaultTenant_WithoutTenantHeader()
     {
         using var client = CreateAuthenticatedClient("hr", includeTenantHeader: false);
@@ -50,16 +98,103 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<EmployeeIdResponse>(JsonOptions);
+        var body = await response.Content.ReadFromJsonAsync<IdResponse>(JsonOptions);
 
+        var demoTenantId = await GetDemoTenantIdAsync();
+        var employee = await LoadEntityAsync<Employee>(body!.Id);
+        employee.TenantId.Should().Be(demoTenantId);
+    }
+
+    [Fact]
+    public async Task CreateDepartment_ScopesDataToDefaultTenant_WithoutTenantHeader()
+    {
+        using var client = CreateAuthenticatedClient("hr", includeTenantHeader: false);
+        var code = $"S{Guid.NewGuid():N}"[..6].ToUpperInvariant();
+
+        var response = await client.PostAsJsonAsync("/api/v1/departments", new
+        {
+            name = "Single Dept",
+            code,
+            description = "Single tenant dept"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<IdResponse>(JsonOptions);
+
+        var demoTenantId = await GetDemoTenantIdAsync();
+        var department = await LoadEntityAsync<Department>(body!.Id);
+        department.TenantId.Should().Be(demoTenantId);
+    }
+
+    [Fact]
+    public async Task CreateLeaveRequest_ScopesDataToDefaultTenant_WithoutTenantHeader()
+    {
+        using var client = CreateAuthenticatedClient("hr", includeTenantHeader: false);
+        var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(client, "single-leave");
+
+        var response = await client.PostAsJsonAsync("/api/v1/leave-requests", new
+        {
+            employeeId,
+            startDate = "2025-08-01",
+            endDate = "2025-08-05",
+            type = "Annual"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<IdResponse>(JsonOptions);
+
+        var demoTenantId = await GetDemoTenantIdAsync();
+        var leaveRequest = await LoadEntityAsync<LeaveRequest>(body!.Id);
+        leaveRequest.TenantId.Should().Be(demoTenantId);
+    }
+
+    [Fact]
+    public async Task CheckIn_ScopesDataToDefaultTenant_WithoutTenantHeader()
+    {
+        using var client = CreateAuthenticatedClient("hr", includeTenantHeader: false);
+        var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(client, "single-att");
+
+        var response = await client.PostAsJsonAsync("/api/v1/attendance/check-in", new
+        {
+            employeeId
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<IdResponse>(JsonOptions);
+
+        var demoTenantId = await GetDemoTenantIdAsync();
+        var record = await LoadEntityAsync<AttendanceRecord>(body!.Id);
+        record.TenantId.Should().Be(demoTenantId);
+    }
+
+    [Fact]
+    public async Task UploadDocument_ScopesDataToDefaultTenant_WithoutTenantHeader()
+    {
+        using var client = CreateAuthenticatedClient("hr", includeTenantHeader: false);
+        var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(client, "single-doc");
+        var documentId = await TenantIsolationFixture.UploadDocumentAsync(client, employeeId);
+
+        var demoTenantId = await GetDemoTenantIdAsync();
+        var document = await LoadEntityAsync<Document>(documentId);
+        document.TenantId.Should().Be(demoTenantId);
+    }
+
+    private async Task<Guid> GetDemoTenantIdAsync()
+    {
         await using var scope = _factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
         var demoTenant = await db.Set<Tenant>().SingleAsync(t => t.Slug == "demo");
-        var employee = await db.Set<Employee>()
-            .IgnoreQueryFilters()
-            .SingleAsync(e => e.Id == body!.Id);
+        return demoTenant.Id;
+    }
 
-        employee.TenantId.Should().Be(demoTenant.Id);
+    private async Task<TEntity> LoadEntityAsync<TEntity>(Guid id)
+        where TEntity : class
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
+        return await db.Set<TEntity>()
+            .IgnoreQueryFilters()
+            .SingleAsync(e => EF.Property<Guid>(e, "Id") == id);
     }
 
     private HttpClient CreateAuthenticatedClient(
@@ -77,7 +212,7 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
 
     public void Dispose() => _client.Dispose();
 
-    private sealed record EmployeeIdResponse(Guid Id);
+    private sealed record IdResponse(Guid Id);
 }
 
 public sealed class MultiTenantResolutionTests : IClassFixture<HrPortalWebApplicationFactory>, IDisposable

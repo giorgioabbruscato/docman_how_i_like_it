@@ -1,3 +1,4 @@
+using System.Text.Json;
 using HrPortal.Audit.Application;
 using HrPortal.Audit.Domain;
 using HrPortal.Identity;
@@ -50,6 +51,40 @@ internal sealed class AuditService : IAuditService
             _userContext.IsAuthenticated ? _userContext.UserId : Guid.Empty,
             entry,
             cancellationToken);
+
+    public async Task LogAccessDecisionAsync(
+        AccessDecisionEntry entry,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_tenantContext.IsResolved)
+        {
+            _logger.LogWarning("Skipping access decision audit: tenant not resolved");
+            return;
+        }
+
+        var metadata = JsonSerializer.Serialize(new
+        {
+            entry.Permission,
+            entry.Allowed,
+            entry.IpAddress,
+            resource = new
+            {
+                employeeId = entry.ResourceEmployeeId,
+                departmentId = entry.ResourceDepartmentId,
+                tenantId = entry.ResourceTenantId
+            }
+        });
+
+        await AddAuditLogAsync(
+            _tenantContext.TenantId,
+            entry.ActorUserId ?? (_userContext.IsAuthenticated ? _userContext.UserId : Guid.Empty),
+            new AuditEntry(
+                entry.Allowed ? "access.allowed" : "access.denied",
+                "Authorization",
+                entry.Permission,
+                metadata),
+            cancellationToken);
+    }
 
     private async Task AddAuditLogAsync(
         Guid tenantId,
