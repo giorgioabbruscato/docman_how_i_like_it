@@ -142,17 +142,27 @@ namespace HrPortal.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("user_profiles", "platform");
                 });
 
-            modelBuilder.Entity("HrPortal.Attendance.Domain.AttendanceRecord", b =>
+            modelBuilder.Entity("HrPortal.Attendance.Domain.AttendanceSession", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<TimeOnly?>("CheckIn")
-                        .HasColumnType("time without time zone");
+                    b.Property<double?>("AccuracyCheckIn")
+                        .HasColumnType("double precision");
 
-                    b.Property<TimeOnly?>("CheckOut")
-                        .HasColumnType("time without time zone");
+                    b.Property<double?>("AccuracyCheckOut")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Browser")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("CheckIn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("CheckOut")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -160,15 +170,28 @@ namespace HrPortal.Api.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
+                    b.Property<string>("Device")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                    b.Property<string>("IPAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<double?>("LatitudeCheckIn")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("LatitudeCheckOut")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("LongitudeCheckIn")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("LongitudeCheckOut")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -184,12 +207,16 @@ namespace HrPortal.Api.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("WorkedMinutes")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "EmployeeId", "Date")
-                        .IsUnique();
+                    b.HasIndex("TenantId", "EmployeeId", "Status")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 'Open'");
 
-                    b.ToTable("attendance_records", "attendance");
+                    b.ToTable("attendance_sessions", "attendance");
                 });
 
             modelBuilder.Entity("HrPortal.Audit.Domain.AuditLog", b =>

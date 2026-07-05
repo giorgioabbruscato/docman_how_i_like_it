@@ -1,6 +1,6 @@
 # TASK 12 — ATTENDANCE DASHBOARD
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create attendance dashboard query endpoints for today, weekly, monthly totals, current session, and history.
 

@@ -1,13 +1,14 @@
 using HrPortal.AccessControl.Domain;
-using HrPortal.Attendance.Application;
+using HrPortal.Attendance.Application.Commands;
 using HrPortal.Attendance.Application.Dtos;
+using HrPortal.Attendance.Application.Queries;
 using HrPortal.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HrPortal.Api.Controllers.V1;
 
-/// <summary>Attendance check-in/out and reporting.</summary>
+/// <summary>Attendance session check-in/out, dashboard, and history.</summary>
 [ApiController]
 [Route("api/v1/attendance")]
 [Tags("Attendance")]
@@ -15,64 +16,89 @@ namespace HrPortal.Api.Controllers.V1;
 [Produces("application/json")]
 public sealed class AttendanceController : ControllerBase
 {
-    private readonly IAttendanceService _attendanceService;
+    private readonly CheckInCommandHandler _checkInHandler;
+    private readonly CheckOutCommandHandler _checkOutHandler;
+    private readonly GetAttendanceDashboardQueryHandler _dashboardHandler;
+    private readonly GetAttendanceHistoryQueryHandler _historyHandler;
 
-    public AttendanceController(IAttendanceService attendanceService) =>
-        _attendanceService = attendanceService;
-
-    /// <summary>List attendance records.</summary>
-    /// <remarks>Auth: attendance.read:tenant OR attendance.read:team</remarks>
-    [HttpGet]
-    [RequireAnyPermission(Permissions.AttendanceReadTenant, Permissions.AttendanceReadTeam)]
-    [ProducesResponseType(typeof(IEnumerable<AttendanceRecordDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public AttendanceController(
+        CheckInCommandHandler checkInHandler,
+        CheckOutCommandHandler checkOutHandler,
+        GetAttendanceDashboardQueryHandler dashboardHandler,
+        GetAttendanceHistoryQueryHandler historyHandler)
     {
-        var result = await _attendanceService.GetAllAsync(cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
+        _checkInHandler = checkInHandler;
+        _checkOutHandler = checkOutHandler;
+        _dashboardHandler = dashboardHandler;
+        _historyHandler = historyHandler;
     }
 
     /// <summary>Record employee check-in.</summary>
-    /// <remarks>Auth: attendance.write:self</remarks>
+    /// <remarks>Auth: attendance_session.check_in:self</remarks>
     [HttpPost("check-in")]
-    [RequirePermission(Permissions.AttendanceWriteSelf)]
-    [ProducesResponseType(typeof(AttendanceRecordDto), StatusCodes.Status200OK)]
+    [RequirePermission(Permissions.AttendanceSessionCheckInSelf)]
+    [ProducesResponseType(typeof(AttendanceSessionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CheckIn(
         [FromBody] CheckInRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _attendanceService.CheckInAsync(request, cancellationToken);
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var result = await _checkInHandler.HandleAsync(request, ipAddress, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
     /// <summary>Record employee check-out.</summary>
-    /// <remarks>Auth: attendance.write:self</remarks>
+    /// <remarks>Auth: attendance_session.check_out:self</remarks>
     [HttpPost("check-out")]
-    [RequirePermission(Permissions.AttendanceWriteSelf)]
-    [ProducesResponseType(typeof(AttendanceRecordDto), StatusCodes.Status200OK)]
+    [RequirePermission(Permissions.AttendanceSessionCheckOutSelf)]
+    [ProducesResponseType(typeof(CheckOutResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CheckOut(
         [FromBody] CheckOutRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _attendanceService.CheckOutAsync(request, cancellationToken);
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var result = await _checkOutHandler.HandleAsync(request, ipAddress, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
-    /// <summary>Get attendance report for a date range.</summary>
-    /// <remarks>Auth: attendance.read:tenant OR attendance.read:team. Query params: from, to (DateOnly).</remarks>
-    [HttpGet("reports")]
-    [RequireAnyPermission(Permissions.AttendanceReadTenant, Permissions.AttendanceReadTeam)]
-    [ProducesResponseType(typeof(AttendanceReportDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetReport(
-        [FromQuery] DateOnly from,
-        [FromQuery] DateOnly to,
+    /// <summary>Get attendance dashboard summary.</summary>
+    /// <remarks>Auth: attendance_session.read:self OR attendance_session.read:team</remarks>
+    [HttpGet("dashboard")]
+    [RequireAnyPermission(
+        Permissions.AttendanceSessionReadSelf,
+        Permissions.AttendanceSessionReadTeam,
+        Permissions.AttendanceSessionReadTenant)]
+    [ProducesResponseType(typeof(AttendanceDashboardDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDashboard(
+        [FromQuery] Guid? employeeId,
         CancellationToken cancellationToken)
     {
-        var result = await _attendanceService.GetReportAsync(from, to, cancellationToken);
+        var result = await _dashboardHandler.HandleAsync(employeeId, cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
+    }
+
+    /// <summary>Get paginated attendance session history.</summary>
+    /// <remarks>Auth: attendance_session.read:self OR attendance_session.read:team</remarks>
+    [HttpGet("history")]
+    [RequireAnyPermission(
+        Permissions.AttendanceSessionReadSelf,
+        Permissions.AttendanceSessionReadTeam,
+        Permissions.AttendanceSessionReadTenant)]
+    [ProducesResponseType(typeof(PagedResult<AttendanceSessionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetHistory(
+        [FromQuery] GetAttendanceHistoryQuery query,
+        CancellationToken cancellationToken)
+    {
+        var result = await _historyHandler.HandleAsync(query, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapFailure(result);
     }
 
@@ -83,6 +109,18 @@ public sealed class AttendanceController : ControllerBase
             {
                 Status = StatusCodes.Status404NotFound,
                 Title = "Not found",
+                Detail = result.Error
+            }),
+            "CONFLICT" => Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflict",
+                Detail = result.Error
+            }),
+            "FORBIDDEN" => StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "Forbidden",
                 Detail = result.Error
             }),
             _ => BadRequest(new ProblemDetails

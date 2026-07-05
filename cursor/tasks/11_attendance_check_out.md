@@ -1,6 +1,6 @@
 # TASK 11 — ATTENDANCE CHECK OUT
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Implement automatic check-out API that closes the open session and calculates worked time.
 

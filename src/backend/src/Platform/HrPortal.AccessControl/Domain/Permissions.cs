@@ -23,11 +23,12 @@ public static class Permissions
     public const string LeaveApproveTeam = "leave.approve:team";
     public const string LeaveDeleteSelf = "leave.delete:self";
 
-    // Attendance
-    public const string AttendanceReadTenant = "attendance.read:tenant";
-    public const string AttendanceReadTeam = "attendance.read:team";
-    public const string AttendanceReadSelf = "attendance.read:self";
-    public const string AttendanceWriteSelf = "attendance.write:self";
+    // Attendance sessions
+    public const string AttendanceSessionReadTenant = "attendance_session.read:tenant";
+    public const string AttendanceSessionReadTeam = "attendance_session.read:team";
+    public const string AttendanceSessionReadSelf = "attendance_session.read:self";
+    public const string AttendanceSessionCheckInSelf = "attendance_session.check_in:self";
+    public const string AttendanceSessionCheckOutSelf = "attendance_session.check_out:self";
 
     // Documents
     public const string DocumentReadTenant = "document.read:tenant";
@@ -91,7 +92,8 @@ public static class Permissions
         EmployeeReadTenant, EmployeeReadTeam, EmployeeReadSelf, EmployeeCreateTenant, EmployeeUpdateTenant, EmployeeDeleteTenant,
         DepartmentReadTenant, DepartmentWriteTenant, DepartmentDeleteTenant,
         LeaveReadTenant, LeaveReadTeam, LeaveReadSelf, LeaveCreateSelf, LeaveApproveTeam, LeaveDeleteSelf,
-        AttendanceReadTenant, AttendanceReadTeam, AttendanceReadSelf, AttendanceWriteSelf,
+        AttendanceSessionReadTenant, AttendanceSessionReadTeam, AttendanceSessionReadSelf,
+        AttendanceSessionCheckInSelf, AttendanceSessionCheckOutSelf,
         DocumentReadTenant, DocumentReadSelf, DocumentUploadSelf, DocumentDeleteTenant,
         RoleReadTenant, RoleCreateTenant, RoleUpdateTenant, RoleDeleteTenant,
         MembershipReadTenant, MembershipCreateTenant, MembershipUpdateTenant, MembershipDeleteTenant,

@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using HrPortal.Api.Infrastructure.Persistence;
+using HrPortal.AccessControl.Infrastructure.Seeding;
 using HrPortal.Attendance.Domain;
 using HrPortal.Departments.Domain;
 using HrPortal.Documents.Domain;
@@ -62,11 +63,11 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
     }
 
     [Fact]
-    public async Task GetAttendance_Succeeds_WithoutTenantHeader()
+    public async Task GetAttendanceDashboard_Succeeds_WithoutTenantHeader()
     {
-        using var client = CreateAuthenticatedClient("manager", includeTenantHeader: false);
+        using var client = CreateAuthenticatedClient("employee", DemoUsers.Employee, includeTenantHeader: false);
 
-        var response = await client.GetAsync("/api/v1/attendance");
+        var response = await client.GetAsync("/api/v1/attendance/dashboard");
 
         response.StatusCode.Should().NotBe(HttpStatusCode.BadRequest);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -146,8 +147,8 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
         var recordId = await TenantIsolationFixture.CheckInAsync(client, employeeId);
 
         var demoTenantId = await GetDemoTenantIdAsync();
-        var record = await LoadEntityAsync<AttendanceRecord>(recordId);
-        record.TenantId.Should().Be(demoTenantId);
+        var session = await LoadEntityAsync<AttendanceSession>(recordId);
+        session.TenantId.Should().Be(demoTenantId);
     }
 
     [Fact]
@@ -199,6 +200,7 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
 
     private HttpClient CreateAuthenticatedClient(
         string role = "hr",
+        Guid? userId = null,
         bool includeTenantHeader = true)
     {
         var client = _factory.CreateClient();
@@ -207,6 +209,10 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
             client.DefaultRequestHeaders.Add("X-Tenant-Id", "demo");
 
         client.DefaultRequestHeaders.Add(TestAuthHandler.RoleHeaderName, role);
+
+        if (userId.HasValue)
+            client.DefaultRequestHeaders.Add(TestAuthHandler.UserIdHeaderName, userId.Value.ToString());
+
         return client;
     }
 

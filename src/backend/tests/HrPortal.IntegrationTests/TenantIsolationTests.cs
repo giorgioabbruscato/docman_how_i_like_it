@@ -221,34 +221,40 @@ public sealed class TenantIsolationTests : IntegrationTestBase
     #region Attendance
 
     [Fact]
-    public async Task Attendance_List_DoesNotIncludeAnotherTenantsData()
+    public async Task Attendance_History_DoesNotIncludeAnotherTenantsData()
     {
         var tenants = await CreateTwoTenantsAsync();
         using var tenantAClient = CreateClientForTenant(tenants.TenantASlug, "hr");
-        using var tenantBClient = CreateClientForTenant(tenants.TenantBSlug, "manager");
+        using var tenantBClient = CreateClientForTenant(tenants.TenantBSlug, "admin");
 
         var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(tenantAClient, "attendance");
-        var recordId = await TenantIsolationFixture.CheckInAsync(tenantAClient, employeeId);
+        var sessionId = await TenantIsolationFixture.CheckInAsync(tenantAClient, employeeId);
+        await tenantAClient.PostAsJsonAsync("/api/v1/attendance/check-out", new { });
 
-        var listResponse = await tenantBClient.GetAsync("/api/v1/attendance");
+        var listResponse = await tenantBClient.GetAsync("/api/v1/attendance/history");
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var records = await listResponse.Content.ReadFromJsonAsync<List<IdResponse>>(JsonOptions);
-        records.Should().NotContain(r => r.Id == recordId);
+        var history = await listResponse.Content.ReadFromJsonAsync<PagedIdResponse>(JsonOptions);
+        history!.Items.Should().NotContain(r => r.Id == sessionId);
     }
 
     [Fact]
-    public async Task Attendance_CheckOut_ReturnsNotFound_WhenAccessingAnotherTenantsData()
+    public async Task Attendance_CheckOut_ReturnsNotFound_WhenNoOpenSession()
     {
         var tenants = await CreateTwoTenantsAsync();
         using var tenantAClient = CreateClientForTenant(tenants.TenantASlug, "hr");
-        using var tenantBClient = CreateClientForTenant(tenants.TenantBSlug, "employee");
+        using var tenantBClient = CreateClientForTenant(tenants.TenantBSlug, "hr");
 
-        var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(tenantAClient, "attendance-out");
+        var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(tenantBClient, "attendance-out");
+        var employeeUserId = Guid.NewGuid();
+        var employeeRoleId = await TenantIsolationFixture.GetRoleIdBySlugAsync(
+            tenantBClient, HrPortal.AccessControl.Domain.SystemRoleTemplates.EmployeeSlug);
+        await TenantIsolationFixture.CreateMembershipAsync(
+            tenantBClient, employeeUserId, employeeRoleId, employeeId);
 
-        var response = await tenantBClient.PostAsJsonAsync("/api/v1/attendance/check-out", new
-        {
-            employeeId
-        });
+        await TenantIsolationFixture.CreateEmployeeAsync(tenantAClient, "attendance-out-a");
+
+        using var scopedClient = CreateClientForTenant(tenants.TenantBSlug, "guest", employeeUserId);
+        var response = await scopedClient.PostAsJsonAsync("/api/v1/attendance/check-out", new { });
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -324,4 +330,6 @@ public sealed class TenantIsolationTests : IntegrationTestBase
 
     private sealed record EmployeeListItem(Guid Id, string Email);
     private sealed record IdResponse(Guid Id);
+
+    private sealed record PagedIdResponse(IReadOnlyList<IdResponse> Items, int TotalCount);
 }

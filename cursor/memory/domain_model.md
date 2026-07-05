@@ -264,26 +264,35 @@ Sole identity object for application services. Enriched per request by `TenantCo
 
 ---
 
-### AttendanceRecord — IMPLEMENTED
+### AttendanceSession — IMPLEMENTED
 
-**Location:** `HrPortal.Attendance.Domain`  
+**Location:** `HrPortal.Attendance.Domain`
 **Schema:** `attendance`
 
 | Field | Type | Description |
 |-------|------|-------------|
 | EmployeeId | Guid | FK to Employee |
-| Date | DateOnly | Work date |
-| CheckIn | TimeOnly? | Clock-in time |
-| CheckOut | TimeOnly? | Clock-out time |
-| Status | AttendanceStatus | Present, Absent, Late, HalfDay |
-| Notes | string? | Optional notes |
+| CheckIn | DateTime | UTC check-in timestamp |
+| CheckOut | DateTime? | UTC check-out timestamp (null = open) |
+| LatitudeCheckIn | double? | GPS latitude at check-in |
+| LongitudeCheckIn | double? | GPS longitude at check-in |
+| LatitudeCheckOut | double? | GPS latitude at check-out |
+| LongitudeCheckOut | double? | GPS longitude at check-out |
+| AccuracyCheckIn | double? | GPS accuracy (meters) at check-in |
+| AccuracyCheckOut | double? | GPS accuracy (meters) at check-out |
+| IPAddress | string? | Caller IP address |
+| Device | string? | Device metadata |
+| Browser | string? | Browser metadata |
+| WorkedMinutes | int? | Computed on check-out |
+| Status | AttendanceSessionStatus | Open, Closed, AutoClosed |
 
-**Enum:** `AttendanceStatus`: Present, Absent, Late, HalfDay, Remote
+**Enum:** `AttendanceSessionStatus`: Open, Closed, AutoClosed
 
 **Business rules:**
-- One record per employee per date per tenant
+- One open session per employee per tenant (partial unique index)
 - CheckOut must be after CheckIn
-- Cannot check out without checking in first
+- WorkedMinutes = (CheckOut - CheckIn).TotalMinutes on close
+- Cannot close an already-closed session
 
 ---
 
@@ -434,7 +443,7 @@ Tenant (platform)
   ├── Employee (employees) ──→ Department (departments)
   │       │
   │       ├── LeaveRequest (leave)
-  │       ├── AttendanceRecord (attendance)
+  │       ├── AttendanceSession (attendance)
   │       ├── Document (documents)
   │       └── ProjectMember (projects) ──→ Project (projects)
   │               └── ProjectTask (tasks) ──→ Project (via IProjectLookup)

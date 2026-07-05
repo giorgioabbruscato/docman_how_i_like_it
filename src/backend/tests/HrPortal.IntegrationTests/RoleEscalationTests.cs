@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using HrPortal.AccessControl.Infrastructure.Seeding;
 using HrPortal.IntegrationTests.Infrastructure;
 
 namespace HrPortal.IntegrationTests;
@@ -63,13 +64,16 @@ public sealed class RoleEscalationTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task Employee_CannotListAttendance()
+    public async Task Employee_CannotAccessTeamAttendanceHistory()
     {
-        using var client = CreateAuthenticatedClient("employee");
+        using var hrClient = CreateAuthenticatedClient("hr");
+        var otherEmployeeId = await TenantIsolationFixture.CreateEmployeeAsync(hrClient, "escalation-att");
 
-        var response = await client.GetAsync("/api/v1/attendance");
+        using var client = CreateAuthenticatedClient("employee", DemoUsers.Employee);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var response = await client.GetAsync($"/api/v1/attendance/history?employeeId={otherEmployeeId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]

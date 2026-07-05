@@ -65,16 +65,16 @@ public sealed class ExamplesOperationFilter : IOperationFilter
                     SetRequestExample(operation, OpenApiExamples.RejectLeaveRequest);
                 SetResponseExample(operation, "200", OpenApiExamples.LeaveRequest);
                 break;
-            case ("/api/v1/attendance", "GET"):
-                SetResponseExample(operation, "200", OpenApiExamples.AttendanceList);
-                break;
             case ("/api/v1/attendance/check-in", "POST"):
             case ("/api/v1/attendance/check-out", "POST"):
-                SetRequestExample(operation, OpenApiExamples.CheckInRequest);
-                SetResponseExample(operation, "200", OpenApiExamples.AttendanceRecord);
+                SetRequestExample(operation, OpenApiExamples.AttendanceCheckInRequest);
+                SetResponseExample(operation, "200", OpenApiExamples.AttendanceSession);
                 break;
-            case ("/api/v1/attendance/reports", "GET"):
-                SetResponseExample(operation, "200", OpenApiExamples.AttendanceReport);
+            case ("/api/v1/attendance/dashboard", "GET"):
+                SetResponseExample(operation, "200", OpenApiExamples.AttendanceDashboard);
+                break;
+            case ("/api/v1/attendance/history", "GET"):
+                SetResponseExample(operation, "200", OpenApiExamples.AttendanceHistory);
                 break;
             case ("/api/v1/documents", "GET"):
                 SetResponseExample(operation, "200", OpenApiExamples.DocumentList);

@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using HrPortal.AccessControl.Application.Dtos;
 using HrPortal.AccessControl.Infrastructure.Seeding;
 using HrPortal.IntegrationTests.Infrastructure;
 
@@ -14,74 +13,48 @@ public sealed class AttendanceEndpointTests : IntegrationTestBase
     public AttendanceEndpointTests(HrPortalWebApplicationFactory factory) : base(factory) { }
 
     [Fact]
-    public async Task GetAll_ReturnsForbidden_ForEmployeeRole()
-    {
-        using var client = CreateAuthenticatedClient("employee");
-
-        var response = await client.GetAsync("/api/v1/attendance");
-
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    public async Task CheckIn_ReturnsNotFound_WhenEmployeeMissing()
-    {
-        using var client = CreateAuthenticatedClient("employee");
-
-        var response = await client.PostAsJsonAsync("/api/v1/attendance/check-in", new
-        {
-            employeeId = Guid.NewGuid()
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-    }
-
-    [Fact]
-    public async Task CheckIn_ReturnsCreated_ForOwnEmployee()
+    public async Task Dashboard_ReturnsOk_ForEmployeeRole()
     {
         using var client = CreateAuthenticatedClient("employee", DemoUsers.Employee);
-        var employeeId = await GetEmployeeIdAsync(client);
 
-        var response = await client.PostAsJsonAsync("/api/v1/attendance/check-in", new
-        {
-            employeeId
-        });
+        var response = await client.GetAsync("/api/v1/attendance/dashboard");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
-    public async Task CheckIn_ReturnsForbidden_ForOtherEmployee()
+    public async Task CheckIn_CreatesSession_ForOwnEmployee()
     {
-        using var hrClient = CreateAuthenticatedClient("hr");
-        var otherEmployeeId = await TenantIsolationFixture.CreateEmployeeAsync(hrClient);
+        using var client = CreateAuthenticatedClient("employee", DemoUsers.Employee);
+        await client.PostAsJsonAsync("/api/v1/attendance/check-out", new { });
 
-        using var employeeClient = CreateAuthenticatedClient("employee", DemoUsers.Employee);
-
-        var response = await employeeClient.PostAsJsonAsync("/api/v1/attendance/check-in", new
+        var response = await client.PostAsJsonAsync("/api/v1/attendance/check-in", new
         {
-            employeeId = otherEmployeeId
+            device = "Test Device"
         });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        await client.PostAsJsonAsync("/api/v1/attendance/check-out", new { });
+    }
+
+    [Fact]
+    public async Task CheckIn_ReturnsForbidden_WithoutEmployeeContext()
+    {
+        using var client = CreateAuthenticatedClient("hr");
+
+        var response = await client.PostAsJsonAsync("/api/v1/attendance/check-in", new { });
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]
-    public async Task GetReports_ReturnsOk_ForManagerRole()
+    public async Task History_ReturnsOk_ForEmployeeWithContext()
     {
-        using var client = CreateAuthenticatedClient("manager");
+        using var client = CreateAuthenticatedClient("employee", DemoUsers.Employee);
 
-        var response = await client.GetAsync("/api/v1/attendance/reports?from=2025-01-01&to=2025-01-31");
+        var response = await client.GetAsync("/api/v1/attendance/history");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
-    private static async Task<Guid> GetEmployeeIdAsync(HttpClient client)
-    {
-        var response = await client.GetAsync("/api/v1/me");
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var me = await response.Content.ReadFromJsonAsync<MeDto>(JsonOptions);
-        me!.EmployeeId.Should().NotBeNull();
-        return me.EmployeeId!.Value;
     }
 }

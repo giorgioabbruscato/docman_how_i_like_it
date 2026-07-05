@@ -380,3 +380,29 @@ removing it early would silently lock out any un-migrated user.
 navigation gating (`app-layout.tsx`, `dashboard-page.tsx`, `attendance-page.tsx`, `documents-page.tsx`,
 `leave-requests-page.tsx`). `auth-roles.ts` is marked `@deprecated` and now only backs the raw-role display on
 the settings page; it is not used for any access-control decision.
+
+---
+
+## ADR-013: Attendance 2.0 — Session Model
+
+**Status:** Accepted
+**Date:** 2026-07
+
+**Context:** The legacy `AttendanceRecord` model stored daily `DateOnly` + `TimeOnly?` clock times. This could not support GPS metadata, device/browser capture, open-session semantics, or dashboard aggregations (weekly/monthly totals, current session).
+
+**Decision:** Replace `AttendanceRecord` with session-based `AttendanceSession`:
+
+- `CheckIn`/`CheckOut` as UTC `DateTime`; `WorkedMinutes` computed on close
+- One **open** session per employee (partial unique index + repository guard)
+- Permissions renamed: `attendance.*` → `attendance_session.*` (clean break)
+- Command handlers (`CheckInCommandHandler`, `CheckOutCommandHandler`) follow TimeTracking timer pattern
+- Read APIs: `GET /dashboard`, `GET /history` with `AttendanceSessionReadScope` (self/team/tenant)
+
+**Migration:** Clean break — create `attendance_sessions`, drop `attendance_records` (no data migration).
+
+**Weekly boundary:** Calendar week Monday 00:00 UTC – Sunday 23:59 UTC (documented to avoid ambiguity with rolling 7-day windows).
+
+**Consequences:**
+- Frontend attendance page deferred to task 18 (API contracts updated)
+- `AttendanceResourceLoader` removed (self-scope via `TenantContext.EmployeeId`)
+- Audit actions: `attendance_session.check_in`, `attendance_session.check_out`

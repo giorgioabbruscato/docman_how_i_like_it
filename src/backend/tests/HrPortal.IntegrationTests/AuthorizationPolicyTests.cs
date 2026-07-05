@@ -208,23 +208,23 @@ public sealed class AuthorizationPolicyTests : IntegrationTestBase
     }
 
     [Theory]
-    [MemberData(nameof(GetEmployeesPolicyCases))]
-    public async Task GetAttendance_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    [MemberData(nameof(AttendanceDashboardPolicyCases))]
+    public async Task GetAttendanceDashboard_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
     {
         using var client = CreateClient(role);
 
-        var response = await client.GetAsync("/api/v1/attendance");
+        var response = await client.GetAsync("/api/v1/attendance/dashboard");
 
         response.StatusCode.Should().Be(expectedStatus);
     }
 
     [Theory]
-    [MemberData(nameof(GetEmployeesPolicyCases))]
-    public async Task GetAttendanceReports_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    [MemberData(nameof(AttendanceHistoryPolicyCases))]
+    public async Task GetAttendanceHistory_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
     {
         using var client = CreateClient(role);
 
-        var response = await client.GetAsync("/api/v1/attendance/reports?from=2024-01-01&to=2024-01-31");
+        var response = await client.GetAsync("/api/v1/attendance/history");
 
         response.StatusCode.Should().Be(expectedStatus);
     }
@@ -473,6 +473,33 @@ public sealed class AuthorizationPolicyTests : IntegrationTestBase
         { "manager", HttpStatusCode.Created },
         { "hr", HttpStatusCode.Created },
         { "admin", HttpStatusCode.Created }
+    };
+
+    public static TheoryData<string?, HttpStatusCode> AttendanceDashboardPolicyCases() => new()
+    {
+        { null, HttpStatusCode.Unauthorized },
+        { "employee", HttpStatusCode.Forbidden },
+        { "manager", HttpStatusCode.Forbidden },
+        { "hr", HttpStatusCode.Forbidden },
+        { "admin", HttpStatusCode.Forbidden }
+    };
+
+    public static TheoryData<string?, HttpStatusCode> AttendanceHistoryPolicyCases() => new()
+    {
+        { null, HttpStatusCode.Unauthorized },
+        { "employee", HttpStatusCode.Forbidden },
+        { "manager", HttpStatusCode.Forbidden },
+        { "hr", HttpStatusCode.Forbidden },
+        { "admin", HttpStatusCode.OK }
+    };
+
+    public static TheoryData<string?, HttpStatusCode> EmployeeSelfReadPolicyCases() => new()
+    {
+        { null, HttpStatusCode.Unauthorized },
+        { "employee", HttpStatusCode.Forbidden },
+        { "manager", HttpStatusCode.Forbidden },
+        { "hr", HttpStatusCode.Forbidden },
+        { "admin", HttpStatusCode.Forbidden }
     };
 
     public static TheoryData<string?, HttpStatusCode> TimeEntryListPolicyCases() => new()

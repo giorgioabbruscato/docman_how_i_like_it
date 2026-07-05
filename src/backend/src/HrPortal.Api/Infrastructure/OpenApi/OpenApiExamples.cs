@@ -154,48 +154,50 @@ internal static class OpenApiExamples
         ["reason"] = new OpenApiString("Insufficient coverage")
     };
 
-    public static readonly OpenApiArray AttendanceList = new()
-    {
-        new OpenApiObject
-        {
-            ["id"] = SampleUuid,
-            ["employeeId"] = SampleUuid,
-            ["date"] = new OpenApiString("2025-07-04"),
-            ["checkIn"] = new OpenApiString("09:00:00"),
-            ["checkOut"] = new OpenApiNull(),
-            ["status"] = new OpenApiString("Present"),
-            ["notes"] = new OpenApiNull()
-        }
-    };
-
-    public static readonly OpenApiObject AttendanceRecord = new()
+    public static readonly OpenApiObject AttendanceSession = new()
     {
         ["id"] = SampleUuid,
         ["employeeId"] = SampleUuid,
-        ["date"] = new OpenApiString("2025-07-04"),
-        ["checkIn"] = new OpenApiString("09:00:00"),
+        ["checkIn"] = SampleDateTime,
         ["checkOut"] = new OpenApiNull(),
-        ["status"] = new OpenApiString("Present"),
-        ["notes"] = new OpenApiNull()
+        ["latitudeCheckIn"] = new OpenApiDouble(45.4642),
+        ["longitudeCheckIn"] = new OpenApiDouble(9.19),
+        ["latitudeCheckOut"] = new OpenApiNull(),
+        ["longitudeCheckOut"] = new OpenApiNull(),
+        ["accuracyCheckIn"] = new OpenApiDouble(12.5),
+        ["accuracyCheckOut"] = new OpenApiNull(),
+        ["device"] = new OpenApiString("iPhone 15"),
+        ["browser"] = new OpenApiString("Safari 17"),
+        ["workedMinutes"] = new OpenApiNull(),
+        ["status"] = new OpenApiString("Open")
     };
 
-    public static readonly OpenApiObject CheckInRequest = new()
+    public static readonly OpenApiObject AttendanceCheckInRequest = new()
     {
-        ["employeeId"] = SampleUuid,
-        ["date"] = new OpenApiString("2025-07-04"),
-        ["time"] = new OpenApiString("09:00:00")
+        ["latitude"] = new OpenApiDouble(45.4642),
+        ["longitude"] = new OpenApiDouble(9.19),
+        ["accuracy"] = new OpenApiDouble(12.5),
+        ["timezone"] = new OpenApiString("Europe/Rome"),
+        ["device"] = new OpenApiString("iPhone 15"),
+        ["browser"] = new OpenApiString("Safari 17")
     };
 
-    public static readonly OpenApiObject AttendanceReport = new()
+    public static readonly OpenApiObject AttendanceDashboard = new()
     {
-        ["from"] = new OpenApiString("2025-07-01"),
-        ["to"] = new OpenApiString("2025-07-31"),
-        ["totalRecords"] = new OpenApiInteger(22),
-        ["presentCount"] = new OpenApiInteger(18),
-        ["absentCount"] = new OpenApiInteger(2),
-        ["lateCount"] = new OpenApiInteger(1),
-        ["halfDayCount"] = new OpenApiInteger(1),
-        ["remoteCount"] = new OpenApiInteger(0)
+        ["todayCheckIn"] = SampleDateTime,
+        ["todayCheckOut"] = new OpenApiNull(),
+        ["todayWorkedMinutes"] = new OpenApiInteger(240),
+        ["currentSession"] = AttendanceSession,
+        ["weeklyTotalMinutes"] = new OpenApiInteger(1920),
+        ["monthlyTotalMinutes"] = new OpenApiInteger(8640)
+    };
+
+    public static readonly OpenApiObject AttendanceHistory = new()
+    {
+        ["items"] = new OpenApiArray { AttendanceSession },
+        ["totalCount"] = new OpenApiInteger(1),
+        ["page"] = new OpenApiInteger(1),
+        ["pageSize"] = new OpenApiInteger(10)
     };
 
     public static readonly OpenApiArray DocumentList = new()

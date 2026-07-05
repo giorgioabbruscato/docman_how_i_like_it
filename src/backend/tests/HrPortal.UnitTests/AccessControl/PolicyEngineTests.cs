@@ -120,7 +120,7 @@ public sealed class PolicyEngineTests
     [InlineData(Permissions.EmployeeReadTeam, AccessScope.Team)]
     [InlineData(Permissions.DepartmentReadTenant, AccessScope.Tenant)]
     [InlineData(Permissions.LeaveReadSelf, AccessScope.Self)]
-    [InlineData(Permissions.AttendanceReadTeam, AccessScope.Team)]
+    [InlineData(Permissions.AttendanceSessionReadTeam, AccessScope.Team)]
     [InlineData(Permissions.DocumentReadSelf, AccessScope.Self)]
     [InlineData(Permissions.TenantManageAll, AccessScope.All)]
     public void TryParseScope_ParsesPermissionSuffix(string permission, AccessScope expected)

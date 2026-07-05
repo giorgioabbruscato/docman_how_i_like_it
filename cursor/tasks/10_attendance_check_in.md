@@ -1,6 +1,6 @@
 # TASK 10 — ATTENDANCE CHECK IN
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Implement automatic check-in API collecting GPS, device, browser, timezone, and timestamp.
 

@@ -573,37 +573,65 @@ only as constants to avoid breaking references while call sites are cleaned up; 
 
 ## Attendance
 
-### GET /api/v1/attendance
-
-**Auth:** `attendance.read:tenant` OR `attendance.read:team`  
-**Response:** `200 OK` — array of AttendanceRecordDto
-
 ### POST /api/v1/attendance/check-in
 
-**Auth:** `attendance.write:self`  
+**Auth:** `attendance_session.check_in:self`
 **Request:**
 
 ```json
 {
-  "employeeId": "uuid",
-  "date": "2025-07-04",
-  "time": "09:00:00"
+  "latitude": 45.4642,
+  "longitude": 9.1900,
+  "accuracy": 12.5,
+  "timezone": "Europe/Rome",
+  "device": "iPhone 15",
+  "browser": "Safari 17"
 }
 ```
 
-**Response:** `200 OK` — AttendanceRecordDto
+**Response:** `200 OK` — AttendanceSessionDto
+**Errors:** `409 Conflict` if open session exists; `403 Forbidden` without employee context
 
 ### POST /api/v1/attendance/check-out
 
-**Auth:** `attendance.write:self`  
-**Request:** Same shape as check-in  
-**Response:** `200 OK` — AttendanceRecordDto
+**Auth:** `attendance_session.check_out:self`
+**Request:**
 
-### GET /api/v1/attendance/reports
+```json
+{
+  "latitude": 45.4642,
+  "longitude": 9.1900,
+  "accuracy": 8.0,
+  "device": "iPhone 15",
+  "browser": "Safari 17"
+}
+```
 
-**Auth:** `attendance.read:tenant` OR `attendance.read:team`  
-**Query:** `from`, `to` (DateOnly)  
-**Response:** `200 OK` — AttendanceReportDto
+**Response:** `200 OK` — CheckOutResponseDto (`sessionId`, `checkIn`, `checkOut`, `workedMinutes`, `status`)
+**Errors:** `404 Not Found` if no open session
+
+### GET /api/v1/attendance/dashboard
+
+**Auth:** `attendance_session.read:self` OR `attendance_session.read:team` OR `attendance_session.read:tenant`
+**Query:** `employeeId?` (team/tenant scope)
+**Response:** `200 OK` — AttendanceDashboardDto
+
+```json
+{
+  "todayCheckIn": "2026-07-05T07:00:00Z",
+  "todayCheckOut": null,
+  "todayWorkedMinutes": 240,
+  "currentSession": { "id": "uuid", "checkIn": "...", "status": "Open" },
+  "weeklyTotalMinutes": 1920,
+  "monthlyTotalMinutes": 8640
+}
+```
+
+### GET /api/v1/attendance/history
+
+**Auth:** `attendance_session.read:self` OR `attendance_session.read:team` OR `attendance_session.read:tenant`
+**Query:** `page` (default 1), `pageSize` (default 10), `fromDate?`, `toDate?`, `employeeId?`
+**Response:** `200 OK` — PagedResult&lt;AttendanceSessionDto&gt;
 
 ---
 

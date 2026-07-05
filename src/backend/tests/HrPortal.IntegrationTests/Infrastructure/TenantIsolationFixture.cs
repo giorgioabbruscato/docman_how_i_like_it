@@ -173,7 +173,12 @@ public static class TenantIsolationFixture
             HttpMethod.Post,
             "/api/v1/attendance/check-in",
             employeeUserId,
-            JsonContent.Create(new { employeeId }));
+            JsonContent.Create(new
+            {
+                latitude = 45.4642,
+                longitude = 9.19,
+                device = "Test"
+            }));
 
         var response = await client.SendAsync(request);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
