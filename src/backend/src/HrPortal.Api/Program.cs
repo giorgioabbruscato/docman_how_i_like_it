@@ -4,6 +4,7 @@ using HrPortal.Api.Infrastructure.Filters;
 using HrPortal.Api.Infrastructure.Middleware;
 using HrPortal.Api.Infrastructure.OpenApi;
 using System.Reflection;
+using System.Text.Json.Serialization;
 using HrPortal.Api.Infrastructure.Persistence;
 using HrPortal.AccessControl;
 using HrPortal.AccessControl.Infrastructure;
@@ -14,6 +15,7 @@ using HrPortal.Configuration;
 using HrPortal.Departments;
 using HrPortal.Documents;
 using HrPortal.Employees;
+using HrPortal.Projects;
 using HrPortal.Identity;
 using HrPortal.Leave;
 using HrPortal.Notifications;
@@ -36,7 +38,9 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .WriteTo.Console());
 
 builder.Services.AddControllers(options =>
-    options.Filters.Add<ValidationFilter>());
+    options.Filters.Add<ValidationFilter>())
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -104,6 +108,7 @@ builder.Services.AddHrPortalNotifications();
 builder.Services.AddHrPortalAudit();
 builder.Services.AddDepartmentsModule();
 builder.Services.AddEmployeesModule();
+builder.Services.AddProjectsModule();
 builder.Services.AddLeaveModule();
 builder.Services.AddAttendanceModule();
 builder.Services.AddDocumentsModule();

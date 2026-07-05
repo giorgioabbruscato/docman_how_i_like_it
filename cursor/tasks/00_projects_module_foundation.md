@@ -1,6 +1,6 @@
 # TASK 00 — PROJECTS MODULE FOUNDATION
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create the `HrPortal.Projects` module following the modular monolith Clean Architecture pattern.
 

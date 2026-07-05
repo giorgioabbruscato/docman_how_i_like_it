@@ -14,7 +14,8 @@ public sealed class ModuleDependencyTests
             ["HrPortal.Employees"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Departments" },
             ["HrPortal.Leave"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees" },
             ["HrPortal.Attendance"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees" },
-            ["HrPortal.Documents"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees" }
+            ["HrPortal.Documents"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees" },
+            ["HrPortal.Projects"] = new HashSet<string>(StringComparer.Ordinal) { "HrPortal.Employees" }
         };
 
     [Fact]

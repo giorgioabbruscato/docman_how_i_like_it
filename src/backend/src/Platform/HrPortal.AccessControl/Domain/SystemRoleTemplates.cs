@@ -41,7 +41,12 @@ public static class SystemRoleTemplates
         Permissions.MembershipCreateTenant,
         Permissions.MembershipUpdateTenant,
         Permissions.RoleReadTenant,
-        Permissions.AuditReadTenant
+        Permissions.AuditReadTenant,
+        Permissions.ProjectReadTenant,
+        Permissions.ProjectCreateTenant,
+        Permissions.ProjectUpdateTenant,
+        Permissions.ProjectDeleteTenant,
+        Permissions.ProjectManageMembersTenant
     ];
 
     private static readonly IReadOnlyList<string> ManagerPermissions =

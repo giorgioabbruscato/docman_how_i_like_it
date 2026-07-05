@@ -1,6 +1,6 @@
 # TASK 02 — PROJECT MEMBERS
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Implement project membership management APIs.
 

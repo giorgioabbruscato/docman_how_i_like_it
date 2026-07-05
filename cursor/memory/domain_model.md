@@ -313,6 +313,52 @@ Sole identity object for application services. Enriched per request by `TenantCo
 
 ---
 
+### Project — IMPLEMENTED
+
+**Location:** `HrPortal.Projects.Domain`  
+**Schema:** `projects`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Name | string | Required, max 200 |
+| Description | string? | Optional |
+| CustomerName | string? | Optional |
+| Status | ProjectStatus | Active, OnHold, Completed, Cancelled |
+| StartDate | DateOnly? | Optional |
+| EndDate | DateOnly? | Must be >= StartDate when both set |
+| BudgetHours | decimal? | >= 0 |
+| BudgetCost | decimal? | >= 0 |
+| IsArchived | bool | Soft archive flag |
+
+**Factory:** `Project.Create(tenantId, name, status, ...)`  
+**Methods:** `Update(...)`, `Archive(updatedBy)`
+
+**Enum:** `ProjectStatus`: Active, OnHold, Completed, Cancelled
+
+---
+
+### ProjectMember — IMPLEMENTED
+
+**Location:** `HrPortal.Projects.Domain`  
+**Schema:** `projects`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| ProjectId | Guid | FK to Project |
+| EmployeeId | Guid | Validated via `IEmployeeLookup` |
+| Role | ProjectMemberRole | Lead, Member, Observer |
+| HourlyRate | decimal? | >= 0 |
+
+**Factory:** `ProjectMember.Create(tenantId, projectId, employeeId, role, hourlyRate?, createdBy?)`
+
+**Enum:** `ProjectMemberRole`: Lead, Member, Observer
+
+**Business rules:**
+- Unique `(ProjectId, EmployeeId)` per tenant
+- Only active employees can be assigned (via `IEmployeeLookup`)
+
+---
+
 ## Entity relationship diagram
 
 ```
@@ -328,7 +374,10 @@ Tenant (platform)
   │       │
   │       ├── LeaveRequest (leave)
   │       ├── AttendanceRecord (attendance)
-  │       └── Document (documents)
+  │       ├── Document (documents)
+  │       └── ProjectMember (projects) ──→ Project (projects)
+  │
+  ├── Project (projects)
   │
   └── Department (departments)
         └── ParentDepartmentId → Department (self-ref)
@@ -344,3 +393,4 @@ See also: `cursor/memory/module_dependencies.md` for the full dependency graph.
 |-----------|--------|--------|
 | `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync(Guid departmentId)` |
 | `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync(Guid employeeId)` |
+| `IProjectLookup` | Projects | `ExistsAsync(Guid projectId)` |

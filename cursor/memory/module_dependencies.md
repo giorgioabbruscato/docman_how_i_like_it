@@ -11,6 +11,7 @@ Departments  (no module dependencies)
     ↑
 Employees
     ↑
+    ├── Projects
     ├── Leave        (+ Notifications)
     ├── Attendance
     └── Documents    (+ Storage)
@@ -23,6 +24,7 @@ The graph is a DAG: no module references another module transitively back to its
 | Consumer | Provider | Interface | Purpose |
 |----------|----------|-----------|---------|
 | Employees | Departments | `IDepartmentLookup` | Validate department on create/update |
+| Projects | Employees | `IEmployeeLookup` | Validate employee on project member assignment |
 | Leave | Employees | `IEmployeeLookup` | Validate employee on leave request |
 | Attendance | Employees | `IEmployeeLookup` | Validate employee on clock-in/out |
 | Documents | Employees | `IEmployeeLookup` | Validate employee on document upload |
@@ -33,8 +35,9 @@ The graph is a DAG: no module references another module transitively back to its
 |-----------|-----------------|--------|
 | `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync(Guid departmentId)` |
 | `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync(Guid employeeId)` |
+| `IProjectLookup` | Projects | `ExistsAsync(Guid projectId)` |
 
-Implementations live in the provider's application service (`IDepartmentService`, `IEmployeeService`) and are registered as the lookup interface in `{Module}ServiceCollectionExtensions`.
+Implementations live in the provider's application service (`IDepartmentService`, `IEmployeeService`) or dedicated lookup class (`ProjectLookup`) and are registered in `{Module}ServiceCollectionExtensions`.
 
 ## Platform dependencies (not module-to-module)
 
@@ -61,6 +64,6 @@ Implementations live in the provider's application service (`IDepartmentService`
 ```
 AddTenancy → AddHrPortalIdentity → AddHrPortalAccessControl
 → AddHrPortalAuthorization → AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalAudit
-→ AddDepartmentsModule → AddEmployeesModule
+→ AddDepartmentsModule → AddEmployeesModule → AddProjectsModule
 → AddLeaveModule → AddAttendanceModule → AddDocumentsModule
 ```

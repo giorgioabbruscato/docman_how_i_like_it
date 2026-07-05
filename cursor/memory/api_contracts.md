@@ -200,6 +200,122 @@ only as constants to avoid breaking references while call sites are cleaned up; 
 **Action:** Soft delete (deactivate)  
 **Response:** `204 No Content`
 
+**Response:** `204 No Content`
+
+---
+
+## Projects — IMPLEMENTED
+
+### GET /api/v1/projects
+
+**Auth:** `project.read:tenant`  
+**Query params:** `page` (default 1), `pageSize` (default 20, max 100), `search`, `customerName`, `status`, `isArchived`  
+**Response:** `200 OK`
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "Website Redesign",
+      "description": "Corporate site refresh",
+      "customerName": "Acme Corp",
+      "status": "Active",
+      "startDate": "2025-01-01",
+      "endDate": "2025-12-31",
+      "budgetHours": 500,
+      "budgetCost": 50000,
+      "isArchived": false
+    }
+  ],
+  "totalCount": 1,
+  "page": 1,
+  "pageSize": 20
+}
+```
+
+### GET /api/v1/projects/{id}
+
+**Auth:** `project.read:tenant`  
+**Response:** `200 OK` — single ProjectDto  
+**Errors:** `404` if not found
+
+### POST /api/v1/projects
+
+**Auth:** `project.create:tenant`  
+**Request:**
+
+```json
+{
+  "name": "Website Redesign",
+  "status": "Active",
+  "description": "Corporate site refresh",
+  "customerName": "Acme Corp",
+  "startDate": "2025-01-01",
+  "endDate": "2025-12-31",
+  "budgetHours": 500,
+  "budgetCost": 50000
+}
+```
+
+**Response:** `201 Created` — ProjectDto  
+**Audit:** `project.created`
+
+### PUT /api/v1/projects/{id}
+
+**Auth:** `project.update:tenant`  
+**Request:** same shape as POST (without defaults)  
+**Response:** `200 OK` — ProjectDto  
+**Audit:** `project.updated`
+
+### DELETE /api/v1/projects/{id}
+
+**Auth:** `project.delete:tenant`  
+**Action:** Soft archive (`IsArchived = true`)  
+**Response:** `204 No Content`  
+**Audit:** `project.deleted`
+
+### GET /api/v1/projects/{id}/members
+
+**Auth:** `project.read:tenant`  
+**Response:** `200 OK`
+
+```json
+[
+  {
+    "id": "uuid",
+    "projectId": "uuid",
+    "employeeId": "uuid",
+    "role": "Lead",
+    "hourlyRate": 85.00
+  }
+]
+```
+
+### POST /api/v1/projects/{id}/members
+
+**Auth:** `project.manage_members:tenant`  
+**Request:**
+
+```json
+{
+  "employeeId": "uuid",
+  "role": "Member",
+  "hourlyRate": 50.00
+}
+```
+
+**Response:** `201 Created` — ProjectMemberDto  
+**Errors:** `404` if project or employee not found/inactive; `409` if duplicate assignment  
+**Audit:** `project.member.added`
+
+### DELETE /api/v1/projects/{id}/members/{memberId}
+
+**Auth:** `project.manage_members:tenant`  
+**Response:** `204 No Content`  
+**Errors:** `404` if member not found or not on project  
+**Audit:** `project.member.removed`
+
 ---
 
 ## Leave Requests
