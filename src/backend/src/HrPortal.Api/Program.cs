@@ -1,9 +1,12 @@
 using System.Threading.RateLimiting;
+using HrPortal.Api.Infrastructure;
 using HrPortal.Api.Infrastructure.Filters;
 using HrPortal.Api.Infrastructure.Middleware;
 using HrPortal.Api.Infrastructure.OpenApi;
 using System.Reflection;
 using HrPortal.Api.Infrastructure.Persistence;
+using HrPortal.AccessControl;
+using HrPortal.AccessControl.Infrastructure;
 using HrPortal.Attendance;
 using HrPortal.Audit;
 using HrPortal.Authorization;
@@ -17,7 +20,6 @@ using HrPortal.Notifications;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.Storage;
 using HrPortal.Tenancy;
-using HrPortal.Tenancy.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +45,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "HR Portal API",
         Version = "v1",
-        Description = "Modular monolith HR platform API. Business endpoints require Bearer JWT and X-Tenant-Id header."
+        Description = "Modular monolith HR platform API. Business endpoints require Bearer JWT. Tenant header (X-Tenant-Id) is required in multi-tenant mode and optional in single-tenant mode."
     });
 
     var xmlPath = Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
@@ -94,7 +96,9 @@ builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 
 builder.Services.AddTenancy(builder.Configuration);
 builder.Services.AddHrPortalIdentity(builder.Configuration);
+builder.Services.AddHrPortalAccessControl();
 builder.Services.AddHrPortalAuthorization();
+builder.Services.AddAuthorizationResourceLoaders();
 builder.Services.AddHrPortalStorage(builder.Configuration);
 builder.Services.AddHrPortalNotifications();
 builder.Services.AddHrPortalAudit();
@@ -193,7 +197,7 @@ if (!app.Environment.IsEnvironment("Testing"))
     app.UseRateLimiter();
 
 app.UseAuthentication();
-app.UseMiddleware<TenantResolverMiddleware>();
+app.UseMiddleware<RequestContextMiddleware>();
 app.UseAuthorization();
 
 if (app.Environment.IsEnvironment("Testing"))

@@ -1,3 +1,4 @@
+using HrPortal.AccessControl.Domain;
 using HrPortal.Attendance.Application;
 using HrPortal.Attendance.Application.Dtos;
 using HrPortal.Authorization;
@@ -20,9 +21,9 @@ public sealed class AttendanceController : ControllerBase
         _attendanceService = attendanceService;
 
     /// <summary>List attendance records.</summary>
-    /// <remarks>Auth: ManagerOrAbove</remarks>
+    /// <remarks>Auth: attendance.read:tenant OR attendance.read:team</remarks>
     [HttpGet]
-    [Authorize(Policy = Policies.ManagerOrAbove)]
+    [RequireAnyPermission(Permissions.AttendanceReadTenant, Permissions.AttendanceReadTeam)]
     [ProducesResponseType(typeof(IEnumerable<AttendanceRecordDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
@@ -31,8 +32,9 @@ public sealed class AttendanceController : ControllerBase
     }
 
     /// <summary>Record employee check-in.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: attendance.write:self</remarks>
     [HttpPost("check-in")]
+    [RequirePermission(Permissions.AttendanceWriteSelf)]
     [ProducesResponseType(typeof(AttendanceRecordDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -45,8 +47,9 @@ public sealed class AttendanceController : ControllerBase
     }
 
     /// <summary>Record employee check-out.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: attendance.write:self</remarks>
     [HttpPost("check-out")]
+    [RequirePermission(Permissions.AttendanceWriteSelf)]
     [ProducesResponseType(typeof(AttendanceRecordDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -59,9 +62,9 @@ public sealed class AttendanceController : ControllerBase
     }
 
     /// <summary>Get attendance report for a date range.</summary>
-    /// <remarks>Auth: ManagerOrAbove. Query params: from, to (DateOnly).</remarks>
+    /// <remarks>Auth: attendance.read:tenant OR attendance.read:team. Query params: from, to (DateOnly).</remarks>
     [HttpGet("reports")]
-    [Authorize(Policy = Policies.ManagerOrAbove)]
+    [RequireAnyPermission(Permissions.AttendanceReadTenant, Permissions.AttendanceReadTeam)]
     [ProducesResponseType(typeof(AttendanceReportDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetReport(

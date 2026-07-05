@@ -31,6 +31,8 @@ public sealed class FileSystemStorageProviderTests : IDisposable
             ContentType = "application/pdf"
         });
 
+        uploadResult.Path.Should().StartWith($"{tenantId}/employee/documents/");
+
         await using var downloadStream = await _provider.DownloadAsync(uploadResult.Path);
         using var reader = new MemoryStream();
         await downloadStream.CopyToAsync(reader);

@@ -3,9 +3,9 @@ using HrPortal.Departments.Application;
 using HrPortal.Employees.Application;
 using HrPortal.Employees.Application.Dtos;
 using HrPortal.Employees.Domain;
-using HrPortal.Identity;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.Tenancy;
+using HrPortal.Tenancy.Application;
 using Moq;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -17,19 +17,29 @@ public sealed class EmployeeServiceTests
     private readonly Mock<IDepartmentLookup> _departmentLookup = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IAuditService> _auditService = new();
-    private readonly TenantContext _tenantContext = TenantContext.Create(Guid.NewGuid(), "demo");
-    private readonly UserContext _userContext = new() { UserId = Guid.NewGuid(), IsAuthenticated = true };
+    private readonly Mock<IFeatureGateService> _featureGateService = new();
+    private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo") with
+    {
+        UserId = Guid.NewGuid()
+    };
     private readonly EmployeeService _service;
 
     public EmployeeServiceTests()
     {
+        _featureGateService
+            .Setup(f => f.GetMaxEmployeesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(int.MaxValue);
+        _repository
+            .Setup(r => r.CountActiveAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
         _service = new EmployeeService(
             _repository.Object,
             _departmentLookup.Object,
             _unitOfWork.Object,
             _tenantContext,
-            _userContext,
             _auditService.Object,
+            _featureGateService.Object,
         NullLogger<EmployeeService>.Instance);
     }
 
@@ -75,6 +85,23 @@ public sealed class EmployeeServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_ReturnsPlanLimitExceeded_WhenAtCapacity()
+    {
+        _featureGateService
+            .Setup(f => f.GetMaxEmployeesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(20);
+        _repository
+            .Setup(r => r.CountActiveAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(20);
+
+        var result = await _service.CreateAsync(new CreateEmployeeRequest(
+            "Mario", "Rossi", "mario@demo.local", new DateOnly(2024, 1, 1)));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorCode.Should().Be("PLAN_LIMIT_EXCEEDED");
+    }
+
+    [Fact]
     public async Task CreateAsync_Succeeds_WhenValid()
     {
         _repository.Setup(r => r.EmailExistsAsync(It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
@@ -86,5 +113,30 @@ public sealed class EmployeeServiceTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.Email.Should().Be("mario@demo.local");
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReturnsNotFound_WhenMissing()
+    {
+        _repository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Employee?)null);
+
+        var result = await _service.UpdateAsync(Guid.NewGuid(), new UpdateEmployeeRequest(
+            "Mario", "Rossi", "mario@demo.local", null, null));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorCode.Should().Be("NOT_FOUND");
+    }
+
+    [Fact]
+    public async Task DeactivateAsync_ReturnsNotFound_WhenMissing()
+    {
+        _repository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Employee?)null);
+
+        var result = await _service.DeactivateAsync(Guid.NewGuid());
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorCode.Should().Be("NOT_FOUND");
     }
 }

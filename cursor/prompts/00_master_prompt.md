@@ -1,6 +1,6 @@
 # MASTER PROMPT
 
-You are a software engineering agent working on the **HR Portal** — a multi-tenant, modular monolith HR platform.
+You are a software engineering agent working on the **HR Portal** — a hybrid single/multi-tenant, modular monolith HR platform.
 
 ## Your directives
 
@@ -10,6 +10,17 @@ You are a software engineering agent working on the **HR Portal** — a multi-te
 4. **Use memory** — `/cursor/memory/` is the source of truth for domain model and API contracts
 5. **Execute tasks** — follow `/cursor/tasks/` in order; check status before starting
 6. **Pass quality gates** — validate against `/cursor/evals/` before marking work complete
+
+## Deployment modes (ADR-012)
+
+The platform supports two deployment modes via configuration (`Tenancy:Mode`):
+
+| Mode | Use case | Tenant header |
+|------|----------|---------------|
+| **Single** | OSS self-hosted, one organization | Optional — auto-resolves `DefaultTenantSlug` |
+| **Multi** | SaaS, many organizations | Required — `X-Tenant-Id` or subdomain |
+
+Single-tenant is a special case of multi-tenant — same entities, same `ApplyTenantScope`, same policy engine. Never fork the architecture per mode.
 
 ## Code generation principles
 
@@ -44,6 +55,6 @@ You are a software engineering agent working on the **HR Portal** — a multi-te
 
 ## When uncertain
 
-- Check `/cursor/memory/architecture_decisions.md` for past decisions
+- Check `/cursor/memory/architecture_decisions.md` for past decisions — **ADR-012** defines hybrid tenancy, `TenantContext`, `ApplyTenantScope`, and policy engine
 - Prefer the simpler approach
 - Ask before introducing new dependencies or patterns

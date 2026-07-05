@@ -59,6 +59,8 @@ services:
       Keycloak__ValidIssuers__0: http://keycloak:8080/realms/hrportal
       Keycloak__ValidIssuers__1: http://localhost:8080/realms/hrportal
       Keycloak__ValidIssuers__2: http://localhost/realms/hrportal
+      Tenancy__Mode: ${TENANCY__MODE:-Multi}
+      Tenancy__DefaultTenantSlug: ${TENANCY__DEFAULTTENANTSLUG:-demo}
       Tenancy__TenantHeaderName: X-Tenant-Id
       Tenancy__UseSubdomainResolution: "false"
       Storage__RootPath: /app/storage
@@ -89,6 +91,7 @@ services:
         VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-http://localhost:8080}
         VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-hrportal}
         VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-hrportal-web}
+        VITE_TENANCY_MODE: ${VITE_TENANCY_MODE:-multi}
         VITE_TENANT_ID: ${VITE_TENANT_ID:-demo}
     container_name: hrportal-frontend
     ports:

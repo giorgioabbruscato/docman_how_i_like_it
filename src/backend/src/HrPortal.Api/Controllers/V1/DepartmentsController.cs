@@ -1,3 +1,4 @@
+using HrPortal.AccessControl.Domain;
 using HrPortal.Authorization;
 using HrPortal.Departments.Application;
 using HrPortal.Departments.Application.Dtos;
@@ -20,9 +21,11 @@ public sealed class DepartmentsController : ControllerBase
         _departmentService = departmentService;
 
     /// <summary>List all departments.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: department.read:tenant</remarks>
     [HttpGet]
+    [RequirePermission(Permissions.DepartmentReadTenant)]
     [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _departmentService.GetAllAsync(cancellationToken);
@@ -30,10 +33,12 @@ public sealed class DepartmentsController : ControllerBase
     }
 
     /// <summary>Get department by ID.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: department.read:tenant</remarks>
     [HttpGet("{id:guid}")]
+    [RequirePermission(Permissions.DepartmentReadTenant)]
     [ProducesResponseType(typeof(DepartmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _departmentService.GetByIdAsync(id, cancellationToken);
@@ -41,9 +46,9 @@ public sealed class DepartmentsController : ControllerBase
     }
 
     /// <summary>Create a new department.</summary>
-    /// <remarks>Auth: HrOrAdmin</remarks>
+    /// <remarks>Auth: department.write:tenant</remarks>
     [HttpPost]
-    [Authorize(Policy = Policies.HrOrAdmin)]
+    [RequirePermission(Permissions.DepartmentWriteTenant)]
     [ProducesResponseType(typeof(DepartmentDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -58,9 +63,9 @@ public sealed class DepartmentsController : ControllerBase
     }
 
     /// <summary>Update a department.</summary>
-    /// <remarks>Auth: HrOrAdmin</remarks>
+    /// <remarks>Auth: department.write:tenant</remarks>
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = Policies.HrOrAdmin)]
+    [RequirePermission(Permissions.DepartmentWriteTenant)]
     [ProducesResponseType(typeof(DepartmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -75,9 +80,9 @@ public sealed class DepartmentsController : ControllerBase
     }
 
     /// <summary>Deactivate a department (soft delete).</summary>
-    /// <remarks>Auth: HrOrAdmin</remarks>
+    /// <remarks>Auth: department.delete:tenant</remarks>
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = Policies.HrOrAdmin)]
+    [RequirePermission(Permissions.DepartmentDeleteTenant)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)

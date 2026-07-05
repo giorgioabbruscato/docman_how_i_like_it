@@ -36,16 +36,17 @@ src/backend/src/
 │   ├── HrPortal.SharedKernel/ # Base entities, Result, IUnitOfWork
 │   ├── HrPortal.Tenancy/      # Multi-tenant resolution & isolation
 │   ├── HrPortal.Identity/     # JWT validation (Keycloak)
-│   ├── HrPortal.Authorization/# Policy-based roles
+│   ├── HrPortal.Authorization/# Permission-based authorization ([RequirePermission])
 │   ├── HrPortal.Storage/      # IStorageProvider (filesystem)
 │   ├── HrPortal.Audit/        # Audit logging
 │   ├── HrPortal.Notifications/# Notification abstraction
 │   └── HrPortal.Configuration/
 └── Modules/
     ├── HrPortal.Employees/    # Reference implementation
-    ├── HrPortal.Departments/  # Planned
-    ├── HrPortal.Leave/        # Planned
-    └── ...
+    ├── HrPortal.Departments/
+    ├── HrPortal.Leave/
+    ├── HrPortal.Documents/
+    └── HrPortal.Attendance/
 ```
 
 Each module follows **Clean Architecture**:
@@ -110,6 +111,23 @@ npm run dev
 
 Frontend: http://localhost:5173
 
+#### Frontend configuration
+
+Copy `src/frontend/.env.example` to `src/frontend/.env` for local dev, or set variables in the root `.env` for Docker builds.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `VITE_API_BASE_URL` | Production | `/api` | Backend API base URL |
+| `VITE_KEYCLOAK_URL` | Yes | — | Keycloak server URL |
+| `VITE_KEYCLOAK_REALM` | Yes | — | Keycloak realm (`hrportal`) |
+| `VITE_KEYCLOAK_CLIENT_ID` | Yes | — | OIDC client ID (`hrportal-web`) |
+| `VITE_TENANCY_MODE` | No | `multi` | `single` or `multi` — controls tenant header behavior |
+| `VITE_TENANT_ID` | Multi mode only | `demo` (dev) | Tenant slug sent as `X-Tenant-Id` header |
+
+**Single mode** (`VITE_TENANCY_MODE=single`): for OSS single-organization deployments. The API client omits `X-Tenant-Id`; `VITE_TENANT_ID` is not required. Tenant UI is hidden in the shell.
+
+**Multi mode** (`VITE_TENANCY_MODE=multi`, default): for SaaS multi-tenant deployments. Every API request includes `X-Tenant-Id` from `VITE_TENANT_ID` (required in production builds).
+
 ### Full stack with Docker
 
 ```bash
@@ -139,6 +157,42 @@ dotnet ef migrations add <MigrationName> \
 ```
 
 See [Operations guide](docs/OPERATIONS.md#database-migrations) for apply/rollback details.
+
+## Deployment modes
+
+The same codebase supports two deployment profiles via configuration only (ADR-012).
+
+### OSS single-tenant
+
+For self-hosted deployments serving one organization:
+
+| Setting | Value |
+|---------|-------|
+| `TENANCY__MODE` | `Single` |
+| `VITE_TENANCY_MODE` | `single` |
+
+- No `X-Tenant-Id` header required on API requests
+- Tenant slug UI hidden in the frontend shell
+- `IFeatureGateService` returns Enterprise-equivalent features regardless of persisted plan
+- Set both variables in root `.env` and rebuild Docker images when using Compose
+
+### SaaS multi-tenant (default)
+
+For hosted multi-organization deployments:
+
+| Setting | Value |
+|---------|-------|
+| `TENANCY__MODE` | `Multi` (default) |
+| `VITE_TENANCY_MODE` | `multi` (default) |
+
+- Every API request must include `X-Tenant-Id` (header or subdomain resolution)
+- Frontend displays current tenant slug in the shell
+- Strict tenant isolation via EF global filters and `ApplyTenantScope`
+- Demo tenant slug: `demo` (local dev via `VITE_TENANT_ID`)
+
+### Authorization model
+
+Access control is **permission-based**, not legacy ASP.NET role policies. Tenant roles map to permission strings (e.g. `employee.read:tenant`); the frontend loads permissions from `GET /api/v1/me` and gates UI elements with `hasPermission()`. Backend enforcement uses `[RequirePermission]` attributes and the centralized policy engine.
 
 ## Multi-tenancy
 

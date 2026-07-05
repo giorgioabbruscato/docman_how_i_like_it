@@ -5,7 +5,7 @@
 ## Project dependency graph
 
 ```
-Platform (SharedKernel, Tenancy, Identity, Audit, Storage, Notifications)
+Platform (SharedKernel, Tenancy, Identity, AccessControl, Audit, Storage, Notifications)
     ↑
 Departments  (no module dependencies)
     ↑
@@ -42,10 +42,12 @@ Implementations live in the provider's application service (`IDepartmentService`
 |----------|------------------|-----------|
 | All modules | SharedKernel | `IUnitOfWork` |
 | All modules | Audit | `IAuditService` |
+| HrPortal.Api | AccessControl | `IMeService`, `ITenantRoleService`, `ITenantMembershipService`, `IPolicyEngine` |
+| HrPortal.Authorization | AccessControl | `IPolicyEngine`, `IPermissionEvaluator` |
 | Leave | Notifications | `INotificationService` |
 | Documents | Storage | `IStorageProvider` |
 
-Platform services must not reference business domain modules.
+`HrPortal.AccessControl` must not reference business domain modules (Employees, Leave, etc.).
 
 ## Rules
 
@@ -57,8 +59,8 @@ Platform services must not reference business domain modules.
 ## Registration order (`Program.cs`)
 
 ```
-AddTenancy → AddHrPortalIdentity → AddHrPortalAuthorization
-→ AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalAudit
+AddTenancy → AddHrPortalIdentity → AddHrPortalAccessControl
+→ AddHrPortalAuthorization → AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalAudit
 → AddDepartmentsModule → AddEmployeesModule
 → AddLeaveModule → AddAttendanceModule → AddDocumentsModule
 ```

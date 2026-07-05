@@ -24,6 +24,17 @@ Each module (`HrPortal.{Module}`) must have:
 - [ ] Interface in Application/Domain, implementation in Infrastructure
 - [ ] Registered in `Program.cs`
 
+## Hybrid architecture checklist (ADR-012)
+
+Applies from task 14 onward as hybrid features are implemented:
+
+- [ ] Single mode: business endpoints work without `X-Tenant-Id` header
+- [ ] Multi mode: tenant isolation — Tenant A cannot see Tenant B data
+- [ ] Every repository query uses `ApplyTenantScope`
+- [ ] No HTTP/JWT/`HttpContext` access in application services — `TenantContext` only
+- [ ] Endpoint authorization via policy engine (`IPolicyEngine.Can`) — no inline role checks
+- [ ] `TenantContext.Mode` correctly set for deployment mode (`Single` \| `Multi`)
+
 ## Code quality
 
 - [ ] No `DbContext` usage outside repositories
@@ -60,6 +71,7 @@ dotnet ef database update --project src/HrPortal.Api
 
 | Module | Domain | Service | Repository | Tests | Status |
 |--------|--------|---------|------------|-------|--------|
+| Access Control | ✅ | ✅ | ✅ | ✅ | Complete |
 | Employees | ✅ | ✅ | ✅ | ✅ | Reference impl |
 | Departments | ✅ | ✅ | ✅ | ✅ | Complete |
 | Leave | ✅ | ✅ | ✅ | ✅ | Complete |

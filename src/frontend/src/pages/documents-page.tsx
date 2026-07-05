@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { hasAnyRole, HR_OR_ADMIN_ROLES, MANAGER_OR_ABOVE_ROLES } from '@/lib/auth-roles';
+import { Permission, hasAnyPermission, hasPermission } from '@/lib/auth-permissions';
 import {
   confirmAction,
   formatDateTime,
@@ -32,9 +32,17 @@ type UploadForm = z.infer<typeof uploadSchema>;
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 export function DocumentsPage() {
-  const user = useAuthStore((state) => state.user);
-  const isManagerOrAbove = hasAnyRole(user?.roles ?? [], ...MANAGER_OR_ABOVE_ROLES);
-  const isHrOrAdmin = hasAnyRole(user?.roles ?? [], ...HR_OR_ADMIN_ROLES);
+  const permissions = useAuthStore((state) => state.permissions);
+  const authEmployeeId = useAuthStore((state) => state.employeeId);
+
+  const canUploadDocument = hasPermission(permissions, Permission.DocumentUploadSelf);
+  const canListDocuments = hasPermission(permissions, Permission.DocumentReadTenant);
+  const canDeleteDocument = hasPermission(permissions, Permission.DocumentDeleteTenant);
+  const canSelectEmployee = hasAnyPermission(
+    permissions,
+    Permission.EmployeeReadTenant,
+    Permission.EmployeeReadTeam,
+  );
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -47,28 +55,48 @@ export function DocumentsPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<UploadForm>({
     resolver: zodResolver(uploadSchema),
-    defaultValues: { category: 'Other' },
+    defaultValues: {
+      employeeId: authEmployeeId ?? '',
+      category: 'Other',
+    },
   });
+
+  useEffect(() => {
+    if (!canSelectEmployee && authEmployeeId) {
+      setValue('employeeId', authEmployeeId);
+    }
+  }, [authEmployeeId, canSelectEmployee, setValue]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      if (isManagerOrAbove) {
-        const [documentData, employeeData] = await Promise.all([
-          fetchDocuments(),
-          fetchEmployees(),
-        ]);
-        setDocuments(documentData);
-        setEmployees(employeeData);
+      const promises: Promise<void>[] = [];
+
+      if (canListDocuments) {
+        promises.push(
+          fetchDocuments().then((documentData) => {
+            setDocuments(documentData);
+          }),
+        );
       } else {
-        const employeeData = await fetchEmployees().catch(() => []);
-        setEmployees(employeeData);
+        setDocuments([]);
       }
+
+      if (canSelectEmployee) {
+        promises.push(
+          fetchEmployees().then((employeeData) => {
+            setEmployees(employeeData);
+          }),
+        );
+      }
+
+      await Promise.all(promises);
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to load documents.'));
     } finally {
@@ -78,7 +106,7 @@ export function DocumentsPage() {
 
   useEffect(() => {
     void loadData();
-  }, [isManagerOrAbove]);
+  }, [canListDocuments, canSelectEmployee]);
 
   const onSubmit = async (data: UploadForm) => {
     if (!selectedFile) {
@@ -96,10 +124,13 @@ export function DocumentsPage() {
         { employeeId: data.employeeId, category: data.category },
         selectedFile,
       );
-      reset({ category: 'Other' });
+      reset({
+        employeeId: canSelectEmployee ? '' : (authEmployeeId ?? ''),
+        category: 'Other',
+      });
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
-      if (isManagerOrAbove) await loadData();
+      if (canListDocuments) await loadData();
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to upload document.'));
     }
@@ -141,60 +172,62 @@ export function DocumentsPage() {
       {error && <ErrorBanner message={error} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Document</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                {isManagerOrAbove ? (
-                  <Select {...register('employeeId')}>
-                    <option value="">Select employee</option>
-                    {employees.map((employee) => (
-                      <option key={employee.id} value={employee.id}>
-                        {employee.firstName} {employee.lastName}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  <>
-                    <Input placeholder="Employee ID (UUID)" {...register('employeeId')} />
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Enter your employee record ID. Contact HR if you do not have it.
+        {canUploadDocument && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload Document</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div>
+                  {canSelectEmployee ? (
+                    <Select {...register('employeeId')}>
+                      <option value="">Select employee</option>
+                      {employees.map((employee) => (
+                        <option key={employee.id} value={employee.id}>
+                          {employee.firstName} {employee.lastName}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input type="hidden" {...register('employeeId')} />
+                  )}
+                  {!canSelectEmployee && authEmployeeId && (
+                    <p className="text-sm text-muted-foreground">
+                      Uploading document for your employee record.
                     </p>
-                  </>
-                )}
-                {errors.employeeId && (
-                  <p className="mt-1 text-xs text-red-600">{errors.employeeId.message}</p>
-                )}
-              </div>
-              <Select {...register('category')}>
-                {DOCUMENT_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </Select>
-              <div>
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Allowed: PDF, JPEG, PNG, DOCX. Max 10 MB.
-                </p>
-              </div>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Uploading...' : 'Upload Document'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                  )}
+                  {errors.employeeId && (
+                    <p className="mt-1 text-xs text-red-600">{errors.employeeId.message}</p>
+                  )}
+                </div>
+                <Select {...register('category')}>
+                  {DOCUMENT_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </Select>
+                <div>
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.docx,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Allowed: PDF, JPEG, PNG, DOCX. Max 10 MB.
+                  </p>
+                </div>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Uploading...' : 'Upload Document'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
-        {isManagerOrAbove && (
+        {canListDocuments && (
           <Card>
             <CardHeader>
               <CardTitle>Document List</CardTitle>
@@ -221,8 +254,12 @@ export function DocumentsPage() {
                         <Button size="sm" variant="outline" onClick={() => handleDownload(doc)}>
                           Download
                         </Button>
-                        {isHrOrAdmin && (
-                          <Button size="sm" variant="destructive" onClick={() => handleDelete(doc.id)}>
+                        {canDeleteDocument && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(doc.id)}
+                          >
                             Delete
                           </Button>
                         )}

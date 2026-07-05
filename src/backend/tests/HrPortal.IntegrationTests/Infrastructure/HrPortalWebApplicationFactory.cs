@@ -11,9 +11,11 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace HrPortal.IntegrationTests.Infrastructure;
 
-public sealed class HrPortalWebApplicationFactory : WebApplicationFactory<Program>
+public class HrPortalWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
+
+    protected virtual IReadOnlyDictionary<string, string?>? ConfigOverrides => null;
 
     public HrPortalWebApplicationFactory()
     {
@@ -26,12 +28,20 @@ public sealed class HrPortalWebApplicationFactory : WebApplicationFactory<Progra
 
         builder.ConfigureAppConfiguration((_, config) =>
         {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
+            var settings = new Dictionary<string, string?>
             {
                 ["ASPNETCORE_ENVIRONMENT"] = "Testing",
                 ["Database:ConnectionString"] = "DataSource=:memory:",
                 ["Storage:RootPath"] = Path.Combine(Path.GetTempPath(), $"hrportal-test-{Guid.NewGuid():N}")
-            });
+            };
+
+            if (ConfigOverrides is not null)
+            {
+                foreach (var (key, value) in ConfigOverrides)
+                    settings[key] = value;
+            }
+
+            config.AddInMemoryCollection(settings);
         });
 
         builder.ConfigureTestServices(services =>

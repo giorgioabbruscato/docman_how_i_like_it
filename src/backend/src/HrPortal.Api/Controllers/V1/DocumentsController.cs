@@ -1,3 +1,4 @@
+using HrPortal.AccessControl.Domain;
 using HrPortal.Authorization;
 using HrPortal.Documents.Application;
 using HrPortal.Documents.Application.Dtos;
@@ -19,9 +20,9 @@ public sealed class DocumentsController : ControllerBase
         _documentService = documentService;
 
     /// <summary>List all documents.</summary>
-    /// <remarks>Auth: ManagerOrAbove</remarks>
+    /// <remarks>Auth: document.read:tenant</remarks>
     [HttpGet]
-    [Authorize(Policy = Policies.ManagerOrAbove)]
+    [RequirePermission(Permissions.DocumentReadTenant)]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<DocumentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
@@ -31,8 +32,9 @@ public sealed class DocumentsController : ControllerBase
     }
 
     /// <summary>Get document metadata by ID.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: document.read:tenant OR document.read:self</remarks>
     [HttpGet("{id:guid}")]
+    [RequireAnyPermission(Permissions.DocumentReadTenant, Permissions.DocumentReadSelf)]
     [Produces("application/json")]
     [ProducesResponseType(typeof(DocumentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -43,8 +45,9 @@ public sealed class DocumentsController : ControllerBase
     }
 
     /// <summary>Upload a document for an employee.</summary>
-    /// <remarks>Auth: Authenticated. Form fields: employeeId, category, file.</remarks>
+    /// <remarks>Auth: document.upload:self. Form fields: employeeId, category, file.</remarks>
     [HttpPost]
+    [RequirePermission(Permissions.DocumentUploadSelf)]
     [Consumes("multipart/form-data")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(DocumentDto), StatusCodes.Status201Created)]
@@ -77,8 +80,9 @@ public sealed class DocumentsController : ControllerBase
     }
 
     /// <summary>Download document file content.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: document.read:tenant OR document.read:self</remarks>
     [HttpGet("{id:guid}/download")]
+    [RequireAnyPermission(Permissions.DocumentReadTenant, Permissions.DocumentReadSelf)]
     [Produces("application/octet-stream", "application/pdf", "image/jpeg", "image/png")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -92,9 +96,9 @@ public sealed class DocumentsController : ControllerBase
     }
 
     /// <summary>Delete a document.</summary>
-    /// <remarks>Auth: HrOrAdmin</remarks>
+    /// <remarks>Auth: document.delete:tenant</remarks>
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = Policies.HrOrAdmin)]
+    [RequirePermission(Permissions.DocumentDeleteTenant)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)

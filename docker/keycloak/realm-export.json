@@ -7,10 +7,11 @@
   "ssoSessionMaxLifespan": 1800,
   "roles": {
     "realm": [
-      { "name": "Admin", "description": "Platform administrator" },
+      { "name": "Admin", "description": "Tenant administrator" },
       { "name": "HR", "description": "HR staff" },
       { "name": "Manager", "description": "Team manager" },
-      { "name": "Employee", "description": "Standard employee" }
+      { "name": "Employee", "description": "Standard employee" },
+      { "name": "PlatformAdmin", "description": "SaaS platform administrator (cross-tenant)" }
     ]
   },
   "clients": [
@@ -67,6 +68,7 @@
   ],
   "users": [
     {
+      "id": "11111111-1111-4111-8111-111111111101",
       "username": "admin@demo.local",
       "email": "admin@demo.local",
       "enabled": true,
@@ -79,6 +81,7 @@
       "realmRoles": ["Admin"]
     },
     {
+      "id": "11111111-1111-4111-8111-111111111102",
       "username": "hr@demo.local",
       "email": "hr@demo.local",
       "enabled": true,
@@ -91,6 +94,7 @@
       "realmRoles": ["HR"]
     },
     {
+      "id": "11111111-1111-4111-8111-111111111103",
       "username": "employee@demo.local",
       "email": "employee@demo.local",
       "enabled": true,
@@ -101,6 +105,19 @@
         { "type": "password", "value": "employee123", "temporary": false }
       ],
       "realmRoles": ["Employee"]
+    },
+    {
+      "id": "11111111-1111-4111-8111-111111111104",
+      "username": "platform.owner@demo.local",
+      "email": "platform.owner@demo.local",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Platform",
+      "lastName": "Admin",
+      "credentials": [
+        { "type": "password", "value": "platform123", "temporary": false }
+      ],
+      "realmRoles": ["PlatformAdmin"]
     }
   ]
 }

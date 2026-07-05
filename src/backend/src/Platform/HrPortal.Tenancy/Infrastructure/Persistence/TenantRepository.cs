@@ -23,4 +23,10 @@ internal sealed class TenantRepository : ITenantRepository
 
     public async Task AddAsync(Tenant tenant, CancellationToken cancellationToken = default) =>
         await _dbContext.Set<Tenant>().AddAsync(tenant, cancellationToken);
+
+    public Task UpdateAsync(Tenant tenant, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Set<Tenant>().Update(tenant);
+        return Task.CompletedTask;
+    }
 }

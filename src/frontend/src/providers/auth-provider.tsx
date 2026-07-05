@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { fetchMe } from '@/api/me';
 import { keycloak, mapKeycloakUser } from '@/lib/keycloak';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -37,6 +38,7 @@ function AuthLoadingScreen() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const setAuth = useAuthStore((state) => state.setAuth);
+  const setMe = useAuthStore((state) => state.setMe);
   const logout = useAuthStore((state) => state.logout);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -46,12 +48,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const user = mapKeycloakUser(keycloak.tokenParsed);
       setAuth(keycloak.token, user);
       setIsAuthenticated(true);
+
+      void fetchMe()
+        .then(setMe)
+        .catch(() => {
+          // Permissions/features stay empty; protected pages remain hidden until /me succeeds.
+        });
       return;
     }
 
     logout();
     setIsAuthenticated(false);
-  }, [logout, setAuth]);
+  }, [logout, setAuth, setMe]);
 
   const refreshToken = useCallback(async () => {
     if (!keycloak.authenticated) {

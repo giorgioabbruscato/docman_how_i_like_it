@@ -1,6 +1,5 @@
 using HrPortal.Audit.Application;
 using HrPortal.Employees.Application;
-using HrPortal.Identity;
 using HrPortal.Leave.Application.Dtos;
 using HrPortal.Leave.Domain;
 using HrPortal.Notifications;
@@ -28,7 +27,6 @@ internal sealed class LeaveRequestService : ILeaveRequestService
     private readonly IEmployeeLookup _employeeLookup;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
-    private readonly UserContext _userContext;
     private readonly IAuditService _auditService;
     private readonly INotificationService _notificationService;
     private readonly ILogger<LeaveRequestService> _logger;
@@ -38,7 +36,6 @@ internal sealed class LeaveRequestService : ILeaveRequestService
         IEmployeeLookup employeeLookup,
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
-        UserContext userContext,
         IAuditService auditService,
         INotificationService notificationService,
         ILogger<LeaveRequestService> logger)
@@ -47,7 +44,6 @@ internal sealed class LeaveRequestService : ILeaveRequestService
         _employeeLookup = employeeLookup;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
-        _userContext = userContext;
         _auditService = auditService;
         _notificationService = notificationService;
         _logger = logger;
@@ -72,8 +68,6 @@ internal sealed class LeaveRequestService : ILeaveRequestService
         CreateLeaveRequest request,
         CancellationToken cancellationToken = default)
     {
-        EnsureTenantResolved();
-
         if (!Enum.TryParse<LeaveType>(request.Type, true, out var leaveType))
             return Result.Failure<LeaveRequestDto>("Invalid leave type.", "VALIDATION_ERROR");
 
@@ -93,7 +87,7 @@ internal sealed class LeaveRequestService : ILeaveRequestService
                 request.EndDate,
                 leaveType,
                 request.Reason,
-                _userContext.UserId);
+                _tenantContext.UserId);
 
             var approvedDays = await _repository.GetApprovedAnnualDaysInYearAsync(
                 request.EmployeeId,
@@ -118,7 +112,7 @@ internal sealed class LeaveRequestService : ILeaveRequestService
             request.EndDate,
             leaveType,
             request.Reason,
-            _userContext.UserId);
+            _tenantContext.UserId);
 
         await _repository.AddAsync(request2, cancellationToken);
         await LogAndSaveAsync("leave_request.created", request2, cancellationToken);
@@ -156,7 +150,7 @@ internal sealed class LeaveRequestService : ILeaveRequestService
 
         try
         {
-            leaveRequest.Approve(_userContext.UserId);
+            leaveRequest.Approve(_tenantContext.UserId ?? Guid.Empty);
         }
         catch (DomainException ex)
         {
@@ -187,7 +181,7 @@ internal sealed class LeaveRequestService : ILeaveRequestService
 
         try
         {
-            leaveRequest.Reject(_userContext.UserId, request.Reason);
+            leaveRequest.Reject(_tenantContext.UserId ?? Guid.Empty, request.Reason);
         }
         catch (DomainException ex)
         {
@@ -215,7 +209,7 @@ internal sealed class LeaveRequestService : ILeaveRequestService
 
         try
         {
-            leaveRequest.Cancel(_userContext.UserId);
+            leaveRequest.Cancel(_tenantContext.UserId);
         }
         catch (DomainException ex)
         {
@@ -232,12 +226,6 @@ internal sealed class LeaveRequestService : ILeaveRequestService
     {
         await _auditService.LogAsync(new AuditEntry(action, nameof(LeaveRequest), leaveRequest.Id.ToString()), cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-    }
-
-    private void EnsureTenantResolved()
-    {
-        if (!_tenantContext.IsResolved)
-            throw new DomainException("Tenant context is not resolved.");
     }
 
     private static LeaveRequestDto MapToDto(LeaveRequest leaveRequest) =>

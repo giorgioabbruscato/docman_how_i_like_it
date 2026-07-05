@@ -65,4 +65,8 @@ Project documentation for developers and operators.
 
 ## Completion
 
-This is the final task in the execution plan. After completion, the system is ready for feature development using the agent task system.
+Documentation baseline complete. Feature development continues with hybrid tenancy architecture.
+
+## Next task
+
+→ `11_hybrid_architecture_foundation.md` — Hybrid architecture foundation (ADR-012)

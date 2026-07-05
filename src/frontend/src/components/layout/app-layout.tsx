@@ -1,51 +1,104 @@
 import { Link, Outlet } from 'react-router-dom';
 import { keycloak } from '@/lib/keycloak';
-import { hasAnyRole, MANAGER_OR_ABOVE_ROLES } from '@/lib/auth-roles';
+import { Permission, hasAnyPermission } from '@/lib/auth-permissions';
+import { isSingleTenancyMode } from '@/lib/tenancy-config';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
+import type { TenantPlanFeatures } from '@/types/me';
 import {
   Building2,
   CalendarDays,
   Clock,
   FileText,
   LayoutDashboard,
+  ScrollText,
   Settings,
   Users,
 } from 'lucide-react';
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-  { to: '/departments', label: 'Departments', icon: Building2, roles: null },
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  isVisible: (permissions: string[], planFeatures: TenantPlanFeatures) => boolean;
+}
+
+const navItems: NavItem[] = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, isVisible: () => true },
+  {
+    to: '/departments',
+    label: 'Departments',
+    icon: Building2,
+    isVisible: (permissions) => hasAnyPermission(permissions, Permission.DepartmentReadTenant),
+  },
   {
     to: '/employees',
     label: 'Employees',
     icon: Users,
-    roles: [...MANAGER_OR_ABOVE_ROLES],
+    isVisible: (permissions) =>
+      hasAnyPermission(permissions, Permission.EmployeeReadTenant, Permission.EmployeeReadTeam),
   },
-  { to: '/leave-requests', label: 'Leave Requests', icon: CalendarDays, roles: null },
-  { to: '/attendance', label: 'Attendance', icon: Clock, roles: null },
-  { to: '/documents', label: 'Documents', icon: FileText, roles: null },
-  { to: '/settings', label: 'Settings', icon: Settings, roles: null },
+  {
+    to: '/leave-requests',
+    label: 'Leave Requests',
+    icon: CalendarDays,
+    isVisible: (permissions) =>
+      hasAnyPermission(
+        permissions,
+        Permission.LeaveCreateSelf,
+        Permission.LeaveReadTenant,
+        Permission.LeaveReadTeam,
+        Permission.LeaveReadSelf,
+      ),
+  },
+  {
+    to: '/attendance',
+    label: 'Attendance',
+    icon: Clock,
+    isVisible: (permissions) =>
+      hasAnyPermission(
+        permissions,
+        Permission.AttendanceReadTenant,
+        Permission.AttendanceReadTeam,
+        Permission.AttendanceReadSelf,
+      ),
+  },
+  {
+    to: '/documents',
+    label: 'Documents',
+    icon: FileText,
+    isVisible: (permissions) =>
+      hasAnyPermission(permissions, Permission.DocumentUploadSelf, Permission.DocumentReadTenant),
+  },
+  {
+    to: '/audit-logs',
+    label: 'Audit Logs',
+    icon: ScrollText,
+    isVisible: (permissions, planFeatures) =>
+      hasAnyPermission(permissions, Permission.AuditReadTenant) && planFeatures.auditLog,
+  },
+  { to: '/settings', label: 'Settings', icon: Settings, isVisible: () => true },
 ];
 
 export function AppLayout() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, permissions, planFeatures, me } = useAuthStore();
+  const tenantDisplay = me?.tenantSlug ?? import.meta.env.VITE_TENANT_ID ?? 'demo';
 
   const handleLogout = () => {
     logout();
     void keycloak.logout({ redirectUri: `${window.location.origin}/login` });
   };
 
-  const visibleNavItems = navItems.filter(
-    (item) => !item.roles || hasAnyRole(user?.roles ?? [], ...item.roles),
-  );
+  const visibleNavItems = navItems.filter((item) => item.isVisible(permissions, planFeatures));
 
   return (
     <div className="min-h-screen flex">
       <aside className="w-64 border-r border-border bg-muted/30 p-4">
         <div className="mb-8">
           <h1 className="text-xl font-bold">HR Portal</h1>
-          <p className="text-sm text-muted-foreground">Multi-tenant platform</p>
+          {!isSingleTenancyMode && (
+            <p className="text-sm text-muted-foreground">Multi-tenant platform</p>
+          )}
         </div>
         <nav className="space-y-1">
           {visibleNavItems.map(({ to, label, icon: Icon }) => (
@@ -63,9 +116,13 @@ export function AppLayout() {
 
       <div className="flex-1 flex flex-col">
         <header className="h-14 border-b border-border flex items-center justify-between px-6">
-          <span className="text-sm text-muted-foreground">
-            Tenant: <strong>{import.meta.env.VITE_TENANT_ID ?? 'demo'}</strong>
-          </span>
+          {!isSingleTenancyMode ? (
+            <span className="text-sm text-muted-foreground">
+              Tenant: <strong>{tenantDisplay}</strong>
+            </span>
+          ) : (
+            <span />
+          )}
           <div className="flex items-center gap-3">
             {user ? (
               <>

@@ -1,3 +1,4 @@
+using HrPortal.AccessControl.Domain;
 using HrPortal.Authorization;
 using HrPortal.Leave.Application;
 using HrPortal.Leave.Application.Dtos;
@@ -20,9 +21,9 @@ public sealed class LeaveRequestsController : ControllerBase
         _leaveRequestService = leaveRequestService;
 
     /// <summary>List all leave requests.</summary>
-    /// <remarks>Auth: ManagerOrAbove</remarks>
+    /// <remarks>Auth: leave.read:tenant OR leave.read:team</remarks>
     [HttpGet]
-    [Authorize(Policy = Policies.ManagerOrAbove)]
+    [RequireAnyPermission(Permissions.LeaveReadTenant, Permissions.LeaveReadTeam)]
     [ProducesResponseType(typeof(IEnumerable<LeaveRequestDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
@@ -31,8 +32,9 @@ public sealed class LeaveRequestsController : ControllerBase
     }
 
     /// <summary>Get leave request by ID.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: leave.read:tenant OR leave.read:team OR leave.read:self</remarks>
     [HttpGet("{id:guid}")]
+    [RequireAnyPermission(Permissions.LeaveReadTenant, Permissions.LeaveReadTeam, Permissions.LeaveReadSelf)]
     [ProducesResponseType(typeof(LeaveRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
@@ -42,8 +44,9 @@ public sealed class LeaveRequestsController : ControllerBase
     }
 
     /// <summary>Submit a new leave request.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: leave.create:self</remarks>
     [HttpPost]
+    [RequirePermission(Permissions.LeaveCreateSelf)]
     [ProducesResponseType(typeof(LeaveRequestDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -58,9 +61,9 @@ public sealed class LeaveRequestsController : ControllerBase
     }
 
     /// <summary>Approve a pending leave request.</summary>
-    /// <remarks>Auth: ManagerOrAbove</remarks>
+    /// <remarks>Auth: leave.approve:team</remarks>
     [HttpPut("{id:guid}/approve")]
-    [Authorize(Policy = Policies.ManagerOrAbove)]
+    [RequirePermission(Permissions.LeaveApproveTeam)]
     [ProducesResponseType(typeof(LeaveRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -72,9 +75,9 @@ public sealed class LeaveRequestsController : ControllerBase
     }
 
     /// <summary>Reject a pending leave request.</summary>
-    /// <remarks>Auth: ManagerOrAbove</remarks>
+    /// <remarks>Auth: leave.approve:team</remarks>
     [HttpPut("{id:guid}/reject")]
-    [Authorize(Policy = Policies.ManagerOrAbove)]
+    [RequirePermission(Permissions.LeaveApproveTeam)]
     [ProducesResponseType(typeof(LeaveRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -89,8 +92,9 @@ public sealed class LeaveRequestsController : ControllerBase
     }
 
     /// <summary>Cancel a pending leave request.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: leave.delete:self</remarks>
     [HttpDelete("{id:guid}")]
+    [RequirePermission(Permissions.LeaveDeleteSelf)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { keycloak, mapKeycloakUser } from '@/lib/keycloak';
+import { isSingleTenancyMode } from '@/lib/tenancy-config';
 import { useAuthStore } from '@/stores/auth-store';
 
 function requireEnv(value: string | undefined, name: string, devFallback: string): string {
@@ -15,14 +16,19 @@ function requireEnv(value: string | undefined, name: string, devFallback: string
 }
 
 const apiBaseUrl = requireEnv(import.meta.env.VITE_API_BASE_URL, 'VITE_API_BASE_URL', '/api');
-const tenantId = requireEnv(import.meta.env.VITE_TENANT_ID, 'VITE_TENANT_ID', 'demo');
+
+const defaultHeaders: Record<string, string> = {
+  'Content-Type': 'application/json',
+};
+
+if (!isSingleTenancyMode) {
+  const tenantId = requireEnv(import.meta.env.VITE_TENANT_ID, 'VITE_TENANT_ID', 'demo');
+  defaultHeaders['X-Tenant-Id'] = tenantId;
+}
 
 export const apiClient = axios.create({
   baseURL: apiBaseUrl,
-  headers: {
-    'Content-Type': 'application/json',
-    'X-Tenant-Id': tenantId,
-  },
+  headers: defaultHeaders,
 });
 
 apiClient.interceptors.request.use((config) => {

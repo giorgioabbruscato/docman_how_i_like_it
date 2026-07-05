@@ -1,5 +1,6 @@
 using HrPortal.Leave.Application;
 using HrPortal.Leave.Domain;
+using HrPortal.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Leave.Infrastructure.Persistence;
@@ -7,14 +8,22 @@ namespace HrPortal.Leave.Infrastructure.Persistence;
 internal sealed class LeaveRequestRepository : ILeaveRequestRepository
 {
     private readonly DbContext _dbContext;
+    private readonly ITenantContextAccessor _accessor;
 
-    public LeaveRequestRepository(DbContext dbContext) => _dbContext = dbContext;
+    public LeaveRequestRepository(DbContext dbContext, ITenantContextAccessor accessor)
+    {
+        _dbContext = dbContext;
+        _accessor = accessor;
+    }
 
     public async Task<LeaveRequest?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await _dbContext.Set<LeaveRequest>().FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
+        await _dbContext.Set<LeaveRequest>()
+            .ApplyTenantScope(_accessor.Current)
+            .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<LeaveRequest>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await _dbContext.Set<LeaveRequest>()
+            .ApplyTenantScope(_accessor.Current)
             .OrderByDescending(l => l.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -26,6 +35,7 @@ internal sealed class LeaveRequestRepository : ILeaveRequestRepository
         CancellationToken cancellationToken = default)
     {
         var query = _dbContext.Set<LeaveRequest>()
+            .ApplyTenantScope(_accessor.Current)
             .Where(l => l.EmployeeId == employeeId)
             .Where(l => l.Status == LeaveStatus.Approved)
             .Where(l => l.StartDate <= endDate && l.EndDate >= startDate);
@@ -46,6 +56,7 @@ internal sealed class LeaveRequestRepository : ILeaveRequestRepository
         var yearEnd = new DateOnly(year, 12, 31);
 
         var query = _dbContext.Set<LeaveRequest>()
+            .ApplyTenantScope(_accessor.Current)
             .Where(l => l.EmployeeId == employeeId)
             .Where(l => l.Type == LeaveType.Annual)
             .Where(l => l.Status == LeaveStatus.Approved)

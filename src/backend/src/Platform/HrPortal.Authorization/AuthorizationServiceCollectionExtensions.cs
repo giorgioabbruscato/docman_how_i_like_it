@@ -1,4 +1,5 @@
 using HrPortal.Identity;
+using HrPortal.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,13 +9,13 @@ public static class AuthorizationServiceCollectionExtensions
 {
     public static IServiceCollection AddHrPortalAuthorization(this IServiceCollection services)
     {
+        services.AddHttpContextAccessor();
+
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, PermissionAnyAuthorizationHandler>();
+
         services.AddAuthorizationBuilder()
-            .AddPolicy(Policies.AdminOnly, policy =>
-                policy.RequireRole(Roles.Admin))
-            .AddPolicy(Policies.HrOrAdmin, policy =>
-                policy.RequireRole(Roles.Admin, Roles.Hr))
-            .AddPolicy(Policies.ManagerOrAbove, policy =>
-                policy.RequireRole(Roles.Admin, Roles.Hr, Roles.Manager))
             .AddPolicy(Policies.Authenticated, policy =>
                 policy.RequireAuthenticatedUser());
 

@@ -29,8 +29,9 @@ The system is valid only if **all** criteria below pass.
 
 ## Multi-tenancy
 
-- [ ] Requests without `X-Tenant-Id` are rejected (except excluded paths)
-- [ ] Tenant A cannot see Tenant B data
+- [ ] **Multi mode** (default): requests without `X-Tenant-Id` are rejected with 400 (except excluded paths: `/health`, `/ready`, `/swagger`, `/api/v1/tenants`)
+- [ ] **Single mode** (OSS): requests without `X-Tenant-Id` auto-resolve to `DefaultTenantSlug` (default: `demo`)
+- [ ] Tenant A cannot see Tenant B data (multi mode)
 - [ ] Demo tenant seeded on first startup
 
 ## API
