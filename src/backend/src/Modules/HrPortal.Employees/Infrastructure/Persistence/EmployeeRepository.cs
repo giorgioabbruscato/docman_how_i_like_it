@@ -50,6 +50,15 @@ internal sealed class EmployeeRepository : IEmployeeRepository
             .Where(e => e.IsActive)
             .CountAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Guid>> GetActiveEmployeeIdsInDepartmentAsync(
+        Guid departmentId,
+        CancellationToken cancellationToken = default) =>
+        await _dbContext.Set<Employee>()
+            .ApplyTenantScope(_accessor.Current)
+            .Where(e => e.IsActive && e.DepartmentId == departmentId)
+            .Select(e => e.Id)
+            .ToListAsync(cancellationToken);
+
     public async Task AddAsync(Employee employee, CancellationToken cancellationToken = default) =>
         await _dbContext.Set<Employee>().AddAsync(employee, cancellationToken);
 

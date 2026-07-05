@@ -345,6 +345,28 @@ public sealed class AuthorizationPolicyTests : IntegrationTestBase
         response.StatusCode.Should().Be(expectedStatus);
     }
 
+    [Theory]
+    [MemberData(nameof(TimeEntryListPolicyCases))]
+    public async Task GetTimeEntries_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync("/api/v1/time-entries");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
+    [Theory]
+    [MemberData(nameof(AuthenticatedOnlyPolicyCases))]
+    public async Task GetTimeEntryById_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
+    {
+        using var client = CreateClient(role);
+
+        var response = await client.GetAsync($"/api/v1/time-entries/{MissingId}");
+
+        response.StatusCode.Should().Be(expectedStatus);
+    }
+
     public static TheoryData<string?, HttpStatusCode> GetEmployeesPolicyCases() => new()
     {
         { null, HttpStatusCode.Unauthorized },
@@ -451,5 +473,14 @@ public sealed class AuthorizationPolicyTests : IntegrationTestBase
         { "manager", HttpStatusCode.Created },
         { "hr", HttpStatusCode.Created },
         { "admin", HttpStatusCode.Created }
+    };
+
+    public static TheoryData<string?, HttpStatusCode> TimeEntryListPolicyCases() => new()
+    {
+        { null, HttpStatusCode.Unauthorized },
+        { "employee", HttpStatusCode.Forbidden },
+        { "manager", HttpStatusCode.Forbidden },
+        { "hr", HttpStatusCode.OK },
+        { "admin", HttpStatusCode.OK }
     };
 }

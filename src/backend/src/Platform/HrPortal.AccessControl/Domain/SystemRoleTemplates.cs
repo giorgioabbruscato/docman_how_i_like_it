@@ -50,7 +50,12 @@ public static class SystemRoleTemplates
         Permissions.TaskReadTenant,
         Permissions.TaskCreateTenant,
         Permissions.TaskUpdateTenant,
-        Permissions.TaskDeleteTenant
+        Permissions.TaskDeleteTenant,
+        Permissions.TimeEntryReadTenant,
+        Permissions.TimeEntryCreateSelf,
+        Permissions.TimeEntryUpdateSelf,
+        Permissions.TimeEntryDeleteSelf,
+        Permissions.TimeEntryExportTenant
     ];
 
     private static readonly IReadOnlyList<string> ManagerPermissions =
@@ -68,7 +73,13 @@ public static class SystemRoleTemplates
         Permissions.AttendanceWriteSelf,
         Permissions.DocumentReadSelf,
         Permissions.DocumentUploadSelf,
-        Permissions.TaskUpdateStatusSelf
+        Permissions.TaskUpdateStatusSelf,
+        Permissions.TimeEntryReadTeam,
+        Permissions.TimeEntryReadSelf,
+        Permissions.TimeEntryCreateSelf,
+        Permissions.TimeEntryUpdateSelf,
+        Permissions.TimeEntryDeleteSelf,
+        Permissions.TimeEntryExportTeam
     ];
 
     private static readonly IReadOnlyList<string> EmployeePermissions =
@@ -81,7 +92,11 @@ public static class SystemRoleTemplates
         Permissions.AttendanceWriteSelf,
         Permissions.DocumentReadSelf,
         Permissions.DocumentUploadSelf,
-        Permissions.TaskUpdateStatusSelf
+        Permissions.TaskUpdateStatusSelf,
+        Permissions.TimeEntryReadSelf,
+        Permissions.TimeEntryCreateSelf,
+        Permissions.TimeEntryUpdateSelf,
+        Permissions.TimeEntryDeleteSelf
     ];
 
 }

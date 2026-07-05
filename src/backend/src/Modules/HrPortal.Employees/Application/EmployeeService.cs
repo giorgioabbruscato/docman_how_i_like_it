@@ -168,6 +168,17 @@ internal sealed class EmployeeService : IEmployeeService, IEmployeeLookup
         return employee is not null && employee.IsActive;
     }
 
+    public Task<IReadOnlyList<Guid>> GetActiveEmployeeIdsInDepartmentAsync(
+        Guid departmentId,
+        CancellationToken cancellationToken = default) =>
+        _repository.GetActiveEmployeeIdsInDepartmentAsync(departmentId, cancellationToken);
+
+    public async Task<string?> GetFullNameAsync(Guid employeeId, CancellationToken cancellationToken = default)
+    {
+        var employee = await _repository.GetByIdAsync(employeeId, cancellationToken);
+        return employee is null ? null : $"{employee.FirstName} {employee.LastName}";
+    }
+
     private async Task<Result> ValidateDepartmentAsync(
         Guid? departmentId,
         CancellationToken cancellationToken)

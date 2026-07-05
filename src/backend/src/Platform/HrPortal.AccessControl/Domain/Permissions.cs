@@ -52,6 +52,16 @@ public static class Permissions
     public const string TaskDeleteTenant = "task.delete:tenant";
     public const string TaskUpdateStatusSelf = "task.update_status:self";
 
+    // Time tracking
+    public const string TimeEntryReadSelf = "time_entry.read:self";
+    public const string TimeEntryReadTeam = "time_entry.read:team";
+    public const string TimeEntryReadTenant = "time_entry.read:tenant";
+    public const string TimeEntryCreateSelf = "time_entry.create:self";
+    public const string TimeEntryUpdateSelf = "time_entry.update:self";
+    public const string TimeEntryDeleteSelf = "time_entry.delete:self";
+    public const string TimeEntryExportTeam = "time_entry.export:team";
+    public const string TimeEntryExportTenant = "time_entry.export:tenant";
+
     // Projects
     public const string ProjectReadTenant = "project.read:tenant";
     public const string ProjectCreateTenant = "project.create:tenant";
@@ -87,6 +97,9 @@ public static class Permissions
         MembershipReadTenant, MembershipCreateTenant, MembershipUpdateTenant, MembershipDeleteTenant,
         ProjectReadTenant, ProjectCreateTenant, ProjectUpdateTenant, ProjectDeleteTenant, ProjectManageMembersTenant,
         TaskReadTenant, TaskCreateTenant, TaskUpdateTenant, TaskDeleteTenant, TaskUpdateStatusSelf,
+        TimeEntryReadSelf, TimeEntryReadTeam, TimeEntryReadTenant,
+        TimeEntryCreateSelf, TimeEntryUpdateSelf, TimeEntryDeleteSelf,
+        TimeEntryExportTeam, TimeEntryExportTenant,
         AuditReadTenant
     ];
 }

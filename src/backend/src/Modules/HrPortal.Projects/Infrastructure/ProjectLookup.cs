@@ -11,4 +11,10 @@ internal sealed class ProjectLookup : IProjectLookup
 
     public Task<bool> ExistsAsync(Guid projectId, CancellationToken cancellationToken = default) =>
         _repository.ExistsAsync(projectId, cancellationToken);
+
+    public async Task<string?> GetNameAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        var project = await _repository.GetByIdAsync(projectId, cancellationToken);
+        return project?.Name;
+    }
 }

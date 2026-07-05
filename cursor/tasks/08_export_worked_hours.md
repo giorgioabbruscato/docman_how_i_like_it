@@ -1,6 +1,6 @@
 # TASK 08 — EXPORT WORKED HOURS
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Implement export functionality for worked hours in Excel, CSV, and PDF formats.
 

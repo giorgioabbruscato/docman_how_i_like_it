@@ -20,6 +20,7 @@
     <ProjectReference Include="..\Modules\HrPortal.Employees\HrPortal.Employees.csproj" />
     <ProjectReference Include="..\Modules\HrPortal.Projects\HrPortal.Projects.csproj" />
     <ProjectReference Include="..\Modules\HrPortal.Tasks\HrPortal.Tasks.csproj" />
+    <ProjectReference Include="..\Modules\HrPortal.TimeTracking\HrPortal.TimeTracking.csproj" />
     <ProjectReference Include="..\Modules\HrPortal.Leave\HrPortal.Leave.csproj" />
     <ProjectReference Include="..\Modules\HrPortal.Attendance\HrPortal.Attendance.csproj" />
     <ProjectReference Include="..\Modules\HrPortal.Documents\HrPortal.Documents.csproj" />

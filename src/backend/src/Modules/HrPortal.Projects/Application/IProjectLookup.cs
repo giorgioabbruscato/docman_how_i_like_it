@@ -6,4 +6,5 @@ namespace HrPortal.Projects.Application;
 public interface IProjectLookup
 {
     Task<bool> ExistsAsync(Guid projectId, CancellationToken cancellationToken = default);
+    Task<string?> GetNameAsync(Guid projectId, CancellationToken cancellationToken = default);
 }

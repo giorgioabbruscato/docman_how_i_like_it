@@ -392,6 +392,95 @@ only as constants to avoid breaking references while call sites are cleaned up; 
 
 ---
 
+## Time Tracking — IMPLEMENTED
+
+### GET /api/v1/time-entries
+
+**Auth:** `time_entry.read:self` OR `time_entry.read:team` OR `time_entry.read:tenant`  
+**Query:** `page`, `pageSize`, `employeeId`, `projectId`, `taskId`, `fromDate`, `toDate`, `billable`  
+**Response:** `200 OK` — `PagedResult<TimeEntryDto>`
+
+### GET /api/v1/time-entries/{id}
+
+**Auth:** same as list  
+**Response:** `200 OK` — TimeEntryDto
+
+### POST /api/v1/time-entries
+
+**Auth:** `time_entry.create:self`  
+**Request:**
+
+```json
+{
+  "projectId": "uuid",
+  "taskId": "uuid",
+  "startTime": "2026-07-05T09:00:00Z",
+  "endTime": "2026-07-05T11:30:00Z",
+  "description": "Feature work",
+  "billable": true
+}
+```
+
+**Response:** `201 Created` — TimeEntryDto  
+**Audit:** `time_entry.created`
+
+### PUT /api/v1/time-entries/{id}
+
+**Auth:** `time_entry.update:self`  
+**Response:** `200 OK` — TimeEntryDto  
+**Audit:** `time_entry.updated`
+
+### DELETE /api/v1/time-entries/{id}
+
+**Auth:** `time_entry.delete:self`  
+**Response:** `204 No Content`  
+**Audit:** `time_entry.deleted`
+
+### POST /api/v1/time-entries/manual
+
+**Auth:** `time_entry.create:self`  
+**Request:**
+
+```json
+{
+  "date": "2026-07-05",
+  "projectId": "uuid",
+  "taskId": "uuid",
+  "hours": 2.5,
+  "description": "Code review",
+  "billable": true
+}
+```
+
+**Response:** `201 Created` — TimeEntryDto (StartTime = date 09:00 UTC)  
+**Audit:** `time_entry.manual_created`
+
+### GET /api/v1/time-entries/export
+
+**Auth:** `time_entry.read:self` OR `time_entry.read:team` OR `time_entry.read:tenant`  
+**Query:** `format` (csv|xlsx|pdf), `employeeId`, `projectId`, `fromDate`, `toDate`, `month`, `year`  
+**Response:** file download (`text/csv`, XLSX MIME, or `application/pdf`)
+
+### POST /api/v1/timer/start
+
+**Auth:** `time_entry.create:self`  
+**Request:** `{ projectId, taskId?, description?, billable? }`  
+**Response:** `201 Created` — TimeEntryDto (active timer)  
+**Audit:** `time_entry.timer_started`
+
+### POST /api/v1/timer/stop
+
+**Auth:** `time_entry.update:self`  
+**Response:** `200 OK` — TimeEntryDto  
+**Audit:** `time_entry.timer_stopped`
+
+### GET /api/v1/timer/active
+
+**Auth:** `time_entry.read:self`  
+**Response:** `200 OK` — TimeEntryDto or `404` if none
+
+---
+
 ## Leave Requests
 
 ### GET /api/v1/leave-requests

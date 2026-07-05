@@ -13,6 +13,7 @@ Employees
     ↑
     ├── Projects
     │       └── Tasks
+    │               └── TimeTracking
     ├── Leave        (+ Notifications)
     ├── Attendance
     └── Documents    (+ Storage)
@@ -28,6 +29,9 @@ The graph is a DAG: no module references another module transitively back to its
 | Projects | Employees | `IEmployeeLookup` | Validate employee on project member assignment |
 | Tasks | Projects | `IProjectLookup` | Validate project on task create/update |
 | Tasks | Employees | `IEmployeeLookup` | Validate assignee on task create/update |
+| TimeTracking | Employees | `IEmployeeLookup` | Validate employee, team scope, export names |
+| TimeTracking | Projects | `IProjectLookup` | Validate project, export names |
+| TimeTracking | Tasks | `ITaskLookup` | Validate task, export titles |
 | Leave | Employees | `IEmployeeLookup` | Validate employee on leave request |
 | Attendance | Employees | `IEmployeeLookup` | Validate employee on clock-in/out |
 | Documents | Employees | `IEmployeeLookup` | Validate employee on document upload |
@@ -37,11 +41,11 @@ The graph is a DAG: no module references another module transitively back to its
 | Interface | Provider module | Method |
 |-----------|-----------------|--------|
 | `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync(Guid departmentId)` |
-| `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync(Guid employeeId)` |
-| `IProjectLookup` | Projects | `ExistsAsync(Guid projectId)` |
-| `ITaskLookup` | Tasks | `ExistsAsync(Guid taskId)` |
+| `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync`, `GetActiveEmployeeIdsInDepartmentAsync`, `GetFullNameAsync` |
+| `IProjectLookup` | Projects | `ExistsAsync`, `GetNameAsync` |
+| `ITaskLookup` | Tasks | `ExistsAsync`, `GetTitleAsync` |
 
-Implementations live in the provider's application service (`IDepartmentService`, `IEmployeeService`) or dedicated lookup class (`ProjectLookup`) and are registered in `{Module}ServiceCollectionExtensions`.
+Implementations live in the provider's application service (`IDepartmentService`, `IEmployeeService`) or dedicated lookup class (`ProjectLookup`, `TaskLookup`) and are registered in `{Module}ServiceCollectionExtensions`.
 
 ## Platform dependencies (not module-to-module)
 
@@ -69,5 +73,5 @@ Implementations live in the provider's application service (`IDepartmentService`
 AddTenancy → AddHrPortalIdentity → AddHrPortalAccessControl
 → AddHrPortalAuthorization → AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalAudit
 → AddDepartmentsModule → AddEmployeesModule → AddProjectsModule → AddTasksModule
-→ AddLeaveModule → AddAttendanceModule → AddDocumentsModule
+→ AddTimeTrackingModule → AddLeaveModule → AddAttendanceModule → AddDocumentsModule
 ```

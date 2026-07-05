@@ -6,4 +6,5 @@ namespace HrPortal.Tasks.Application;
 public interface ITaskLookup
 {
     Task<bool> ExistsAsync(Guid taskId, CancellationToken cancellationToken = default);
+    Task<string?> GetTitleAsync(Guid taskId, CancellationToken cancellationToken = default);
 }

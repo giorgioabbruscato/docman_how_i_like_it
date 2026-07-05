@@ -1,6 +1,6 @@
 # TASK 06 — TIMER
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Implement timer functionality with start/stop endpoints.
 

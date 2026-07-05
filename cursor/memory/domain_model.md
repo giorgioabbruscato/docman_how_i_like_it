@@ -388,7 +388,34 @@ Sole identity object for application services. Enriched per request by `TenantCo
 - AssignedEmployeeId validated via `IEmployeeLookup.ExistsAndIsActiveAsync` when set
 - Delete is hard delete (no soft-delete flag)
 
-**Cross-module interface:** `ITaskLookup.ExistsAsync(taskId)`
+**Cross-module interface:** `ITaskLookup.ExistsAsync(taskId)`, `GetTitleAsync(taskId)`
+
+---
+
+### TimeEntry — IMPLEMENTED
+
+**Location:** `HrPortal.TimeTracking.Domain`  
+**Schema:** `time_tracking`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| EmployeeId | Guid | From `TenantContext.EmployeeId` on create |
+| ProjectId | Guid | Validated via `IProjectLookup` |
+| TaskId | Guid? | Optional, validated via `ITaskLookup` |
+| StartTime | DateTime | UTC |
+| EndTime | DateTime? | UTC; null = active timer |
+| WorkedMinutes | int | Computed when EndTime set |
+| Description | string? | Max 1000 |
+| Billable | bool | Default true |
+
+**Factory:** `TimeEntry.Create(...)`, `TimeEntry.StartTimer(...)`  
+**Methods:** `Stop(utcNow)`, `Update(...)`, `CalculateWorkedMinutes(start, end)`
+
+**Business rules:**
+- One active timer per employee (`EndTime == null`)
+- No overlapping intervals for same employee
+- Manual entries: max 1440 minutes/day (UTC date), start at 09:00 UTC on given date
+- Read scope: self / team (department) / tenant via permissions
 
 ---
 
@@ -410,9 +437,11 @@ Tenant (platform)
   │       ├── Document (documents)
   │       └── ProjectMember (projects) ──→ Project (projects)
   │               └── ProjectTask (tasks) ──→ Project (via IProjectLookup)
+  │       └── TimeEntry (time_tracking) ──→ Project, Task?, Employee
   │
   ├── Project (projects)
   │       └── ProjectTask (tasks)
+  │       └── TimeEntry (time_tracking)
   │
   └── Department (departments)
         └── ParentDepartmentId → Department (self-ref)
@@ -427,6 +456,6 @@ See also: `cursor/memory/module_dependencies.md` for the full dependency graph.
 | Interface | Module | Method |
 |-----------|--------|--------|
 | `IDepartmentLookup` | Departments | `ExistsAndIsActiveAsync(Guid departmentId)` |
-| `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync(Guid employeeId)` |
-| `IProjectLookup` | Projects | `ExistsAsync(Guid projectId)` |
-| `ITaskLookup` | Tasks | `ExistsAsync(Guid taskId)` |
+| `IEmployeeLookup` | Employees | `ExistsAndIsActiveAsync`, `GetActiveEmployeeIdsInDepartmentAsync`, `GetFullNameAsync` |
+| `IProjectLookup` | Projects | `ExistsAsync`, `GetNameAsync` |
+| `ITaskLookup` | Tasks | `ExistsAsync`, `GetTitleAsync` |
