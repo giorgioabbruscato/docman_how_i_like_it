@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { isSingleTenancyMode } from '@/lib/tenancy-config';
 import { useAuthStore } from '@/stores/auth-store';
 
 export function SettingsPage() {
   const user = useAuthStore((state) => state.user);
-  const tenantId = import.meta.env.VITE_TENANT_ID ?? 'demo';
+  const me = useAuthStore((state) => state.me);
+  const tenantDisplay = me?.tenantSlug ?? import.meta.env.VITE_TENANT_ID ?? 'demo';
 
   return (
     <div className="space-y-6">
@@ -32,8 +34,10 @@ export function SettingsPage() {
             </p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Tenant</p>
-            <p className="font-medium">{tenantId}</p>
+            <p className="text-sm text-muted-foreground">Organization</p>
+            <p className="font-medium">
+              {isSingleTenancyMode ? 'Single organization' : tenantDisplay}
+            </p>
           </div>
         </CardContent>
       </Card>

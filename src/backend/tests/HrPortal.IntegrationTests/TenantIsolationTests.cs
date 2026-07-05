@@ -113,7 +113,7 @@ public sealed class TenantIsolationTests : IntegrationTestBase
     {
         var tenants = await CreateTwoTenantsAsync();
         using var tenantAClient = CreateClientForTenant(tenants.TenantASlug, "hr");
-        using var tenantBClient = CreateClientForTenant(tenants.TenantBSlug, "employee");
+        using var tenantBClient = CreateClientForTenant(tenants.TenantBSlug, "hr");
 
         var departmentId = await TenantIsolationFixture.CreateDepartmentAsync(tenantAClient);
 
@@ -128,7 +128,7 @@ public sealed class TenantIsolationTests : IntegrationTestBase
     {
         var tenants = await CreateTwoTenantsAsync();
         using var tenantAClient = CreateClientForTenant(tenants.TenantASlug, "hr");
-        using var tenantBClient = CreateClientForTenant(tenants.TenantBSlug, "employee");
+        using var tenantBClient = CreateClientForTenant(tenants.TenantBSlug, "hr");
 
         var departmentId = await TenantIsolationFixture.CreateDepartmentAsync(tenantAClient);
 

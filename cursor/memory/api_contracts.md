@@ -151,7 +151,7 @@ only as constants to avoid breaking references while call sites are cleaned up; 
 
 ### GET /api/v1/departments
 
-**Auth:** Authenticated  
+**Auth:** department.read:tenant  
 **Response:** `200 OK`
 
 ```json
@@ -169,7 +169,7 @@ only as constants to avoid breaking references while call sites are cleaned up; 
 
 ### GET /api/v1/departments/{id}
 
-**Auth:** Authenticated  
+**Auth:** department.read:tenant  
 **Response:** `200 OK` — single DepartmentDto
 
 ### POST /api/v1/departments

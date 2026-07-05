@@ -13,6 +13,8 @@ interface AuthState {
   user: { email: string; name: string; roles: string[] } | null;
   me: Me | null;
   permissions: string[];
+  employeeId: string | null;
+  features: string[];
   planFeatures: TenantPlanFeatures;
   isPlatformAdmin: boolean;
   setAuth: (token: string, user: AuthState['user']) => void;
@@ -25,6 +27,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   me: null,
   permissions: [],
+  employeeId: null,
+  features: [],
   planFeatures: EMPTY_PLAN_FEATURES,
   isPlatformAdmin: false,
   setAuth: (accessToken, user) => set({ accessToken, user }),
@@ -32,6 +36,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
     set({
       me,
       permissions: me.permissions,
+      employeeId: me.employeeId,
+      features: me.features,
       planFeatures: me.planFeatures,
       isPlatformAdmin: me.isPlatformAdmin,
     }),
@@ -41,6 +47,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
       user: null,
       me: null,
       permissions: [],
+      employeeId: null,
+      features: [],
       planFeatures: EMPTY_PLAN_FEATURES,
       isPlatformAdmin: false,
     }),

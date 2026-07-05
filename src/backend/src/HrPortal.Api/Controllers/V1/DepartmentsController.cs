@@ -21,9 +21,11 @@ public sealed class DepartmentsController : ControllerBase
         _departmentService = departmentService;
 
     /// <summary>List all departments.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: department.read:tenant</remarks>
     [HttpGet]
+    [RequirePermission(Permissions.DepartmentReadTenant)]
     [ProducesResponseType(typeof(IEnumerable<DepartmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await _departmentService.GetAllAsync(cancellationToken);
@@ -31,10 +33,12 @@ public sealed class DepartmentsController : ControllerBase
     }
 
     /// <summary>Get department by ID.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: department.read:tenant</remarks>
     [HttpGet("{id:guid}")]
+    [RequirePermission(Permissions.DepartmentReadTenant)]
     [ProducesResponseType(typeof(DepartmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _departmentService.GetByIdAsync(id, cancellationToken);

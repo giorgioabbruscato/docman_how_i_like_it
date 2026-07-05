@@ -17,6 +17,10 @@ internal static class ResourceLoaderHelpers
         HttpMethods.IsPost(context.Request.Method) &&
         context.Request.Path.Equals(collectionPath, StringComparison.OrdinalIgnoreCase);
 
+    internal static bool MatchesPostPath(HttpContext context, string path) =>
+        HttpMethods.IsPost(context.Request.Method) &&
+        context.Request.Path.Equals(path, StringComparison.OrdinalIgnoreCase);
+
     internal static bool TryGetRouteId(HttpContext context, out Guid id)
     {
         id = default;

@@ -1,3 +1,5 @@
+import { useAuthStore } from '@/stores/auth-store';
+
 /** Mirrors backend permission strings in `Permissions.cs`. */
 export const Permission = {
   EmployeeReadTenant: 'employee.read:tenant',
@@ -52,3 +54,13 @@ export const hasPermission = (permissions: string[], required: string): boolean 
 
 export const hasAnyPermission = (permissions: string[], ...required: string[]): boolean =>
   required.some((permission) => permissions.includes(permission));
+
+export function useHasPermission(required: PermissionKey): boolean {
+  const permissions = useAuthStore((state) => state.permissions);
+  return hasPermission(permissions, required);
+}
+
+export function useHasAnyPermission(...required: PermissionKey[]): boolean {
+  const permissions = useAuthStore((state) => state.permissions);
+  return hasAnyPermission(permissions, ...required);
+}

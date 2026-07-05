@@ -135,10 +135,18 @@ public static class TenantIsolationFixture
 
     public static async Task<Guid> CheckInAsync(HttpClient client, Guid employeeId)
     {
-        var response = await client.PostAsJsonAsync("/api/v1/attendance/check-in", new
-        {
-            employeeId
-        });
+        var employeeUserId = Guid.NewGuid();
+        var employeeRoleId = await GetRoleIdBySlugAsync(client, SystemRoleTemplates.EmployeeSlug);
+        await CreateMembershipAsync(client, employeeUserId, employeeRoleId, employeeId);
+
+        using var request = CreateEmployeeScopedRequest(
+            client,
+            HttpMethod.Post,
+            "/api/v1/attendance/check-in",
+            employeeUserId,
+            JsonContent.Create(new { employeeId }));
+
+        var response = await client.SendAsync(request);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<IdResponse>();
         return body!.Id;

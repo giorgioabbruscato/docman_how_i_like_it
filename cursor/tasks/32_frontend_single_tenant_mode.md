@@ -1,6 +1,6 @@
 # TASK 32 — FRONTEND SINGLE-TENANT MODE
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Adapt the frontend for hybrid tenancy: optional tenant header in single mode, permissions from `/me`.
 

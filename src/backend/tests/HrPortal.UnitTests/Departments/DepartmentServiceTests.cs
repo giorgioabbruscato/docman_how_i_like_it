@@ -66,4 +66,44 @@ public sealed class DepartmentServiceTests
         result.IsSuccess.Should().BeFalse();
         result.ErrorCode.Should().Be("CONFLICT");
     }
+
+    [Fact]
+    public async Task CreateAsync_Succeeds_WhenValid()
+    {
+        _repository.Setup(r => r.CodeExistsAsync(It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var result = await _service.CreateAsync(new CreateDepartmentRequest("Engineering", "ENG", "Dev team"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Name.Should().Be("Engineering");
+        result.Value.Code.Should().Be("ENG");
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReturnsNotFound_WhenMissing()
+    {
+        _repository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Department?)null);
+
+        var result = await _service.UpdateAsync(
+            Guid.NewGuid(),
+            new UpdateDepartmentRequest("Engineering", "ENG"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorCode.Should().Be("NOT_FOUND");
+    }
+
+    [Fact]
+    public async Task DeactivateAsync_ReturnsNotFound_WhenMissing()
+    {
+        _repository.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Department?)null);
+
+        var result = await _service.DeactivateAsync(Guid.NewGuid());
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorCode.Should().Be("NOT_FOUND");
+    }
 }

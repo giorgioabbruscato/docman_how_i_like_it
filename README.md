@@ -110,6 +110,23 @@ npm run dev
 
 Frontend: http://localhost:5173
 
+#### Frontend configuration
+
+Copy `src/frontend/.env.example` to `src/frontend/.env` for local dev, or set variables in the root `.env` for Docker builds.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `VITE_API_BASE_URL` | Production | `/api` | Backend API base URL |
+| `VITE_KEYCLOAK_URL` | Yes | — | Keycloak server URL |
+| `VITE_KEYCLOAK_REALM` | Yes | — | Keycloak realm (`hrportal`) |
+| `VITE_KEYCLOAK_CLIENT_ID` | Yes | — | OIDC client ID (`hrportal-web`) |
+| `VITE_TENANCY_MODE` | No | `multi` | `single` or `multi` — controls tenant header behavior |
+| `VITE_TENANT_ID` | Multi mode only | `demo` (dev) | Tenant slug sent as `X-Tenant-Id` header |
+
+**Single mode** (`VITE_TENANCY_MODE=single`): for OSS single-organization deployments. The API client omits `X-Tenant-Id`; `VITE_TENANT_ID` is not required. Tenant UI is hidden in the shell.
+
+**Multi mode** (`VITE_TENANCY_MODE=multi`, default): for SaaS multi-tenant deployments. Every API request includes `X-Tenant-Id` from `VITE_TENANT_ID` (required in production builds).
+
 ### Full stack with Docker
 
 ```bash

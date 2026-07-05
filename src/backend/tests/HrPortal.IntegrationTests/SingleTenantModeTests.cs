@@ -143,17 +143,10 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
     {
         using var client = CreateAuthenticatedClient("hr", includeTenantHeader: false);
         var employeeId = await TenantIsolationFixture.CreateEmployeeAsync(client, "single-att");
-
-        var response = await client.PostAsJsonAsync("/api/v1/attendance/check-in", new
-        {
-            employeeId
-        });
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<IdResponse>(JsonOptions);
+        var recordId = await TenantIsolationFixture.CheckInAsync(client, employeeId);
 
         var demoTenantId = await GetDemoTenantIdAsync();
-        var record = await LoadEntityAsync<AttendanceRecord>(body!.Id);
+        var record = await LoadEntityAsync<AttendanceRecord>(recordId);
         record.TenantId.Should().Be(demoTenantId);
     }
 

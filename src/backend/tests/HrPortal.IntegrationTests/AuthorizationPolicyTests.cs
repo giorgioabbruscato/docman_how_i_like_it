@@ -87,7 +87,7 @@ public sealed class AuthorizationPolicyTests : IntegrationTestBase
     }
 
     [Theory]
-    [MemberData(nameof(AuthenticatedListPolicyCases))]
+    [MemberData(nameof(HrOrAdminListPolicyCases))]
     public async Task GetDepartments_PolicyMatrix_ReturnsExpectedStatus(string? role, HttpStatusCode expectedStatus)
     {
         using var client = CreateClient(role);
