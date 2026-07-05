@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { hasAnyRole, MANAGER_OR_ABOVE_ROLES } from '@/lib/auth-roles';
+import { Permission, hasAnyPermission } from '@/lib/auth-permissions';
 import {
   confirmAction,
   formatDate,
@@ -43,8 +43,12 @@ const createLeaveSchema = z
 type CreateLeaveForm = z.infer<typeof createLeaveSchema>;
 
 export function LeaveRequestsPage() {
-  const user = useAuthStore((state) => state.user);
-  const isManagerOrAbove = hasAnyRole(user?.roles ?? [], ...MANAGER_OR_ABOVE_ROLES);
+  const permissions = useAuthStore((state) => state.permissions);
+  const isManagerOrAbove = hasAnyPermission(
+    permissions,
+    Permission.LeaveReadTenant,
+    Permission.LeaveReadTeam,
+  );
 
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);

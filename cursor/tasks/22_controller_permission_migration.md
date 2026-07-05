@@ -1,6 +1,6 @@
 # TASK 22 — CONTROLLER PERMISSION MIGRATION
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Migrate all V1 API controllers from legacy role policies to `[RequirePermission]` attributes.
 
@@ -92,26 +92,26 @@ Document and apply mapping for all controllers:
 
 ### Migration checklist
 
-- [ ] `EmployeesController`
-- [ ] `DepartmentsController`
-- [ ] `LeaveRequestsController`
-- [ ] `AttendanceController`
-- [ ] `DocumentsController`
-- [ ] `MeController`
-- [ ] `RolesController`
-- [ ] `MembershipsController`
-- [ ] `AuditLogsController`
-- [ ] `PlatformTenantsController`
-- [ ] `TenantsController`
+- [x] `EmployeesController`
+- [x] `DepartmentsController`
+- [x] `LeaveRequestsController`
+- [x] `AttendanceController`
+- [x] `DocumentsController`
+- [x] `MeController` (kept `Authenticated` — no per-permission gate needed)
+- [x] `RolesController`
+- [x] `MembershipsController`
+- [x] `AuditLogsController` (task 25 — created with `[RequirePermission(AuditReadTenant)]`)
+- [x] `PlatformTenantsController` (task 24 — `[RequirePermission(TenantManageAll)]` + platform context fix)
+- [x] `TenantsController`
 
 ### Swagger
 
-- [ ] Update `<remarks>Auth: ...</remarks>` on each action to show permission string
-- [ ] Update `AuthResponsesOperationFilter` if needed
+- [x] Update `<remarks>Auth: ...</remarks>` on each action to show permission string
+- [x] Update `AuthResponsesOperationFilter` if needed (403 description updated to "insufficient permission")
 
 ### Memory
 
-- [ ] Update `cursor/memory/api_contracts.md` with permission column per endpoint
+- [x] Update `cursor/memory/api_contracts.md` with permission column per endpoint
 
 ## Files to touch
 
@@ -123,10 +123,10 @@ Document and apply mapping for all controllers:
 
 ## Acceptance criteria
 
-- [ ] No controller uses `Policies.HrOrAdmin` / `ManagerOrAbove` / `AdminOnly`
-- [ ] Every business endpoint has `[RequirePermission]` or explicit `[AllowAnonymous]`
-- [ ] Integration tests verify permission denied → 403
-- [ ] Swagger documents permissions
+- [x] No controller uses `Policies.HrOrAdmin` / `ManagerOrAbove` / `AdminOnly`
+- [x] Every business endpoint has `[RequirePermission]` / `[RequireAnyPermission]` or explicit `[AllowAnonymous]`
+- [x] Integration tests verify permission denied → 403 (`AuthorizationPolicyTests.cs`, `EndpointAuthorizationGuardTests.cs`)
+- [x] Swagger documents permissions
 
 ## Next task
 

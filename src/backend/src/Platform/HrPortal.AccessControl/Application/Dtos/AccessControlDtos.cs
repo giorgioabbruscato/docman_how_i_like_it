@@ -1,3 +1,5 @@
+using HrPortal.Tenancy.Domain;
+
 namespace HrPortal.AccessControl.Application.Dtos;
 
 public sealed record MeDto(
@@ -9,7 +11,8 @@ public sealed record MeDto(
     IReadOnlyList<string> RoleSlugs,
     IReadOnlyList<string> Permissions,
     IReadOnlyList<string> Features,
-    bool IsPlatformAdmin);
+    bool IsPlatformAdmin,
+    TenantFeatures PlanFeatures);
 
 public sealed record TenantRoleDto(
     Guid Id,

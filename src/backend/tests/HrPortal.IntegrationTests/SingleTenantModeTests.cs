@@ -179,6 +179,23 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
         document.TenantId.Should().Be(demoTenantId);
     }
 
+    [Fact]
+    public async Task GetMe_ReturnsEnterpriseEquivalentFeatures_RegardlessOfPersistedPlan()
+    {
+        // Single-tenant (OSS) deployments always get Enterprise-equivalent features, even though the
+        // seeded demo tenant's persisted plan could be anything.
+        using var client = CreateAuthenticatedClient("admin", includeTenantHeader: false);
+
+        var response = await client.GetAsync("/api/v1/me");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var me = await response.Content.ReadFromJsonAsync<MeResponse>(JsonOptions);
+        me!.PlanFeatures.AuditLog.Should().BeTrue();
+        me.PlanFeatures.CustomRoles.Should().BeTrue();
+        me.PlanFeatures.AdvancedReports.Should().BeTrue();
+        me.PlanFeatures.MaxEmployees.Should().Be(int.MaxValue);
+    }
+
     private async Task<Guid> GetDemoTenantIdAsync()
     {
         await using var scope = _factory.Services.CreateAsyncScope();
@@ -213,6 +230,14 @@ public sealed class SingleTenantModeTests : IClassFixture<SingleTenantWebApplica
     public void Dispose() => _client.Dispose();
 
     private sealed record IdResponse(Guid Id);
+
+    private sealed record MeResponse(PlanFeaturesResponse PlanFeatures);
+
+    private sealed record PlanFeaturesResponse(
+        int MaxEmployees,
+        bool CustomRoles,
+        bool AuditLog,
+        bool AdvancedReports);
 }
 
 public sealed class MultiTenantResolutionTests : IClassFixture<HrPortalWebApplicationFactory>, IDisposable

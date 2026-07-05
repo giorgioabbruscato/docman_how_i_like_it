@@ -44,6 +44,12 @@ internal sealed class EmployeeRepository : IEmployeeRepository
         return await query.AnyAsync(cancellationToken);
     }
 
+    public async Task<int> CountActiveAsync(CancellationToken cancellationToken = default) =>
+        await _dbContext.Set<Employee>()
+            .ApplyTenantScope(_accessor.Current)
+            .Where(e => e.IsActive)
+            .CountAsync(cancellationToken);
+
     public async Task AddAsync(Employee employee, CancellationToken cancellationToken = default) =>
         await _dbContext.Set<Employee>().AddAsync(employee, cancellationToken);
 

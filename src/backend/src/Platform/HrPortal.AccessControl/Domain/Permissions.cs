@@ -45,6 +45,9 @@ public static class Permissions
     public const string MembershipUpdateTenant = "membership.update:tenant";
     public const string MembershipDeleteTenant = "membership.delete:tenant";
 
+    // Audit
+    public const string AuditReadTenant = "audit.read:tenant";
+
     // Platform (scope: all)
     public const string TenantManageAll = "tenant.manage:all";
     public const string BillingManageAll = "billing.manage:all";
@@ -67,6 +70,7 @@ public static class Permissions
         AttendanceReadTenant, AttendanceReadTeam, AttendanceReadSelf, AttendanceWriteSelf,
         DocumentReadTenant, DocumentReadSelf, DocumentUploadSelf, DocumentDeleteTenant,
         RoleReadTenant, RoleCreateTenant, RoleUpdateTenant, RoleDeleteTenant,
-        MembershipReadTenant, MembershipCreateTenant, MembershipUpdateTenant, MembershipDeleteTenant
+        MembershipReadTenant, MembershipCreateTenant, MembershipUpdateTenant, MembershipDeleteTenant,
+        AuditReadTenant
     ];
 }

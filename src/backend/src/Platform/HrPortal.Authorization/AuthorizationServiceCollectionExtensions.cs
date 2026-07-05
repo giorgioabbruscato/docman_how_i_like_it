@@ -13,14 +13,9 @@ public static class AuthorizationServiceCollectionExtensions
 
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, PermissionAnyAuthorizationHandler>();
 
         services.AddAuthorizationBuilder()
-            .AddPolicy(Policies.AdminOnly, policy =>
-                policy.RequireRole(Roles.Admin))
-            .AddPolicy(Policies.HrOrAdmin, policy =>
-                policy.RequireRole(Roles.Admin, Roles.Hr))
-            .AddPolicy(Policies.ManagerOrAbove, policy =>
-                policy.RequireRole(Roles.Admin, Roles.Hr, Roles.Manager))
             .AddPolicy(Policies.Authenticated, policy =>
                 policy.RequireAuthenticatedUser());
 

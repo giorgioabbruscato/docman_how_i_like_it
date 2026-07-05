@@ -16,7 +16,7 @@ public sealed class AuthResponsesOperationFilter : IOperationFilter
             return;
 
         AddResponse(operation, "401", "Unauthorized — missing or invalid JWT.");
-        AddResponse(operation, "403", "Forbidden — insufficient role for this policy.");
+        AddResponse(operation, "403", "Forbidden — insufficient permission for this action.");
     }
 
     private static void AddResponse(OpenApiOperation operation, string statusCode, string description)

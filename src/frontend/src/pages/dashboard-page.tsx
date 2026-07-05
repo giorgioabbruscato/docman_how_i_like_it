@@ -4,7 +4,7 @@ import { fetchEmployees } from '@/api/employees';
 import { fetchLeaveRequests } from '@/api/leave-requests';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { hasAnyRole, MANAGER_OR_ABOVE_ROLES } from '@/lib/auth-roles';
+import { Permission, hasAnyPermission } from '@/lib/auth-permissions';
 import { useAuthStore } from '@/stores/auth-store';
 
 interface DashboardStats {
@@ -14,8 +14,12 @@ interface DashboardStats {
 }
 
 export function DashboardPage() {
-  const user = useAuthStore((state) => state.user);
-  const isManagerOrAbove = hasAnyRole(user?.roles ?? [], ...MANAGER_OR_ABOVE_ROLES);
+  const permissions = useAuthStore((state) => state.permissions);
+  const isManagerOrAbove = hasAnyPermission(
+    permissions,
+    Permission.EmployeeReadTenant,
+    Permission.EmployeeReadTeam,
+  );
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(false);
 

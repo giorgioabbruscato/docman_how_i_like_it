@@ -1,4 +1,5 @@
 using HrPortal.AccessControl.Application;
+using HrPortal.AccessControl.Domain;
 using HrPortal.Identity;
 using HrPortal.Tenancy;
 using HrPortal.Tenancy.Application;
@@ -96,7 +97,7 @@ public sealed class RequestContextMiddleware
             tenant.Id,
             tenant.Slug,
             options.Mode,
-            tenant.GetFeatures());
+            tenant.GetModules());
 
         SetContext(context, tenantContextAccessor, tenantContext);
 
@@ -160,6 +161,7 @@ public sealed class RequestContextMiddleware
                 UserId = userContext.UserId,
                 Email = userContext.Email,
                 Mode = options.Mode,
+                Permissions = Permissions.PlatformAdmin,
                 IsPlatformAdmin = true,
                 IsResolved = true
             };

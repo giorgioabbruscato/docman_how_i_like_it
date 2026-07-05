@@ -1,3 +1,4 @@
+using HrPortal.AccessControl.Domain;
 using HrPortal.Employees.Application;
 using HrPortal.Employees.Application.Dtos;
 using HrPortal.Authorization;
@@ -20,9 +21,9 @@ public sealed class EmployeesController : ControllerBase
         _employeeService = employeeService;
 
     /// <summary>List all employees.</summary>
-    /// <remarks>Auth: ManagerOrAbove</remarks>
+    /// <remarks>Auth: employee.read:tenant OR employee.read:team</remarks>
     [HttpGet]
-    [Authorize(Policy = Policies.ManagerOrAbove)]
+    [RequireAnyPermission(Permissions.EmployeeReadTenant, Permissions.EmployeeReadTeam)]
     [ProducesResponseType(typeof(IEnumerable<EmployeeDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
@@ -31,8 +32,9 @@ public sealed class EmployeesController : ControllerBase
     }
 
     /// <summary>Get employee by ID.</summary>
-    /// <remarks>Auth: Authenticated</remarks>
+    /// <remarks>Auth: employee.read:tenant OR employee.read:team OR employee.read:self</remarks>
     [HttpGet("{id:guid}")]
+    [RequireAnyPermission(Permissions.EmployeeReadTenant, Permissions.EmployeeReadTeam, Permissions.EmployeeReadSelf)]
     [ProducesResponseType(typeof(EmployeeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
@@ -42,11 +44,12 @@ public sealed class EmployeesController : ControllerBase
     }
 
     /// <summary>Create a new employee.</summary>
-    /// <remarks>Auth: HrOrAdmin</remarks>
+    /// <remarks>Auth: employee.create:tenant</remarks>
     [HttpPost]
-    [Authorize(Policy = Policies.HrOrAdmin)]
+    [RequirePermission(Permissions.EmployeeCreateTenant)]
     [ProducesResponseType(typeof(EmployeeDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create(
         [FromBody] CreateEmployeeRequest request,
@@ -59,9 +62,9 @@ public sealed class EmployeesController : ControllerBase
     }
 
     /// <summary>Update an employee.</summary>
-    /// <remarks>Auth: HrOrAdmin</remarks>
+    /// <remarks>Auth: employee.update:tenant</remarks>
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = Policies.HrOrAdmin)]
+    [RequirePermission(Permissions.EmployeeUpdateTenant)]
     [ProducesResponseType(typeof(EmployeeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -76,9 +79,9 @@ public sealed class EmployeesController : ControllerBase
     }
 
     /// <summary>Deactivate an employee (soft delete).</summary>
-    /// <remarks>Auth: HrOrAdmin</remarks>
+    /// <remarks>Auth: employee.delete:tenant</remarks>
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = Policies.HrOrAdmin)]
+    [RequirePermission(Permissions.EmployeeDeleteTenant)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
@@ -100,6 +103,12 @@ public sealed class EmployeesController : ControllerBase
             {
                 Status = StatusCodes.Status409Conflict,
                 Title = "Conflict",
+                Detail = result.Error
+            }),
+            "PLAN_LIMIT_EXCEEDED" => StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "Plan limit exceeded",
                 Detail = result.Error
             }),
             _ => BadRequest(new ProblemDetails

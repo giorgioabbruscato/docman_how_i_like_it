@@ -48,7 +48,7 @@ public sealed class TestAuthHandler : AuthenticationHandler<AuthenticationScheme
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId.ToString()),
-            new(ClaimTypes.Email, "test@demo.local"),
+            new(ClaimTypes.Email, $"test-{userId:N}@demo.local"),
             new(ClaimTypes.Role, normalizedRole)
         };
 

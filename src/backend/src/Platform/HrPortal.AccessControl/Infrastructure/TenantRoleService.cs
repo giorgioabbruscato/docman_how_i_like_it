@@ -6,6 +6,8 @@ using HrPortal.Identity;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.SharedKernel.Results;
 using HrPortal.Tenancy;
+using HrPortal.Tenancy.Application;
+using HrPortal.Tenancy.Domain;
 using Microsoft.Extensions.Logging;
 
 namespace HrPortal.AccessControl.Infrastructure;
@@ -17,6 +19,7 @@ internal sealed class TenantRoleService : ITenantRoleService
     private readonly TenantContext _tenantContext;
     private readonly UserContext _userContext;
     private readonly IAuditService _auditService;
+    private readonly IFeatureGateService _featureGateService;
     private readonly ILogger<TenantRoleService> _logger;
 
     public TenantRoleService(
@@ -25,6 +28,7 @@ internal sealed class TenantRoleService : ITenantRoleService
         TenantContext tenantContext,
         UserContext userContext,
         IAuditService auditService,
+        IFeatureGateService featureGateService,
         ILogger<TenantRoleService> logger)
     {
         _repository = repository;
@@ -32,6 +36,7 @@ internal sealed class TenantRoleService : ITenantRoleService
         _tenantContext = tenantContext;
         _userContext = userContext;
         _auditService = auditService;
+        _featureGateService = featureGateService;
         _logger = logger;
     }
 
@@ -61,6 +66,13 @@ internal sealed class TenantRoleService : ITenantRoleService
         CancellationToken cancellationToken = default)
     {
         EnsureTenantResolved();
+
+        if (!await _featureGateService.IsEnabledAsync(FeatureKeys.CustomRoles, cancellationToken))
+        {
+            return Result.Failure<TenantRoleDto>(
+                "Custom roles are not available on the current plan. Upgrade to Pro or Enterprise.",
+                "PLAN_LIMIT_EXCEEDED");
+        }
 
         if (await _repository.SlugExistsAsync(request.Slug, cancellationToken: cancellationToken))
             return Result.Failure<TenantRoleDto>("A role with this slug already exists.", "CONFLICT");

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { hasAnyRole, MANAGER_OR_ABOVE_ROLES } from '@/lib/auth-roles';
+import { Permission, hasAnyPermission } from '@/lib/auth-permissions';
 import {
   currentTimeString,
   formatDate,
@@ -41,8 +41,12 @@ const reportSchema = z
 type ReportForm = z.infer<typeof reportSchema>;
 
 export function AttendancePage() {
-  const user = useAuthStore((state) => state.user);
-  const isManagerOrAbove = hasAnyRole(user?.roles ?? [], ...MANAGER_OR_ABOVE_ROLES);
+  const permissions = useAuthStore((state) => state.permissions);
+  const isManagerOrAbove = hasAnyPermission(
+    permissions,
+    Permission.AttendanceReadTenant,
+    Permission.AttendanceReadTeam,
+  );
 
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);

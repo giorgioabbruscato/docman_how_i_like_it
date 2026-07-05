@@ -1,6 +1,6 @@
 # TASK 25 — AUDIT ENTERPRISE
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Extend the audit module for enterprise-grade access decision logging and audit log querying.
 
@@ -70,28 +70,30 @@ Read before starting:
 
 ### Extended AuditLog entity
 
-- [ ] Add fields: `TargetId`, `Scope`, `IpAddress`, `ActorEmail`, `Decision` (Allow/Deny)
-- [ ] Migration for new columns
-- [ ] Keep immutability enforcement in DbContext
+- [x] Add fields: `TargetId`, `Scope`, `IpAddress`, `ActorEmail`, `Decision` (Allow/Deny)
+- [x] Migration for new columns (`20260705121221_AuditLogEnterpriseFields`)
+- [x] Keep immutability enforcement in DbContext
 
 ### Audit service
 
-- [ ] `LogAccessDecisionAsync(ctx, permission, resource, allowed)` — called from policy handler
-- [ ] Existing `LogAsync` for business mutations unchanged
+- [x] `LogAccessDecisionAsync(ctx, permission, resource, allowed)` — called from `PermissionAuthorizationHandler`
+      and `PermissionAnyAuthorizationHandler` on every permission check; saves immediately (fixed the
+      previously-missing `SaveChangesAsync` for read-only/GET requests)
+- [x] Existing `LogAsync` for business mutations unchanged
 
 ### Query API
 
-- [ ] `IAuditQueryService` with filtered pagination
-- [ ] `GET /api/v1/audit-logs` — gated by:
-  - Enterprise `auditLog` feature enabled
-  - `audit.read:tenant` permission
-- [ ] Filters: date range, actor, action, decision
+- [x] `IAuditQueryService` with filtered pagination
+- [x] `GET /api/v1/audit-logs` — gated by:
+  - Enterprise `auditLog` feature enabled (`IFeatureGateService`)
+  - `audit.read:tenant` permission (`[RequirePermission]`)
+- [x] Filters: date range, actor, action, decision
 
 ### Frontend
 
-- [ ] `src/frontend/src/api/audit-logs.ts` — API client
-- [ ] `src/frontend/src/pages/audit-page.tsx` — paginated audit log table
-- [ ] Nav link visible only with `audit.read:tenant` + feature enabled
+- [x] `src/frontend/src/api/audit-logs.ts` — API client
+- [x] `src/frontend/src/pages/audit-page.tsx` — paginated audit log table
+- [x] Nav link visible only with `audit.read:tenant` + feature enabled
 
 ## Files to touch
 
@@ -106,11 +108,11 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] Every permission check logged with allow/deny
-- [ ] Audit logs immutable (modify/delete throws)
-- [ ] Free plan: audit API returns 403 or feature disabled response
-- [ ] Enterprise plan: audit page loads and paginates
-- [ ] Integration test for audit log query with permission gate
+- [x] Every permission check logged with allow/deny
+- [x] Audit logs immutable (modify/delete throws)
+- [x] Free plan: audit API returns 403 or feature disabled response
+- [x] Enterprise plan: audit page loads and paginates
+- [x] Integration test for audit log query with permission gate (`AuditLogsControllerTests.cs`, 5 tests)
 
 ## Next task
 

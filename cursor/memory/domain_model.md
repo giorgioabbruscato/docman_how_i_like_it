@@ -36,13 +36,31 @@ Interface requiring `TenantId` — enables EF global query filters.
 | Name | string | Display name |
 | Slug | string | URL-safe identifier (lowercase) |
 | IsActive | bool | Active flag |
-| Plan | string? | Subscription plan (default: `standard`) |
-| FeaturesJson | string? | JSON array of enabled module features |
+| Plan | string? | `TenantPlan` enum as string: `Free` \| `Pro` \| `Enterprise` |
+| ModulesJson | string? | JSON array of enabled module keys (e.g. `employees`, `leave`) — the OSS "which modules are on" list |
+| FeaturesJson | string? | JSON `TenantFeaturesOverrides` — partial per-tenant overrides layered on top of plan defaults; `null` field = inherit plan default |
+| IsSuspended | bool | Platform-admin suspension flag (blocks all tenant-scoped access with `404`) |
 | SuspendedAt | DateTime? | Suspension timestamp |
 | CreatedAt | DateTime | Creation timestamp |
 
 **Factory:** `Tenant.Create(name, slug)`  
-**Methods:** `Deactivate()`, `Activate()`, `SetPlan()`, `SetFeatures()`, `Suspend()`, `Unsuspend()`, `GetFeatures()`
+**Methods:** `Deactivate()`, `Activate()`, `Suspend()`, `Unsuspend()`,
+`GetPlan()`/`SetPlan(TenantPlan)`, `GetModules()`/`SetModules(IReadOnlyList<string>)`,
+`GetFeatureOverrides()`/`SetFeatureOverrides(TenantFeaturesOverrides)`,
+`GetEffectiveFeatures()` — merges plan defaults (`TenantFeaturesDefaults.ForPlan`) with overrides
+
+#### TenantPlan / TenantFeatures — IMPLEMENTED (Task 24)
+
+**Location:** `HrPortal.Tenancy.Domain`
+
+- `TenantPlan` enum: `Free`, `Pro`, `Enterprise`
+- `TenantFeatures` record: `MaxEmployees` (int), `CustomRoles` (bool), `AuditLog` (bool), `AdvancedReports` (bool)
+- `TenantFeaturesOverrides` record: same shape, all fields nullable (partial override)
+- `TenantFeaturesDefaults.ForPlan(plan)`: Free → 20/false/false/false; Pro → 200/true/true/false;
+  Enterprise → unlimited/true/true/true
+- `IFeatureGateService` (`HrPortal.Tenancy.Application`/`Infrastructure`) resolves effective features per
+  request; in `TenantDeploymentMode.Single` (OSS) it always returns Enterprise-equivalent features
+  regardless of the persisted plan
 
 ---
 
@@ -96,6 +114,38 @@ Canonical permission strings in `Permissions.cs`:
 System role templates in `SystemRoleTemplates.cs`: `admin`, `hr`, `manager`, `employee` with default permission sets.
 
 Legacy Keycloak realm roles mapped via `LegacyRoleMapper` during migration period.
+
+---
+
+### AuditLog — IMPLEMENTED (extended Task 25)
+
+**Location:** `HrPortal.Audit.Domain`  
+**Schema:** `platform`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| UserId | Guid | Actor's user ID |
+| ActorEmail | string? | Actor's email at time of action |
+| Action | string | Business action or permission string (e.g. `employee.read:tenant`) |
+| Entity | string | Entity type name |
+| EntityId | string? | Affected entity ID |
+| TargetId | string? | Resource target ID for access-decision entries (may differ from EntityId) |
+| Scope | string? | ABAC scope of the decision: `Self`, `Department`, `Team`, `Tenant`, `All` |
+| Decision | string? | `Allow` \| `Deny` — set only for access-decision entries, `null` for business-mutation entries |
+| IpAddress | string? | Caller IP for access-decision entries |
+| Metadata | string? | Optional JSON metadata |
+| Timestamp | DateTime | UTC event time |
+
+**Factory:** `AuditLog.Create(tenantId, userId, action, entity, entityId?, targetId?, scope?, decision?, ipAddress?, actorEmail?, metadata?)`  
+**Immutability:** No update/delete methods exist; `HrPortalDbContext.SaveChanges` throws if an `AuditLog` entry is modified or deleted after creation.
+
+**Written by:** `IAuditService`
+- `LogAsync` / `LogForTenantAsync` — business mutations (e.g. `employee.created`), saved with the caller's unit-of-work
+- `LogAccessDecisionAsync` — one row per permission check from `PermissionAuthorizationHandler` /
+  `PermissionAnyAuthorizationHandler`, saved **immediately** (`saveImmediately: true`) so read-only (GET)
+  requests are captured even though they have no other pending `SaveChanges` call
+
+**Read by:** `IAuditQueryService.QueryAsync(AuditLogQuery)` — filtered (date range, actor, action, decision), paginated (`PagedResult<AuditLogDto>`), tenant-scoped. Exposed via `GET /api/v1/audit-logs` (`audit.read:tenant` permission + `auditLog` plan feature).
 
 ---
 
@@ -267,10 +317,12 @@ Sole identity object for application services. Enriched per request by `TenantCo
 
 ```
 Tenant (platform)
+  │   Plan, ModulesJson, FeaturesJson (overrides) → GetEffectiveFeatures()
   │
-  ├── TenantRole (platform) — PLANNED
-  ├── TenantMembership (platform) — PLANNED
+  ├── TenantRole (platform)
+  ├── TenantMembership (platform)
   │       └── EmployeeId? → Employee
+  ├── AuditLog (platform) — business mutations + access decisions (immutable)
   │
   ├── Employee (employees) ──→ Department (departments)
   │       │
@@ -281,7 +333,7 @@ Tenant (platform)
   └── Department (departments)
         └── ParentDepartmentId → Department (self-ref)
 
-UserProfile (platform, global) — PLANNED
+UserProfile (platform, global) — UserId (Keycloak sub, unique), Email, IsPlatformAdmin
 ```
 
 ## Cross-module lookup interfaces

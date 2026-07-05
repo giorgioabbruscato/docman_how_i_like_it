@@ -9,6 +9,7 @@ public static class AuditServiceCollectionExtensions
     public static IServiceCollection AddHrPortalAudit(this IServiceCollection services)
     {
         services.AddScoped<IAuditService, AuditService>();
+        services.AddScoped<IAuditQueryService, AuditQueryService>();
         return services;
     }
 }

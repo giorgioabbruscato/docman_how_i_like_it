@@ -343,3 +343,40 @@ bool IPolicyEngine.Can(TenantContext ctx, string action, ResourceContext? resour
 - All repositories migrated to `ApplyTenantScope` (task 18)
 - Legacy role policies sunset after controller migration (tasks 22–23)
 - `00_acceptance_criteria.md` multi-tenancy section evolves in tasks 14/19/34
+
+### Addendum (task 23): Legacy policy deprecation + `LegacyRoleMapper` sunset plan
+
+**Status:** Completed (backend) — `LegacyRoleMapper` retained as a compatibility shim.
+
+All 10 V1 controllers now authorize exclusively via `[RequirePermission]` / `[RequireAnyPermission]` against
+permission strings from `Permissions.cs` (task 22). As a direct consequence:
+
+- `Policies.AdminOnly`, `Policies.HrOrAdmin`, and `Policies.ManagerOrAbove` are marked `[Obsolete]` in
+  `Policies.cs`. Only `Policies.Authenticated` remains a live ASP.NET authorization policy.
+- Their DI registrations were removed from `AuthorizationServiceCollectionExtensions` — only the
+  `Authenticated` policy, `PermissionPolicyProvider`, `PermissionAuthorizationHandler`, and
+  `PermissionAnyAuthorizationHandler` are registered.
+- Zero production references to the obsolete constants remain (`grep` gate is safe to add to CI); the
+  `[Obsolete]` attribute itself acts as a compile-time trip wire against regressions.
+
+**`LegacyRoleMapper` sunset plan:** `MeService` and `TenantContextFactory` still fall back to
+`LegacyRoleMapper.Map(ctx.Roles)` when a user has **no active `TenantMembership`** row (e.g. Keycloak-only
+users provisioned before task 12's membership model, or environments still relying on realm-role JWT
+claims). This mapper translates the four legacy realm roles (`Admin`, `HR`, `Manager`, `Employee`) into
+their equivalent permission sets from `SystemRoleTemplates`, so authorization behavior is identical whether
+a user resolves permissions via a real membership or via the legacy shim.
+
+The mapper should be removed once both are true:
+1. Every tenant's users have been backfilled into `TenantMembership` + `TenantRole` rows (one-time data
+   migration, tracked separately — not part of tasks 22–25), and
+2. Keycloak realm roles are no longer relied upon for authorization anywhere in the codebase (they may still
+   exist for display purposes, e.g. `auth-roles.ts` on the frontend).
+
+Until then, `LegacyRoleMapper` is intentionally kept as documented technical debt rather than deleted, since
+removing it early would silently lock out any un-migrated user.
+
+**Frontend parity (task 23):** The SPA mirrors this shift — `auth-permissions.ts` (`hasPermission` /
+`hasAnyPermission`) replaces role-string checks against `/api/v1/me`'s `permissions` array for all page and
+navigation gating (`app-layout.tsx`, `dashboard-page.tsx`, `attendance-page.tsx`, `documents-page.tsx`,
+`leave-requests-page.tsx`). `auth-roles.ts` is marked `@deprecated` and now only backs the raw-role display on
+the settings page; it is not used for any access-control decision.

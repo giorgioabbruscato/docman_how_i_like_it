@@ -1,5 +1,6 @@
 using HrPortal.AccessControl.Application;
 using HrPortal.AccessControl.Application.Dtos;
+using HrPortal.AccessControl.Domain;
 using HrPortal.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ namespace HrPortal.Api.Controllers.V1;
 [ApiController]
 [Route("api/v1/memberships")]
 [Tags("Access Control")]
-[Authorize(Policy = Policies.AdminOnly)]
+[Authorize(Policy = Policies.Authenticated)]
 [Produces("application/json")]
 public sealed class MembershipsController : ControllerBase
 {
@@ -20,8 +21,9 @@ public sealed class MembershipsController : ControllerBase
         _membershipService = membershipService;
 
     /// <summary>List tenant memberships.</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: membership.read:tenant)</remarks>
+    /// <remarks>Auth: membership.read:tenant</remarks>
     [HttpGet]
+    [RequirePermission(Permissions.MembershipReadTenant)]
     [ProducesResponseType(typeof(IEnumerable<TenantMembershipDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
@@ -30,8 +32,9 @@ public sealed class MembershipsController : ControllerBase
     }
 
     /// <summary>Get membership by ID.</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: membership.read:tenant)</remarks>
+    /// <remarks>Auth: membership.read:tenant</remarks>
     [HttpGet("{id:guid}")]
+    [RequirePermission(Permissions.MembershipReadTenant)]
     [ProducesResponseType(typeof(TenantMembershipDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
@@ -41,8 +44,9 @@ public sealed class MembershipsController : ControllerBase
     }
 
     /// <summary>Create a tenant membership.</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: membership.create:tenant)</remarks>
+    /// <remarks>Auth: membership.create:tenant</remarks>
     [HttpPost]
+    [RequirePermission(Permissions.MembershipCreateTenant)]
     [ProducesResponseType(typeof(TenantMembershipDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -57,8 +61,9 @@ public sealed class MembershipsController : ControllerBase
     }
 
     /// <summary>Update a tenant membership.</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: membership.update:tenant)</remarks>
+    /// <remarks>Auth: membership.update:tenant</remarks>
     [HttpPut("{id:guid}")]
+    [RequirePermission(Permissions.MembershipUpdateTenant)]
     [ProducesResponseType(typeof(TenantMembershipDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -72,8 +77,9 @@ public sealed class MembershipsController : ControllerBase
     }
 
     /// <summary>Deactivate a membership (soft delete).</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: membership.delete:tenant)</remarks>
+    /// <remarks>Auth: membership.delete:tenant</remarks>
     [HttpDelete("{id:guid}")]
+    [RequirePermission(Permissions.MembershipDeleteTenant)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)

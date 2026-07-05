@@ -1,6 +1,6 @@
 # TASK 23 — DEPRECATE LEGACY ROLE POLICIES
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Remove legacy ASP.NET role-based policies and migrate frontend to permission-based authorization.
 
@@ -70,29 +70,33 @@ Read before starting:
 
 ### Backend cleanup
 
-- [ ] Mark `Policies.AdminOnly`, `HrOrAdmin`, `ManagerOrAbove` as `[Obsolete]`
-- [ ] Remove policy registrations from `AuthorizationServiceCollectionExtensions` (or keep shim temporarily)
-- [ ] Update `EndpointAuthorizationGuardTests` — verify `[RequirePermission]` or `[Authorize]` on all endpoints
-- [ ] Rewrite `AuthorizationPolicyTests` for permission-based matrix
-- [ ] Document sunset plan for `LegacyRoleMapper` in ADR-012 addendum
+- [x] Mark `Policies.AdminOnly`, `HrOrAdmin`, `ManagerOrAbove` as `[Obsolete]`
+- [x] Remove policy registrations from `AuthorizationServiceCollectionExtensions` (only `Authenticated` remains)
+- [x] Update `EndpointAuthorizationGuardTests` — verify `[RequirePermission]` or `[Authorize]` on all endpoints
+- [x] Rewrite `AuthorizationPolicyTests` for permission-based matrix
+- [x] Document sunset plan for `LegacyRoleMapper` in ADR-012 addendum
 
 ### Keycloak
 
-- [ ] Realm roles remain for bootstrap; permissions derived via mapper until all users have memberships
-- [ ] No code changes to Keycloak required in this task
+- [x] Realm roles remain for bootstrap; permissions derived via mapper until all users have memberships
+- [x] No code changes to Keycloak required in this task (Keycloak changes for task 24's `PlatformAdmin` role are separate)
 
 ### Frontend migration
 
-- [ ] Create `src/frontend/src/lib/auth-permissions.ts`:
-  - `hasPermission(permission: string): boolean`
+- [x] Create `src/frontend/src/lib/auth-permissions.ts`:
+  - `hasPermission(permissions, permission)` / `hasAnyPermission(permissions, ...permissions)`
   - Load permissions from auth store (populated by `/api/v1/me`)
-- [ ] Deprecate role-based checks in `auth-roles.ts` (keep shim temporarily)
-- [ ] Update `auth-store.ts` to store permissions array from `/me`
+- [x] Deprecate role-based checks in `auth-roles.ts` (`@deprecated` shim retained for settings-page role display only)
+- [x] Update `auth-store.ts` to store `permissions`, `planFeatures`, `isPlatformAdmin` from `/me`
+- [x] Migrate UI gating off roles in `app-layout.tsx`, `dashboard-page.tsx`, `attendance-page.tsx`,
+      `documents-page.tsx`, `leave-requests-page.tsx`
 
 ### Tests
 
-- [ ] Integration: user with legacy Keycloak role still gets correct permissions
-- [ ] Integration: user with membership gets tenant role permissions
+- [x] Integration: user with legacy Keycloak role still gets correct permissions
+      (`MembershipPermissionResolutionTests.LegacyRoleOnlyUser_WithoutMembership_ResolvesPermissionsViaLegacyMapper`)
+- [x] Integration: user with membership gets tenant role permissions
+      (`MembershipPermissionResolutionTests.MembershipUser_ResolvesPermissionsFromTenantRole_NotLegacyMapper`)
 
 ## Files to touch
 
@@ -107,10 +111,10 @@ Read before starting:
 
 ## Acceptance criteria
 
-- [ ] No production code references `Policies.HrOrAdmin` etc.
-- [ ] Frontend uses `hasPermission()` for UI gating
-- [ ] Legacy Keycloak users still functional via mapper
-- [ ] All tests pass
+- [x] No production code references `Policies.HrOrAdmin` etc.
+- [x] Frontend uses `hasPermission()` / `hasAnyPermission()` for UI gating
+- [x] Legacy Keycloak users still functional via mapper
+- [x] All tests pass (`dotnet test`: 206/206; `npm run build`: passes)
 
 ## Next task
 

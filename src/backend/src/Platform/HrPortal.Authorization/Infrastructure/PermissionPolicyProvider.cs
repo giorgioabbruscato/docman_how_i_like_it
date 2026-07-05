@@ -18,6 +18,19 @@ internal sealed class PermissionPolicyProvider : IAuthorizationPolicyProvider
 
     public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
+        if (policyName.StartsWith(Policies.PermissionAnyPrefix, StringComparison.Ordinal))
+        {
+            var permissions = policyName[Policies.PermissionAnyPrefix.Length..]
+                .Split(Policies.PermissionAnySeparator, StringSplitOptions.RemoveEmptyEntries);
+
+            var anyPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .AddRequirements(new PermissionAnyRequirement(permissions))
+                .Build();
+
+            return Task.FromResult<AuthorizationPolicy?>(anyPolicy);
+        }
+
         if (policyName.StartsWith(Policies.PermissionPrefix, StringComparison.Ordinal))
         {
             var permission = policyName[Policies.PermissionPrefix.Length..];

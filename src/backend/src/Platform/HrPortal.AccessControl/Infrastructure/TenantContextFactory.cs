@@ -39,7 +39,7 @@ internal sealed class TenantContextFactory : ITenantContextFactory
         var isPlatformAdmin = profile?.IsPlatformAdmin ?? false;
 
         var tenant = await _tenantRepository.GetByIdAsync(baseContext.TenantId, cancellationToken);
-        var features = tenant?.GetFeatures() ?? baseContext.Features ?? [];
+        var features = tenant?.GetModules() ?? baseContext.Features ?? [];
 
         var membership = await _membershipRepository.GetActiveByUserIdAsync(
             userContext.UserId,

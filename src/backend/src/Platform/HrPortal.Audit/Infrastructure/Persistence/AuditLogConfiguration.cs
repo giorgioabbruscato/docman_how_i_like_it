@@ -26,6 +26,23 @@ internal sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         builder.Property(a => a.Metadata)
             .HasColumnType("jsonb");
 
+        builder.Property(a => a.TargetId)
+            .HasMaxLength(100);
+
+        builder.Property(a => a.Scope)
+            .HasMaxLength(50);
+
+        builder.Property(a => a.IpAddress)
+            .HasMaxLength(64);
+
+        builder.Property(a => a.ActorEmail)
+            .HasMaxLength(255);
+
+        builder.Property(a => a.Decision)
+            .HasMaxLength(10);
+
         builder.HasIndex(a => new { a.TenantId, a.Timestamp });
+        builder.HasIndex(a => new { a.TenantId, a.Decision });
+        builder.HasIndex(a => new { a.TenantId, a.Action });
     }
 }

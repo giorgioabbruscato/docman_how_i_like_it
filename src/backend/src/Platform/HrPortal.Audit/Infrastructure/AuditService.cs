@@ -83,14 +83,29 @@ internal sealed class AuditService : IAuditService
                 "Authorization",
                 entry.Permission,
                 metadata),
-            cancellationToken);
+            cancellationToken,
+            actorEmail: _userContext.IsAuthenticated ? _userContext.Email : null,
+            ipAddress: entry.IpAddress,
+            decision: entry.Allowed ? AuditDecision.Allow : AuditDecision.Deny,
+            scope: ResolveScope(entry.Permission),
+            targetId: ResolveTargetId(entry),
+            // Access decisions are logged by the authorization handler, which runs before the MVC action
+            // and its own IUnitOfWork.SaveChangesAsync — nothing downstream would otherwise persist them
+            // (e.g. GET requests never call SaveChangesAsync), so they must be committed immediately.
+            saveImmediately: true);
     }
 
     private async Task AddAuditLogAsync(
         Guid tenantId,
         Guid userId,
         AuditEntry entry,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? actorEmail = null,
+        string? ipAddress = null,
+        string? decision = null,
+        string? scope = null,
+        string? targetId = null,
+        bool saveImmediately = false)
     {
         var auditLog = AuditLog.Create(
             tenantId,
@@ -98,8 +113,29 @@ internal sealed class AuditService : IAuditService
             entry.Action,
             entry.Entity,
             entry.EntityId,
-            entry.Metadata);
+            entry.Metadata,
+            actorEmail,
+            ipAddress,
+            decision,
+            scope,
+            targetId);
 
         await _dbContext.Set<AuditLog>().AddAsync(auditLog, cancellationToken);
+
+        if (saveImmediately)
+            await _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    private static string? ResolveScope(string permission)
+    {
+        var separatorIndex = permission.LastIndexOf(':');
+        return separatorIndex >= 0 && separatorIndex < permission.Length - 1
+            ? permission[(separatorIndex + 1)..]
+            : null;
+    }
+
+    private static string? ResolveTargetId(AccessDecisionEntry entry) =>
+        entry.ResourceEmployeeId?.ToString()
+        ?? entry.ResourceDepartmentId?.ToString()
+        ?? entry.ResourceTenantId?.ToString();
 }

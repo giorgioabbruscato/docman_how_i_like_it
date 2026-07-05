@@ -16,6 +16,7 @@ internal sealed class MeService : IMeService
     private readonly IUserProfileRepository _userProfileRepository;
     private readonly ITenantRepository _tenantRepository;
     private readonly IPermissionResolver _permissionResolver;
+    private readonly IFeatureGateService _featureGateService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
     private readonly UserContext _userContext;
@@ -26,6 +27,7 @@ internal sealed class MeService : IMeService
         IUserProfileRepository userProfileRepository,
         ITenantRepository tenantRepository,
         IPermissionResolver permissionResolver,
+        IFeatureGateService featureGateService,
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
         UserContext userContext,
@@ -35,6 +37,7 @@ internal sealed class MeService : IMeService
         _userProfileRepository = userProfileRepository;
         _tenantRepository = tenantRepository;
         _permissionResolver = permissionResolver;
+        _featureGateService = featureGateService;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
         _userContext = userContext;
@@ -81,6 +84,8 @@ internal sealed class MeService : IMeService
             roleSlugs = MapLegacyRoleSlugs(_userContext.Roles);
         }
 
+        var planFeatures = await _featureGateService.GetEffectiveFeaturesAsync(cancellationToken);
+
         return Result.Success(new MeDto(
             _userContext.UserId,
             profile.Email,
@@ -89,8 +94,9 @@ internal sealed class MeService : IMeService
             employeeId,
             roleSlugs,
             permissions,
-            tenant.GetFeatures(),
-            profile.IsPlatformAdmin));
+            tenant.GetModules(),
+            profile.IsPlatformAdmin,
+            planFeatures));
     }
 
     private async Task<UserProfile> EnsureUserProfileAsync(CancellationToken cancellationToken)

@@ -1,5 +1,6 @@
 using HrPortal.AccessControl.Application;
 using HrPortal.AccessControl.Application.Dtos;
+using HrPortal.AccessControl.Domain;
 using HrPortal.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ namespace HrPortal.Api.Controllers.V1;
 [ApiController]
 [Route("api/v1/roles")]
 [Tags("Access Control")]
-[Authorize(Policy = Policies.AdminOnly)]
+[Authorize(Policy = Policies.Authenticated)]
 [Produces("application/json")]
 public sealed class RolesController : ControllerBase
 {
@@ -19,8 +20,9 @@ public sealed class RolesController : ControllerBase
     public RolesController(ITenantRoleService roleService) => _roleService = roleService;
 
     /// <summary>List tenant roles.</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: role.read:tenant)</remarks>
+    /// <remarks>Auth: role.read:tenant</remarks>
     [HttpGet]
+    [RequirePermission(Permissions.RoleReadTenant)]
     [ProducesResponseType(typeof(IEnumerable<TenantRoleDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
@@ -29,8 +31,9 @@ public sealed class RolesController : ControllerBase
     }
 
     /// <summary>Get role by ID.</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: role.read:tenant)</remarks>
+    /// <remarks>Auth: role.read:tenant</remarks>
     [HttpGet("{id:guid}")]
+    [RequirePermission(Permissions.RoleReadTenant)]
     [ProducesResponseType(typeof(TenantRoleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
@@ -40,10 +43,12 @@ public sealed class RolesController : ControllerBase
     }
 
     /// <summary>Create a custom tenant role.</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: role.create:tenant)</remarks>
+    /// <remarks>Auth: role.create:tenant</remarks>
     [HttpPost]
+    [RequirePermission(Permissions.RoleCreateTenant)]
     [ProducesResponseType(typeof(TenantRoleDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create(
         [FromBody] CreateTenantRoleRequest request,
@@ -56,8 +61,9 @@ public sealed class RolesController : ControllerBase
     }
 
     /// <summary>Update role permissions.</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: role.update:tenant)</remarks>
+    /// <remarks>Auth: role.update:tenant</remarks>
     [HttpPut("{id:guid}")]
+    [RequirePermission(Permissions.RoleUpdateTenant)]
     [ProducesResponseType(typeof(TenantRoleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -71,8 +77,9 @@ public sealed class RolesController : ControllerBase
     }
 
     /// <summary>Deactivate a custom role (soft delete).</summary>
-    /// <remarks>Auth: AdminOnly (interim; target: role.delete:tenant)</remarks>
+    /// <remarks>Auth: role.delete:tenant</remarks>
     [HttpDelete("{id:guid}")]
+    [RequirePermission(Permissions.RoleDeleteTenant)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -95,6 +102,12 @@ public sealed class RolesController : ControllerBase
             {
                 Status = StatusCodes.Status409Conflict,
                 Title = "Conflict",
+                Detail = result.Error
+            }),
+            "PLAN_LIMIT_EXCEEDED" => StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "Plan limit exceeded",
                 Detail = result.Error
             }),
             _ => BadRequest(new ProblemDetails

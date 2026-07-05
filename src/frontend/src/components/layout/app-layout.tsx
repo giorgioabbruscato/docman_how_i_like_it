@@ -1,44 +1,59 @@
 import { Link, Outlet } from 'react-router-dom';
 import { keycloak } from '@/lib/keycloak';
-import { hasAnyRole, MANAGER_OR_ABOVE_ROLES } from '@/lib/auth-roles';
+import { Permission, hasAnyPermission } from '@/lib/auth-permissions';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
+import type { TenantPlanFeatures } from '@/types/me';
 import {
   Building2,
   CalendarDays,
   Clock,
   FileText,
   LayoutDashboard,
+  ScrollText,
   Settings,
   Users,
 } from 'lucide-react';
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-  { to: '/departments', label: 'Departments', icon: Building2, roles: null },
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  isVisible: (permissions: string[], planFeatures: TenantPlanFeatures) => boolean;
+}
+
+const navItems: NavItem[] = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, isVisible: () => true },
+  { to: '/departments', label: 'Departments', icon: Building2, isVisible: () => true },
   {
     to: '/employees',
     label: 'Employees',
     icon: Users,
-    roles: [...MANAGER_OR_ABOVE_ROLES],
+    isVisible: (permissions) =>
+      hasAnyPermission(permissions, Permission.EmployeeReadTenant, Permission.EmployeeReadTeam),
   },
-  { to: '/leave-requests', label: 'Leave Requests', icon: CalendarDays, roles: null },
-  { to: '/attendance', label: 'Attendance', icon: Clock, roles: null },
-  { to: '/documents', label: 'Documents', icon: FileText, roles: null },
-  { to: '/settings', label: 'Settings', icon: Settings, roles: null },
+  { to: '/leave-requests', label: 'Leave Requests', icon: CalendarDays, isVisible: () => true },
+  { to: '/attendance', label: 'Attendance', icon: Clock, isVisible: () => true },
+  { to: '/documents', label: 'Documents', icon: FileText, isVisible: () => true },
+  {
+    to: '/audit-logs',
+    label: 'Audit Logs',
+    icon: ScrollText,
+    isVisible: (permissions, planFeatures) =>
+      hasAnyPermission(permissions, Permission.AuditReadTenant) && planFeatures.auditLog,
+  },
+  { to: '/settings', label: 'Settings', icon: Settings, isVisible: () => true },
 ];
 
 export function AppLayout() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, permissions, planFeatures } = useAuthStore();
 
   const handleLogout = () => {
     logout();
     void keycloak.logout({ redirectUri: `${window.location.origin}/login` });
   };
 
-  const visibleNavItems = navItems.filter(
-    (item) => !item.roles || hasAnyRole(user?.roles ?? [], ...item.roles),
-  );
+  const visibleNavItems = navItems.filter((item) => item.isVisible(permissions, planFeatures));
 
   return (
     <div className="min-h-screen flex">

@@ -18,6 +18,7 @@ public static class TenancyServiceCollectionExtensions
         services.AddScoped<ITenantContextAccessor, TenantContextAccessor>();
         services.AddScoped<ITenantResolver, TenantResolver>();
         services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddScoped<IFeatureGateService, FeatureGateService>();
         services.AddValidatorsFromAssemblyContaining<CreateTenantRequestValidator>();
         services.AddScoped<TenantContext>(sp => sp.GetRequiredService<ITenantContextAccessor>().Current);
 

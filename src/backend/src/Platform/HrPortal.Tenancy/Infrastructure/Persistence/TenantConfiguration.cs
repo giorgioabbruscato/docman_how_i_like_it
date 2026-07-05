@@ -32,6 +32,9 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(t => t.Plan)
             .HasMaxLength(50);
 
+        builder.Property(t => t.ModulesJson)
+            .HasMaxLength(2000);
+
         builder.Property(t => t.FeaturesJson)
             .HasMaxLength(2000);
 

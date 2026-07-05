@@ -12,7 +12,7 @@ public static class DbInitializer
     private const string DemoTenantSlug = "demo";
     private const string DemoEmployeeEmail = "employee@demo.local";
 
-    private static readonly string[] DemoFeatures =
+    private static readonly string[] DemoModules =
         ["employees", "departments", "leave", "attendance", "documents"];
 
     public static async Task InitializeAsync(IServiceProvider services)
@@ -40,9 +40,10 @@ public static class DbInitializer
             await dbContext.SaveChangesAsync();
         }
 
-        if (demoTenant.GetFeatures().Count == 0)
+        if (demoTenant.GetModules().Count == 0 || demoTenant.GetPlan() != TenantPlan.Enterprise)
         {
-            demoTenant.SetFeatures(DemoFeatures);
+            demoTenant.SetModules(DemoModules);
+            demoTenant.SetPlan(TenantPlan.Enterprise);
             dbContext.Set<Tenant>().Update(demoTenant);
             await dbContext.SaveChangesAsync();
         }
@@ -69,6 +70,11 @@ public static class DbInitializer
         }
 
         await SeedDemoUsersAndMembershipsAsync(dbContext, demoTenant.Id, demoEmployee.Id);
+        await EnsureUserProfileAsync(
+            dbContext,
+            DemoUsers.PlatformAdmin,
+            DemoUsers.PlatformAdminEmail,
+            isPlatformAdmin: true);
     }
 
     private static async Task SeedDemoUsersAndMembershipsAsync(
@@ -109,7 +115,8 @@ public static class DbInitializer
     private static async Task EnsureUserProfileAsync(
         HrPortalDbContext dbContext,
         Guid userId,
-        string email)
+        string email,
+        bool isPlatformAdmin = false)
     {
         var exists = await dbContext.Set<UserProfile>()
             .AnyAsync(p => p.UserId == userId);
@@ -117,7 +124,7 @@ public static class DbInitializer
         if (exists)
             return;
 
-        await dbContext.Set<UserProfile>().AddAsync(UserProfile.Create(userId, email));
+        await dbContext.Set<UserProfile>().AddAsync(UserProfile.Create(userId, email, isPlatformAdmin));
         await dbContext.SaveChangesAsync();
     }
 

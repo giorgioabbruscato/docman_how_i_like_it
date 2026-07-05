@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState, ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { hasAnyRole, HR_OR_ADMIN_ROLES, MANAGER_OR_ABOVE_ROLES } from '@/lib/auth-roles';
+import { Permission, hasPermission } from '@/lib/auth-permissions';
 import {
   confirmAction,
   formatDateTime,
@@ -32,9 +32,9 @@ type UploadForm = z.infer<typeof uploadSchema>;
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 export function DocumentsPage() {
-  const user = useAuthStore((state) => state.user);
-  const isManagerOrAbove = hasAnyRole(user?.roles ?? [], ...MANAGER_OR_ABOVE_ROLES);
-  const isHrOrAdmin = hasAnyRole(user?.roles ?? [], ...HR_OR_ADMIN_ROLES);
+  const permissions = useAuthStore((state) => state.permissions);
+  const isManagerOrAbove = hasPermission(permissions, Permission.DocumentReadTenant);
+  const isHrOrAdmin = hasPermission(permissions, Permission.DocumentDeleteTenant);
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);

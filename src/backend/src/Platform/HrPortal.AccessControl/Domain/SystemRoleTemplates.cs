@@ -30,14 +30,18 @@ public static class SystemRoleTemplates
         Permissions.DepartmentWriteTenant,
         Permissions.DepartmentDeleteTenant,
         Permissions.LeaveReadTenant,
+        Permissions.LeaveCreateSelf,
         Permissions.LeaveApproveTeam,
         Permissions.AttendanceReadTenant,
+        Permissions.AttendanceWriteSelf,
         Permissions.DocumentReadTenant,
+        Permissions.DocumentUploadSelf,
         Permissions.DocumentDeleteTenant,
         Permissions.MembershipReadTenant,
         Permissions.MembershipCreateTenant,
         Permissions.MembershipUpdateTenant,
-        Permissions.RoleReadTenant
+        Permissions.RoleReadTenant,
+        Permissions.AuditReadTenant
     ];
 
     private static readonly IReadOnlyList<string> ManagerPermissions =
@@ -50,6 +54,7 @@ public static class SystemRoleTemplates
         Permissions.EmployeeReadSelf,
         Permissions.LeaveReadSelf,
         Permissions.LeaveCreateSelf,
+        Permissions.LeaveDeleteSelf,
         Permissions.AttendanceReadSelf,
         Permissions.AttendanceWriteSelf,
         Permissions.DocumentReadSelf,
