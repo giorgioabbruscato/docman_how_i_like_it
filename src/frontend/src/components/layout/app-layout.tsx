@@ -10,9 +10,11 @@ import {
   CalendarDays,
   Clock,
   FileText,
+  FolderKanban,
   LayoutDashboard,
   ScrollText,
   Settings,
+  Timer,
   Users,
 } from 'lucide-react';
 
@@ -58,9 +60,27 @@ const navItems: NavItem[] = [
     isVisible: (permissions) =>
       hasAnyPermission(
         permissions,
-        Permission.AttendanceReadTenant,
-        Permission.AttendanceReadTeam,
-        Permission.AttendanceReadSelf,
+        Permission.AttendanceSessionReadTenant,
+        Permission.AttendanceSessionReadTeam,
+        Permission.AttendanceSessionReadSelf,
+      ),
+  },
+  {
+    to: '/projects',
+    label: 'Projects',
+    icon: FolderKanban,
+    isVisible: (permissions) => hasAnyPermission(permissions, Permission.ProjectReadTenant),
+  },
+  {
+    to: '/time-tracking',
+    label: 'Time Tracking',
+    icon: Timer,
+    isVisible: (permissions) =>
+      hasAnyPermission(
+        permissions,
+        Permission.TimeEntryReadSelf,
+        Permission.TimeEntryReadTeam,
+        Permission.TimeEntryReadTenant,
       ),
   },
   {

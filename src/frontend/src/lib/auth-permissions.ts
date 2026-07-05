@@ -20,10 +20,26 @@ export const Permission = {
   LeaveApproveTeam: 'leave.approve:team',
   LeaveDeleteSelf: 'leave.delete:self',
 
-  AttendanceReadTenant: 'attendance.read:tenant',
-  AttendanceReadTeam: 'attendance.read:team',
-  AttendanceReadSelf: 'attendance.read:self',
-  AttendanceWriteSelf: 'attendance.write:self',
+  AttendanceSessionReadSelf: 'attendance_session.read:self',
+  AttendanceSessionReadTeam: 'attendance_session.read:team',
+  AttendanceSessionReadTenant: 'attendance_session.read:tenant',
+  AttendanceSessionCheckInSelf: 'attendance_session.check_in:self',
+  AttendanceSessionCheckOutSelf: 'attendance_session.check_out:self',
+
+  ProjectReadTenant: 'project.read:tenant',
+  ProjectCreateTenant: 'project.create:tenant',
+  ProjectUpdateTenant: 'project.update:tenant',
+  ProjectDeleteTenant: 'project.delete:tenant',
+  ProjectManageMembersTenant: 'project.manage_members:tenant',
+
+  TaskReadTenant: 'task.read:tenant',
+
+  TimeEntryReadSelf: 'time_entry.read:self',
+  TimeEntryReadTeam: 'time_entry.read:team',
+  TimeEntryReadTenant: 'time_entry.read:tenant',
+  TimeEntryCreateSelf: 'time_entry.create:self',
+  TimeEntryUpdateSelf: 'time_entry.update:self',
+  TimeEntryDeleteSelf: 'time_entry.delete:self',
 
   DocumentReadTenant: 'document.read:tenant',
   DocumentReadSelf: 'document.read:self',

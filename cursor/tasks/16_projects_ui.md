@@ -1,6 +1,6 @@
 # TASK 16 — PROJECTS UI
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Create Projects frontend pages with list, details, members, CRUD, filters, and search.
 

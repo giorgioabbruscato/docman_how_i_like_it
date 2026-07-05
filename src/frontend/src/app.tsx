@@ -9,7 +9,14 @@ import { DocumentsPage } from '@/pages/documents-page';
 import { EmployeesPage } from '@/pages/employees-page';
 import { LeaveRequestsPage } from '@/pages/leave-requests-page';
 import { LoginPage } from '@/pages/login-page';
+import { ProjectCreatePage } from '@/pages/projects/project-create-page';
+import { ProjectDetailPage } from '@/pages/projects/project-detail-page';
+import { ProjectEditPage } from '@/pages/projects/project-edit-page';
+import { ProjectListPage } from '@/pages/projects/project-list-page';
 import { SettingsPage } from '@/pages/settings-page';
+import { CalendarPage } from '@/pages/time-tracking/calendar-page';
+import { ManualEntryPage } from '@/pages/time-tracking/manual-entry-page';
+import { TimeTrackingPage } from '@/pages/time-tracking/time-tracking-page';
 
 export function App() {
   return (
@@ -25,6 +32,13 @@ export function App() {
             <Route path="attendance" element={<AttendancePage />} />
             <Route path="documents" element={<DocumentsPage />} />
             <Route path="audit-logs" element={<AuditPage />} />
+            <Route path="projects" element={<ProjectListPage />} />
+            <Route path="projects/new" element={<ProjectCreatePage />} />
+            <Route path="projects/:id" element={<ProjectDetailPage />} />
+            <Route path="projects/:id/edit" element={<ProjectEditPage />} />
+            <Route path="time-tracking" element={<TimeTrackingPage />} />
+            <Route path="time-tracking/manual" element={<ManualEntryPage />} />
+            <Route path="time-tracking/calendar" element={<CalendarPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
