@@ -1,10 +1,14 @@
 using System;
+using HrPortal.Api.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace HrPortal.Api.Infrastructure.Persistence.Migrations
 {
+    [DbContext(typeof(HrPortalDbContext))]
+    [Migration("20260705172000_AddCalendarSchema")]
     public partial class AddCalendarSchema : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)

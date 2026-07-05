@@ -1,10 +1,14 @@
 using System;
+using HrPortal.Api.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace HrPortal.Api.Infrastructure.Persistence.Migrations
 {
+    [DbContext(typeof(HrPortalDbContext))]
+    [Migration("20260705173000_AddGeofencing")]
     public partial class AddGeofencing : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)

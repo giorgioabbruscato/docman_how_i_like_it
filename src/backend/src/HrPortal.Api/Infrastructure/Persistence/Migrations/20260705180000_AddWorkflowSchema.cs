@@ -1,4 +1,6 @@
 using System;
+using HrPortal.Api.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,6 +8,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HrPortal.Api.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(HrPortalDbContext))]
+    [Migration("20260705180000_AddWorkflowSchema")]
     public partial class AddWorkflowSchema : Migration
     {
         /// <inheritdoc />
