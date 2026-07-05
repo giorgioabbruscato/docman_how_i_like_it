@@ -33,6 +33,8 @@ public sealed class HrPortalDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Notifications.Domain.UserNotification).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Documents.Domain.Document).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.AccessControl.Domain.TenantRole).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Workflows.Domain.WorkflowDefinition).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrPortal.Integrations.Domain.CalendarConnection).Assembly);
 
         ApplyTenantFilters(modelBuilder);
     }

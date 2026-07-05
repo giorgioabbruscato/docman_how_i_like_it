@@ -1,6 +1,6 @@
 # TASK 27 — CHECK-IN LOCATION MAP
 
-> Status: **PENDING**
+> Status: **COMPLETED**
 
 Display check-in and check-out locations on a map in the attendance detail and history views.
 

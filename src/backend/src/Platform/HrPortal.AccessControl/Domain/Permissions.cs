@@ -97,6 +97,15 @@ public static class Permissions
     // Audit
     public const string AuditReadTenant = "audit.read:tenant";
 
+    // Workflows
+    public const string WorkflowManageTenant = "workflow.manage:tenant";
+    public const string WorkflowReadTeam = "workflow.read:team";
+    public const string WorkflowActTeam = "workflow.act:team";
+
+    // Calendar integrations
+    public const string CalendarConnectSelf = "calendar_connect.manage:self";
+    public const string CalendarSyncManageTenant = "calendar_sync.manage:tenant";
+
     // Platform (scope: all)
     public const string TenantManageAll = "tenant.manage:all";
     public const string BillingManageAll = "billing.manage:all";
@@ -131,6 +140,8 @@ public static class Permissions
         GeofenceReadTenant, GeofenceManageTenant,
         AnalyticsReadTeam, AnalyticsReadTenant,
         ReportGenerateSelf, ReportGenerateTeam, ReportGenerateTenant,
-        AuditReadTenant
+        AuditReadTenant,
+        WorkflowManageTenant, WorkflowReadTeam, WorkflowActTeam,
+        CalendarConnectSelf, CalendarSyncManageTenant
     ];
 }

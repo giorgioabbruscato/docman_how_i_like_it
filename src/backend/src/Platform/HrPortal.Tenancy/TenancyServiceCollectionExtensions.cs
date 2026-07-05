@@ -19,6 +19,7 @@ public static class TenancyServiceCollectionExtensions
         services.AddScoped<ITenantResolver, TenantResolver>();
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<IFeatureGateService, FeatureGateService>();
+        services.AddScoped<IPlatformMetricsService, PlatformMetricsService>();
         services.AddValidatorsFromAssemblyContaining<CreateTenantRequestValidator>();
 
         // Application services inject TenantContext (resolved from ITenantContextAccessor.Current).

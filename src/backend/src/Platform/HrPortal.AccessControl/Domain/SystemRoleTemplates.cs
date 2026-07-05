@@ -64,7 +64,12 @@ public static class SystemRoleTemplates
         Permissions.GeofenceReadTenant,
         Permissions.GeofenceManageTenant,
         Permissions.AnalyticsReadTenant,
-        Permissions.ReportGenerateTenant
+        Permissions.ReportGenerateTenant,
+        Permissions.WorkflowManageTenant,
+        Permissions.WorkflowReadTeam,
+        Permissions.WorkflowActTeam,
+        Permissions.CalendarConnectSelf,
+        Permissions.CalendarSyncManageTenant
     ];
 
     private static readonly IReadOnlyList<string> ManagerPermissions =
@@ -94,7 +99,9 @@ public static class SystemRoleTemplates
         Permissions.TimesheetApproveTeam,
         Permissions.CalendarReadTeam,
         Permissions.AnalyticsReadTeam,
-        Permissions.ReportGenerateTeam
+        Permissions.ReportGenerateTeam,
+        Permissions.WorkflowReadTeam,
+        Permissions.WorkflowActTeam
     ];
 
     private static readonly IReadOnlyList<string> EmployeePermissions =
@@ -116,6 +123,7 @@ public static class SystemRoleTemplates
         Permissions.TimesheetSubmitSelf,
         Permissions.TimesheetReadSelf,
         Permissions.CalendarReadSelf,
+        Permissions.CalendarConnectSelf,
         Permissions.ReportGenerateSelf
     ];
 

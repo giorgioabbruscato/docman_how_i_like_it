@@ -13,6 +13,7 @@
     <ProjectReference Include="..\..\Platform\HrPortal.AccessControl\HrPortal.AccessControl.csproj" />
     <ProjectReference Include="..\HrPortal.Employees\HrPortal.Employees.csproj" />
     <ProjectReference Include="..\HrPortal.Calendar\HrPortal.Calendar.csproj" />
+    <ProjectReference Include="..\..\Platform\HrPortal.Workflows\HrPortal.Workflows.csproj" />
   </ItemGroup>
 
   <ItemGroup>

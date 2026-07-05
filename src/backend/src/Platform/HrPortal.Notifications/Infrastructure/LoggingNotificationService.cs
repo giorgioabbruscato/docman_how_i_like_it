@@ -1,3 +1,4 @@
+using HrPortal.AccessControl.Application;
 using HrPortal.Notifications.Application;
 using HrPortal.Notifications.Domain;
 using HrPortal.SharedKernel.Persistence;
@@ -9,17 +10,20 @@ namespace HrPortal.Notifications.Infrastructure;
 internal sealed class LoggingNotificationService : INotificationService
 {
     private readonly IUserNotificationRepository _notificationRepository;
+    private readonly ITenantMembershipRepository _membershipRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
     private readonly ILogger<LoggingNotificationService> _logger;
 
     public LoggingNotificationService(
         IUserNotificationRepository notificationRepository,
+        ITenantMembershipRepository membershipRepository,
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
         ILogger<LoggingNotificationService> logger)
     {
         _notificationRepository = notificationRepository;
+        _membershipRepository = membershipRepository;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
         _logger = logger;
@@ -148,6 +152,31 @@ internal sealed class LoggingNotificationService : INotificationService
             $"Your timesheet for {periodStart:yyyy-MM-dd} to {periodEnd:yyyy-MM-dd} has been rejected.",
             $"{{\"periodStart\":\"{periodStart:yyyy-MM-dd}\",\"periodEnd\":\"{periodEnd:yyyy-MM-dd}\"}}"),
             cancellationToken);
+
+    public async Task NotifyWorkflowActionRequiredAsync(
+        Guid approverEmployeeId,
+        string requestType,
+        Guid requestId,
+        string stepName,
+        CancellationToken cancellationToken = default)
+    {
+        var membership = await _membershipRepository.GetActiveByEmployeeIdAsync(approverEmployeeId, cancellationToken);
+        if (membership is null)
+        {
+            _logger.LogInformation(
+                "Workflow notification skipped: no membership for approver employee {EmployeeId}",
+                approverEmployeeId);
+            return;
+        }
+
+        await DispatchAsync(new NotificationPayload(
+            "workflow.action_required",
+            membership.UserId,
+            "Approval required",
+            $"Your approval is required for {requestType} request at step '{stepName}'.",
+            $"{{\"requestType\":\"{requestType}\",\"requestId\":\"{requestId}\",\"stepName\":\"{stepName}\"}}"),
+            cancellationToken);
+    }
 
     private async Task DispatchAsync(NotificationPayload payload, CancellationToken cancellationToken)
     {

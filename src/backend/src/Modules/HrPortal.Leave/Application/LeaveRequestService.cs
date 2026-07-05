@@ -8,6 +8,8 @@ using HrPortal.SharedKernel.Exceptions;
 using HrPortal.SharedKernel.Persistence;
 using HrPortal.SharedKernel.Results;
 using HrPortal.Tenancy;
+using HrPortal.Workflows.Application;
+using HrPortal.Workflows.Domain;
 using Microsoft.Extensions.Logging;
 
 namespace HrPortal.Leave.Application;
@@ -26,6 +28,8 @@ internal sealed class LeaveRequestService : ILeaveRequestService
 {
     private readonly ILeaveRequestRepository _repository;
     private readonly IEmployeeLookup _employeeLookup;
+    private readonly IWorkflowEngine _workflowEngine;
+    private readonly IWorkflowInstanceRepository _workflowInstanceRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TenantContext _tenantContext;
     private readonly IAuditService _auditService;
@@ -36,6 +40,8 @@ internal sealed class LeaveRequestService : ILeaveRequestService
     public LeaveRequestService(
         ILeaveRequestRepository repository,
         IEmployeeLookup employeeLookup,
+        IWorkflowEngine workflowEngine,
+        IWorkflowInstanceRepository workflowInstanceRepository,
         IUnitOfWork unitOfWork,
         TenantContext tenantContext,
         IAuditService auditService,
@@ -45,6 +51,8 @@ internal sealed class LeaveRequestService : ILeaveRequestService
     {
         _repository = repository;
         _employeeLookup = employeeLookup;
+        _workflowEngine = workflowEngine;
+        _workflowInstanceRepository = workflowInstanceRepository;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
         _auditService = auditService;
@@ -105,6 +113,16 @@ internal sealed class LeaveRequestService : ILeaveRequestService
 
             await _repository.AddAsync(leaveRequest, cancellationToken);
             await LogAndSaveAsync("leave_request.created", leaveRequest, cancellationToken);
+
+            var workflowResult = await _workflowEngine.StartWorkflowAsync(
+                WorkflowRequestType.Leave,
+                leaveRequest.Id,
+                request.EmployeeId,
+                cancellationToken);
+
+            if (!workflowResult.IsSuccess)
+                return Result.Failure<LeaveRequestDto>(workflowResult.Error!, workflowResult.ErrorCode);
+
             _logger.LogInformation("Leave request {LeaveRequestId} created for employee {EmployeeId}", leaveRequest.Id, request.EmployeeId);
             return Result.Success(MapToDto(leaveRequest));
         }
@@ -120,6 +138,16 @@ internal sealed class LeaveRequestService : ILeaveRequestService
 
         await _repository.AddAsync(request2, cancellationToken);
         await LogAndSaveAsync("leave_request.created", request2, cancellationToken);
+
+        var workflowResult2 = await _workflowEngine.StartWorkflowAsync(
+            WorkflowRequestType.Leave,
+            request2.Id,
+            request.EmployeeId,
+            cancellationToken);
+
+        if (!workflowResult2.IsSuccess)
+            return Result.Failure<LeaveRequestDto>(workflowResult2.Error!, workflowResult2.ErrorCode);
+
         _logger.LogInformation("Leave request {LeaveRequestId} created for employee {EmployeeId}", request2.Id, request.EmployeeId);
         return Result.Success(MapToDto(request2));
     }
@@ -130,60 +158,32 @@ internal sealed class LeaveRequestService : ILeaveRequestService
         if (leaveRequest is null)
             return Result.Failure<LeaveRequestDto>("Leave request not found.", "NOT_FOUND");
 
-        if (await _repository.HasOverlappingApprovedAsync(
-                leaveRequest.EmployeeId,
-                leaveRequest.StartDate,
-                leaveRequest.EndDate,
-                leaveRequest.Id,
-                cancellationToken))
-            return Result.Failure<LeaveRequestDto>("Leave request overlaps with an existing approved request.", "CONFLICT");
+        var actorUserId = _tenantContext.UserId;
+        if (!actorUserId.HasValue)
+            return Result.Failure<LeaveRequestDto>("User context is required.", "FORBIDDEN");
 
-        if (leaveRequest.Type == LeaveType.Annual)
-        {
-            var approvedDays = await _repository.GetApprovedAnnualDaysInYearAsync(
-                leaveRequest.EmployeeId,
-                leaveRequest.StartDate.Year,
-                leaveRequest.Id,
-                cancellationToken);
-
-            if (approvedDays + leaveRequest.DayCount > LeaveRequest.MaxAnnualLeaveDays)
-                return Result.Failure<LeaveRequestDto>(
-                    $"Annual leave exceeds the maximum of {LeaveRequest.MaxAnnualLeaveDays} days per year.",
-                    "CONFLICT");
-        }
-
-        try
-        {
-            leaveRequest.Approve(_tenantContext.UserId ?? Guid.Empty);
-        }
-        catch (DomainException ex)
-        {
-            return Result.Failure<LeaveRequestDto>(ex.Message, "VALIDATION_ERROR");
-        }
-
-        await _repository.UpdateAsync(leaveRequest, cancellationToken);
-        await LogAndSaveAsync("leave_request.approved", leaveRequest, cancellationToken);
-
-        var email = await _employeeLookup.GetEmailAsync(leaveRequest.EmployeeId, cancellationToken)
-            ?? leaveRequest.EmployeeId.ToString();
-        var recipient = await _recipientResolver.ResolveForEmployeeAsync(
-            leaveRequest.EmployeeId,
-            email,
+        var instance = await _workflowInstanceRepository.GetActiveByRequestAsync(
+            WorkflowRequestType.Leave,
+            id,
             cancellationToken);
 
-        if (recipient.UserId.HasValue)
-        {
-            NotificationHelper.FireAndForget(
-                _logger,
-                ct => _notificationService.NotifyLeaveApprovedAsync(
-                    recipient.UserId.Value,
-                    leaveRequest.StartDate,
-                    leaveRequest.EndDate,
-                    ct));
-        }
+        if (instance is null)
+            return Result.Failure<LeaveRequestDto>("No active workflow found for this leave request.", "NOT_FOUND");
 
-        _logger.LogInformation("Leave request {LeaveRequestId} approved", id);
-        return Result.Success(MapToDto(leaveRequest));
+        var result = await _workflowEngine.ProcessActionAsync(
+            instance.Id,
+            WorkflowActionType.Approve,
+            actorUserId.Value,
+            _tenantContext.EmployeeId,
+            comment: null,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+            return Result.Failure<LeaveRequestDto>(result.Error!, result.ErrorCode);
+
+        leaveRequest = await _repository.GetByIdAsync(id, cancellationToken);
+        _logger.LogInformation("Leave request {LeaveRequestId} approved via workflow", id);
+        return Result.Success(MapToDto(leaveRequest!));
     }
 
     public async Task<Result<LeaveRequestDto>> RejectAsync(
@@ -195,26 +195,32 @@ internal sealed class LeaveRequestService : ILeaveRequestService
         if (leaveRequest is null)
             return Result.Failure<LeaveRequestDto>("Leave request not found.", "NOT_FOUND");
 
-        try
-        {
-            leaveRequest.Reject(_tenantContext.UserId ?? Guid.Empty, request.Reason);
-        }
-        catch (DomainException ex)
-        {
-            return Result.Failure<LeaveRequestDto>(ex.Message, "VALIDATION_ERROR");
-        }
+        var actorUserId = _tenantContext.UserId;
+        if (!actorUserId.HasValue)
+            return Result.Failure<LeaveRequestDto>("User context is required.", "FORBIDDEN");
 
-        await _repository.UpdateAsync(leaveRequest, cancellationToken);
-        await LogAndSaveAsync("leave_request.rejected", leaveRequest, cancellationToken);
-
-        await _notificationService.SendAsync(new NotificationMessage(
-            leaveRequest.EmployeeId.ToString(),
-            "Leave request rejected",
-            $"Your leave request from {leaveRequest.StartDate} to {leaveRequest.EndDate} has been rejected."),
+        var instance = await _workflowInstanceRepository.GetActiveByRequestAsync(
+            WorkflowRequestType.Leave,
+            id,
             cancellationToken);
 
-        _logger.LogInformation("Leave request {LeaveRequestId} rejected", id);
-        return Result.Success(MapToDto(leaveRequest));
+        if (instance is null)
+            return Result.Failure<LeaveRequestDto>("No active workflow found for this leave request.", "NOT_FOUND");
+
+        var result = await _workflowEngine.ProcessActionAsync(
+            instance.Id,
+            WorkflowActionType.Reject,
+            actorUserId.Value,
+            _tenantContext.EmployeeId,
+            request.Reason,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+            return Result.Failure<LeaveRequestDto>(result.Error!, result.ErrorCode);
+
+        leaveRequest = await _repository.GetByIdAsync(id, cancellationToken);
+        _logger.LogInformation("Leave request {LeaveRequestId} rejected via workflow", id);
+        return Result.Success(MapToDto(leaveRequest!));
     }
 
     public async Task<Result> CancelAsync(Guid id, CancellationToken cancellationToken = default)
@@ -222,6 +228,31 @@ internal sealed class LeaveRequestService : ILeaveRequestService
         var leaveRequest = await _repository.GetByIdAsync(id, cancellationToken);
         if (leaveRequest is null)
             return Result.Failure("Leave request not found.", "NOT_FOUND");
+
+        var actorUserId = _tenantContext.UserId ?? Guid.Empty;
+        var actorEmployeeId = _tenantContext.EmployeeId ?? leaveRequest.EmployeeId;
+
+        var instance = await _workflowInstanceRepository.GetActiveByRequestAsync(
+            WorkflowRequestType.Leave,
+            id,
+            cancellationToken);
+
+        if (instance is not null)
+        {
+            var workflowResult = await _workflowEngine.ProcessActionAsync(
+                instance.Id,
+                WorkflowActionType.Cancel,
+                actorUserId,
+                actorEmployeeId,
+                comment: null,
+                cancellationToken);
+
+            if (!workflowResult.IsSuccess)
+                return Result.Failure(workflowResult.Error!, workflowResult.ErrorCode);
+
+            _logger.LogInformation("Leave request {LeaveRequestId} cancelled via workflow", id);
+            return Result.Success();
+        }
 
         try
         {

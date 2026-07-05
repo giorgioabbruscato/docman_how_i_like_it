@@ -66,4 +66,11 @@ public interface INotificationService
         DateOnly periodStart,
         DateOnly periodEnd,
         CancellationToken cancellationToken = default);
+
+    Task NotifyWorkflowActionRequiredAsync(
+        Guid approverEmployeeId,
+        string requestType,
+        Guid requestId,
+        string stepName,
+        CancellationToken cancellationToken = default);
 }

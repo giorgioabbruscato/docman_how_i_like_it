@@ -200,7 +200,8 @@ public sealed class RequestContextMiddleware
         path.StartsWithSegments("/health") ||
         path.StartsWithSegments("/ready") ||
         path.StartsWithSegments("/swagger") ||
-        path.StartsWithSegments("/api/v1/tenants");
+        path.StartsWithSegments("/api/v1/tenants") ||
+        path.StartsWithSegments("/api/v1/integrations/calendar/callback");
 
     private static bool IsPlatformPath(PathString path) =>
         path.StartsWithSegments("/api/v1/platform");

@@ -32,7 +32,10 @@ public class HrPortalWebApplicationFactory : WebApplicationFactory<Program>
             {
                 ["ASPNETCORE_ENVIRONMENT"] = "Testing",
                 ["Database:ConnectionString"] = "DataSource=:memory:",
-                ["Storage:RootPath"] = Path.Combine(Path.GetTempPath(), $"hrportal-test-{Guid.NewGuid():N}")
+                ["Storage:RootPath"] = Path.Combine(Path.GetTempPath(), $"hrportal-test-{Guid.NewGuid():N}"),
+                ["Integrations:UseMockProviders"] = "true",
+                ["Integrations:ApiBaseUrl"] = "http://localhost",
+                ["Integrations:FrontendBaseUrl"] = "http://localhost:5173"
             };
 
             if (ConfigOverrides is not null)

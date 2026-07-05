@@ -571,6 +571,111 @@ only as constants to avoid breaking references while call sites are cleaned up; 
 
 ---
 
+## Workflows — IMPLEMENTED (Task 29)
+
+### GET /api/v1/workflows/definitions
+
+**Auth:** `workflow.manage:tenant`  
+**Response:** `200 OK` — array of `WorkflowDefinitionDto`
+
+### POST /api/v1/workflows/definitions
+
+**Auth:** `workflow.manage:tenant`  
+**Request:**
+
+```json
+{
+  "requestType": "Leave",
+  "name": "Two-step leave",
+  "stepsJson": "{\"steps\":[{\"name\":\"Direct Manager\",\"approverType\":\"DirectManager\"}]}"
+}
+```
+
+**Response:** `201 Created` — `WorkflowDefinitionDto` (deactivates prior active definition for same request type)
+
+### PUT /api/v1/workflows/definitions/{id}
+
+**Auth:** `workflow.manage:tenant`  
+**Request:** `{ "name": "...", "stepsJson": "..." }`  
+**Response:** `200 OK` — new version `WorkflowDefinitionDto`
+
+### GET /api/v1/workflows/instances
+
+**Auth:** `workflow.read:team`  
+**Response:** `200 OK` — array of `WorkflowInstanceDto`
+
+### GET /api/v1/workflows/instances/{id}
+
+**Auth:** `workflow.read:team`  
+**Response:** `200 OK` — `WorkflowInstanceDto` with action history
+
+### POST /api/v1/workflows/instances/{id}/approve
+
+**Auth:** `workflow.act:team`  
+**Request:** `{ "comment": "optional" }`  
+**Response:** `200 OK` — updated `WorkflowInstanceDto`
+
+### POST /api/v1/workflows/instances/{id}/reject
+
+**Auth:** `workflow.act:team`  
+**Request:** `{ "comment": "optional reason" }`  
+**Response:** `200 OK` — updated `WorkflowInstanceDto`
+
+### GET /api/v1/workflows/pending
+
+**Auth:** `workflow.act:team`  
+**Response:** `200 OK` — array of `PendingActionDto` for current user
+
+**Leave integration:** `POST /api/v1/leave-requests` starts a workflow instance; `PUT .../approve` and `PUT .../reject` delegate to `IWorkflowEngine`. Final approval invokes `LeaveWorkflowCompletionHandler`, which triggers `ILeaveCalendarSyncService` (Task 28).
+
+---
+
+## Calendar integrations (Task 28)
+
+Base path: `/api/v1/integrations/calendar`
+
+### GET /api/v1/integrations/calendar/providers
+
+**Auth:** authenticated  
+**Response:** `200 OK` — `[{ "id": "Google", "name": "Google Calendar" }, ...]`
+
+### GET /api/v1/integrations/calendar/connect/{provider}
+
+**Auth:** `calendar_connect.manage:self`  
+**Query:** `redirectUri` (frontend callback URL)  
+**Response:** `200 OK` — `{ "authorizationUrl": "..." }` (OAuth redirect to provider; provider callback hits API `/callback`)
+
+### GET /api/v1/integrations/calendar/callback
+
+**Auth:** public (OAuth provider redirect)  
+**Query:** `code`, `state`  
+**Response:** `302` redirect to frontend `redirectUri?success=true|false`
+
+### GET /api/v1/integrations/calendar/connections
+
+**Auth:** `calendar_connect.manage:self`  
+**Response:** `200 OK` — array of `CalendarConnectionDto`
+
+### DELETE /api/v1/integrations/calendar/connections/{id}
+
+**Auth:** `calendar_connect.manage:self`  
+**Response:** `204 No Content`
+
+### POST /api/v1/integrations/calendar/sync/{leaveRequestId}
+
+**Auth:** `calendar_sync.manage:tenant`  
+**Response:** `204 No Content` — manual re-sync for approved leave
+
+### GET /api/v1/integrations/calendar/sync-log
+
+**Auth:** `calendar_sync.manage:tenant`  
+**Query:** `limit` (optional)  
+**Response:** `200 OK` — array of `CalendarSyncLogDto`
+
+**Config:** `Integrations:Google:ClientId/ClientSecret`, `Integrations:Microsoft:ClientId/ClientSecret`, `Integrations:ApiBaseUrl`, `Integrations:FrontendBaseUrl`, `Integrations:UseMockProviders` (true in Testing/CI).
+
+---
+
 ## Attendance
 
 ### POST /api/v1/attendance/check-in
@@ -848,6 +953,81 @@ Feature gates enforced in application services (no inline plan checks in control
 
 **Response:** `200 OK` — PlatformTenantDto  
 **Errors:** `404` if tenant not found
+
+---
+
+## Platform Admin Dashboard — IMPLEMENTED (Task 30)
+
+Cross-tenant metrics for platform administrators. Routes live under `/api/v1/platform/admin/*` (separate from tenant CRUD at `/api/v1/platform/tenants`). No `X-Tenant-Id` header required. `RequestContextMiddleware` enforces `IsPlatformAdmin`; controllers require `tenant.manage:all`.
+
+### GET /api/v1/platform/admin/dashboard
+
+**Auth:** `tenant.manage:all` (platform admin)  
+**Response:** `200 OK` — `PlatformDashboardSummaryDto`
+
+```json
+{
+  "totalTenants": 3,
+  "totalEmployees": 42,
+  "activeEmployeesLast30Days": 18,
+  "totalTimeEntriesLast30Days": 120,
+  "licenseSeatsUsed": 42,
+  "licenseSeatsTotal": 620
+}
+```
+
+### GET /api/v1/platform/admin/tenants
+
+**Auth:** `tenant.manage:all`  
+**Response:** `200 OK` — `PlatformTenantMetricsDto[]`
+
+```json
+[
+  {
+    "tenantId": "uuid",
+    "slug": "demo",
+    "name": "Demo Company",
+    "employeeCount": 12,
+    "isActive": true,
+    "createdAt": "2026-01-01T00:00:00Z",
+    "lastActivityAt": "2026-07-01T10:30:00Z"
+  }
+]
+```
+
+### GET /api/v1/platform/admin/tenants/{tenantId}/summary
+
+**Auth:** `tenant.manage:all`  
+**Response:** `200 OK` — `PlatformTenantSummaryDto`  
+**Errors:** `404` if tenant not found
+
+```json
+{
+  "tenantId": "uuid",
+  "slug": "demo",
+  "name": "Demo Company",
+  "employeeCount": 12,
+  "activeProjects": 4,
+  "timeEntriesThisMonth": 35,
+  "attendanceSessionsThisMonth": 22,
+  "leaveRequestsPending": 2,
+  "storageUsedBytes": null
+}
+```
+
+### GET /api/v1/platform/admin/usage
+
+**Auth:** `tenant.manage:all`  
+**Response:** `200 OK` — `PlatformUsageDto` (12-month tenant growth + time-entry trends)
+
+```json
+{
+  "tenantGrowth": [{ "period": "2026-07", "count": 1 }],
+  "timeEntriesByMonth": [{ "period": "2026-07", "count": 35 }]
+}
+```
+
+**Errors:** `401` anonymous; `403` non-platform-admin tenant user
 
 ---
 

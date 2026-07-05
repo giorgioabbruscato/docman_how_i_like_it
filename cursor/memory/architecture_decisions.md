@@ -458,3 +458,56 @@ Dedup via in-process `ConcurrentDictionary` keyed by `tenantId:employeeId:date:t
 **Date:** 2026-07
 
 **Decision:** Optional tenant geofence zones (Haversine radius). Defaults: geofencing off, allow check-in without GPS. When enabled with active zones, out-of-range check-ins return `GEOFENCE_VIOLATION`. `AttendanceSession` stores `MatchedGeofenceZoneId` and `GpsUnavailableAtCheckIn`.
+
+---
+
+## ADR-018: Configurable Approval Workflows
+
+**Status:** Accepted  
+**Date:** 2026-07
+
+**Context:** Leave and timesheet approvals used ad-hoc logic in domain modules. Multi-step chains (manager → HR) and tenant-specific configuration required a shared engine.
+
+**Decision:** Introduce platform module `HrPortal.Workflows`:
+
+- **Definitions** stored per tenant as JSON (`StepsJson`) with versioning; one active definition per `WorkflowRequestType` (`Leave`, `Timesheet`, `Overtime`).
+- **Instances** track state (`InProgress` → `Approved` \| `Rejected` \| `Cancelled`) and `CurrentStepIndex`.
+- **Actions** audit every transition.
+- **`IWorkflowEngine`** — domain modules call `StartWorkflowAsync` on submit and `ProcessActionAsync` on approve/reject/cancel; **`IWorkflowCompletionHandler`** callbacks finalize domain entities on terminal states.
+- **Approver resolution:** `DirectManager` via department-manager memberships (`ManagerSlug` + `departmentId` attribute); `Role` via permission on role templates; `NamedEmployee` via explicit `employeeId` in step JSON. Authorization matches actor by user id or employee id.
+- **Permissions:** `workflow.manage:tenant`, `workflow.read:team`, `workflow.act:team`.
+- **Default seed:** 1-step DirectManager leave workflow via `IWorkflowSeeder` on tenant creation and demo init.
+
+**Timesheet coexistence:** Task 23 `TimesheetApprovalService` remains the default path. Optional future migration: implement `WorkflowTimesheetApprovalService : ITimesheetApprovalService` delegating to `IWorkflowEngine` when tenant has active Timesheet definition (feature-flag or tenant config).
+
+**DirectManager limitation:** No `Employee.ManagerId` in v1; department managers only (consistent with timesheet supervisor notifications). Future task may add explicit manager chain.
+
+**Consequences:**
+- Leave module depends on `HrPortal.Workflows`; approve/reject endpoints delegate to engine
+- `NotifyWorkflowActionRequiredAsync` added to `INotificationService`
+- Notifications awaited synchronously in engine (no FireAndForget — avoids DbContext concurrency)
+
+---
+
+## ADR-019: OAuth Token Storage for Calendar Integrations
+
+**Status:** Accepted  
+**Date:** 2026-07
+
+**Context:** Task 28 requires Google Calendar and Microsoft 365 OAuth2 with tokens stored per tenant/employee connection. Secrets must not appear in source code.
+
+**Decision:**
+
+- ASP.NET Core **Data Protection** encrypts tokens at rest:
+  - Purpose `"CalendarOAuthTokens"` for access/refresh tokens on `CalendarConnection`
+  - Purpose `"CalendarOAuthState"` for short-lived OAuth `state` parameter (tenant, employee, provider, redirect URI, expiry)
+- `IOAuthTokenStore` wraps `IDataProtector` Protect/Unprotect
+- Provider credentials via `IOptions<IntegrationsOptions>` (`Integrations:Google`, `Integrations:Microsoft`); secrets from environment in production
+- OAuth callback path `/api/v1/integrations/calendar/callback` excluded from tenant header middleware; tenant restored from protected state
+- **CI/testing:** `Integrations:UseMockProviders=true` registers `MockCalendarSyncProvider` — no live HTTP to Google/Microsoft
+
+**Consequences:**
+
+- Platform module `HrPortal.Integrations` owns connections, external event mapping, sync log, and `CalendarSyncRetryHostedService`
+- Idempotent sync via `ExternalCalendarEvent` unique index on `(LeaveRequestId, Provider)`
+- `ILeaveCalendarSyncService` in Leave.Application avoids circular module deps; Integrations registers implementation and replaces via `RemoveAll` in DI

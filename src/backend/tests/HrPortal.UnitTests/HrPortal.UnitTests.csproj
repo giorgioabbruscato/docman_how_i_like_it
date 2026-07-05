@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\Platform\HrPortal.AccessControl\HrPortal.AccessControl.csproj" />
     <ProjectReference Include="..\..\src\Platform\HrPortal.Authorization\HrPortal.Authorization.csproj" />
     <ProjectReference Include="..\..\src\Platform\HrPortal.Notifications\HrPortal.Notifications.csproj" />
+    <ProjectReference Include="..\..\src\Platform\HrPortal.Workflows\HrPortal.Workflows.csproj" />
   </ItemGroup>
 
   <ItemGroup>

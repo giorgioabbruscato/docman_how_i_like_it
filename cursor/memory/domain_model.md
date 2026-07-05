@@ -108,7 +108,7 @@ Interface requiring `TenantId` — enables EF global query filters.
 
 Canonical permission strings in `Permissions.cs`:
 
-- Format: `{resource}.{action}:{scope}` (e.g. `employee.read:tenant`, `leave.approve:team`)
+- Format: `{resource}.{action}:{scope}` (e.g. `employee.read:tenant`, `leave.approve:team`, `workflow.manage:tenant`)
 - Scopes: `Self`, `Department`, `Team`, `Tenant`, `All`
 
 System role templates in `SystemRoleTemplates.cs`: `admin`, `hr`, `manager`, `employee` with default permission sets.
@@ -146,6 +146,71 @@ Legacy Keycloak realm roles mapped via `LegacyRoleMapper` during migration perio
   requests are captured even though they have no other pending `SaveChanges` call
 
 **Read by:** `IAuditQueryService.QueryAsync(AuditLogQuery)` — filtered (date range, actor, action, decision), paginated (`PagedResult<AuditLogDto>`), tenant-scoped. Exposed via `GET /api/v1/audit-logs` (`audit.read:tenant` permission + `auditLog` plan feature).
+
+---
+
+### Workflow entities — IMPLEMENTED (Task 29)
+
+**Module:** `HrPortal.Workflows.Domain`  
+**Schema:** `workflows`
+
+#### WorkflowDefinition
+
+| Field | Type | Description |
+|-------|------|-------------|
+| RequestType | WorkflowRequestType | `Leave`, `Timesheet`, `Overtime` |
+| Name | string | Display name |
+| StepsJson | string | JSON step chain (see ADR-018) |
+| IsActive | bool | Only one active per request type per tenant |
+| Version | int | Incremented on update (previous version deactivated) |
+
+**Factory:** `WorkflowDefinition.Create(...)`  
+**Methods:** `CreateNewVersion(...)`, `Deactivate()`, `ParseSteps()`
+
+#### WorkflowInstance
+
+| Field | Type | Description |
+|-------|------|-------------|
+| WorkflowDefinitionId | Guid | FK to definition used at start |
+| RequestType | WorkflowRequestType | |
+| RequestId | Guid | FK to domain entity (leave request, timesheet, etc.) |
+| EmployeeId | Guid | Requester |
+| Status | WorkflowStatus | `Pending`, `InProgress`, `Approved`, `Rejected`, `Cancelled` |
+| CurrentStepIndex | int | 0-based active step |
+| StartedAt | DateTime | UTC |
+| CompletedAt | DateTime? | UTC when terminal |
+
+**Factory:** `WorkflowInstance.Create(...)`  
+**State machine:** `InProgress` → advance step on approve → `Approved` \| `Rejected` \| `Cancelled`
+
+#### WorkflowAction
+
+| Field | Type | Description |
+|-------|------|-------------|
+| WorkflowInstanceId | Guid | FK |
+| StepIndex | int | Step at time of action |
+| ActorEmployeeId | Guid | Actor (requester employee id when actor has no linked employee) |
+| Action | WorkflowActionType | `Approve`, `Reject`, `Delegate`, `Cancel` |
+| Comment | string? | |
+| ActionAt | DateTime | UTC |
+
+**Factory:** `WorkflowAction.Record(...)`
+
+#### Workflow step JSON (stored in `StepsJson`)
+
+```json
+{
+  "steps": [
+    { "name": "Direct Manager", "approverType": "DirectManager" },
+    { "name": "HR", "approverType": "Role", "role": "leave.approve:team" },
+    { "name": "Named approver", "approverType": "NamedEmployee", "employeeId": "..." }
+  ]
+}
+```
+
+**ApproverType:** `DirectManager` (department-matched manager memberships), `Role` (permission on role template), `NamedEmployee` (explicit employee id).
+
+**Engine:** `IWorkflowEngine` — `StartWorkflowAsync`, `ProcessActionAsync`, `GetPendingForActorAsync`. Domain modules register `IWorkflowCompletionHandler` per request type.
 
 ---
 
@@ -592,3 +657,38 @@ No EF entities — KPI/chart/supervisor DTOs only.
 **Permissions:** `analytics.read:team` (Manager), `analytics.read:tenant` (HR/Admin).
 
 **Feature gate:** `FeatureKeys.AdvancedReports` (Enterprise plan; mirrored from audit log pattern).
+
+---
+
+## Calendar integrations (platform) — IMPLEMENTED (Task 28)
+
+**Module:** `HrPortal.Integrations`  
+**Schema:** `integrations`
+
+| Entity | Key fields |
+|--------|------------|
+| `CalendarConnection` | `EmployeeId`, `Provider` (Google, Microsoft365), `AccessTokenEncrypted`, `RefreshTokenEncrypted`, `TokenExpiresAt`, `ConnectedAt`, `IsActive` |
+| `ExternalCalendarEvent` | `LeaveRequestId`, `Provider`, `ExternalEventId`, `LastSyncedAt` — unique per `(TenantId, LeaveRequestId, Provider)` |
+| `CalendarSyncLog` | `LeaveRequestId`, `EmployeeId?`, `Provider?`, `Status` (Success, Failed, PendingRetry), `Message`, `RetryCount`, `NextRetryAt` |
+
+**Services:** `ICalendarConnectionService` (OAuth connect/disconnect), `ICalendarSyncService` (sync/delete leave events, sync log), `ICalendarSyncProvider` (Google, Microsoft365, mock for CI).
+
+**Leave hook:** `ILeaveCalendarSyncService` defined in `HrPortal.Leave.Application`; implemented by Integrations. `LeaveWorkflowCompletionHandler` calls sync on approval and delete on reject/cancel via isolated DI scope.
+
+**Background job:** `CalendarSyncRetryHostedService` — retries failed syncs with exponential backoff.
+
+---
+
+## Platform admin metrics (read-only, not entities) — IMPLEMENTED (Task 30)
+
+**Module:** `HrPortal.Tenancy.Application.Dtos`  
+**Service:** `IPlatformMetricsService` / `PlatformMetricsService` — cross-tenant aggregate SQL (`GROUP BY tenant_id`); never disables EF global filters on business entity loads.
+
+| DTO | Purpose |
+|-----|---------|
+| `PlatformDashboardSummaryDto` | Platform KPIs: tenant count, employees, active users (30d), time entries (30d), license seats used/total |
+| `PlatformTenantMetricsDto` | Per-tenant row for admin table: slug, name, employee count, active flag, created/last activity |
+| `PlatformTenantSummaryDto` | Per-tenant drill-down: employees, active projects, time entries/attendance this month, pending leave, storage (nullable) |
+| `PlatformUsageDto` | Trend series: `TenantGrowth` + `TimeEntriesByMonth` (`PlatformUsageTrendPointDto`: period, count) |
+
+**Auth:** `IsPlatformAdmin` middleware gate on `/api/v1/platform/*` + `tenant.manage:all` permission.

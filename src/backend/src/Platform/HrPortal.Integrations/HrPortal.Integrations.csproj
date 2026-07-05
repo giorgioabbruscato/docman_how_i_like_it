@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HrPortal.UnitTests" />
+    <InternalsVisibleTo Include="HrPortal.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HrPortal.SharedKernel\HrPortal.SharedKernel.csproj" />
+    <ProjectReference Include="..\HrPortal.Tenancy\HrPortal.Tenancy.csproj" />
+    <ProjectReference Include="..\HrPortal.AccessControl\HrPortal.AccessControl.csproj" />
+    <ProjectReference Include="..\..\Modules\HrPortal.Leave\HrPortal.Leave.csproj" />
+    <ProjectReference Include="..\..\Modules\HrPortal.Employees\HrPortal.Employees.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

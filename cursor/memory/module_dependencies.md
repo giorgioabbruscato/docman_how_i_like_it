@@ -5,7 +5,7 @@
 ## Project dependency graph
 
 ```
-Platform (SharedKernel, Tenancy, Identity, AccessControl, Audit, Storage, Notifications)
+Platform (SharedKernel, Tenancy, Identity, AccessControl, Audit, Storage, Notifications, Workflows, Integrations)
     ↑
 Departments  (no module dependencies)
     ↑
@@ -14,7 +14,7 @@ Employees
     ├── Projects
     │       └── Tasks
     │               └── TimeTracking
-    ├── Leave        (+ Notifications)
+    ├── Leave        (+ Notifications, Workflows)
     ├── Calendar     (+ Leave provider, Employees, Departments)
     ├── Attendance
     ├── Documents    (+ Storage)
@@ -43,6 +43,7 @@ The graph is a DAG: no module references another module transitively back to its
 | Calendar | Employees | `IEmployeeLookup` | Employee names, read scope |
 | Calendar | Departments | `IDepartmentLookup` | Department-scoped team calendar |
 | Leave | Calendar | `ILeaveCalendarProvider` impl | `LeaveCalendarProvider` registration |
+| Leave | Workflows | `IWorkflowEngine`, `IWorkflowInstanceRepository`, `IWorkflowCompletionHandler` | Leave approval state machine |
 | Leave | Employees | `IEmployeeLookup` | Validate employee on leave request |
 | Attendance | Employees | `IEmployeeLookup` | Validate employee on clock-in/out |
 | Documents | Employees | `IEmployeeLookup` | Validate employee on document upload |
@@ -84,11 +85,18 @@ Implementations live in the provider's application service (`IDepartmentService`
 | HrPortal.Api | AccessControl | `IMeService`, `ITenantRoleService`, `ITenantMembershipService`, `IPolicyEngine` |
 | HrPortal.Authorization | AccessControl | `IPolicyEngine`, `IPermissionEvaluator` |
 | Leave | Notifications | `INotificationService` |
+| Leave | Workflows | `IWorkflowEngine` (via `LeaveWorkflowCompletionHandler`) |
+| Leave | Integrations | `ILeaveCalendarSyncService` (interface in Leave.Application; impl in Integrations) |
+| Integrations | Leave | `ILeaveRequestRepository` (load approved leave for sync) |
+| Integrations | Employees | `IEmployeeLookup` (employee name on calendar events) |
 | TimeTracking | Notifications | `INotificationService` (timesheet workflow hooks) |
 | Projects | Notifications | `INotificationService` (project/task assignment hooks) |
 | Tasks | Notifications | `INotificationService` (task assignment hooks) |
 | Documents | Notifications | `INotificationService` (document upload hook) |
 | Attendance | Notifications | `INotificationService` (forgotten check-in/out reminders) |
+| Workflows | Employees | `IEmployeeLookup` | DirectManager department resolution |
+| Workflows | AccessControl | `ITenantMembershipRepository`, `ITenantRoleRepository` | Role/department approver resolution |
+| Workflows | Notifications | `INotificationService` | Step-assignment notifications |
 | Projects, Tasks, Leave, Documents, Attendance | AccessControl | `INotificationRecipientResolver` (employee → user mapping) |
 | Documents | Storage | `IStorageProvider` |
 
@@ -105,7 +113,7 @@ Implementations live in the provider's application service (`IDepartmentService`
 
 ```
 AddTenancy → AddHrPortalIdentity → AddHrPortalAccessControl
-→ AddHrPortalAuthorization → AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalAudit
+→ AddHrPortalAuthorization → AddHrPortalStorage → AddHrPortalNotifications → AddHrPortalWorkflows → AddHrPortalIntegrations → AddHrPortalAudit
 → AddDepartmentsModule → AddEmployeesModule → AddProjectsModule → AddTasksModule
 → AddTimeTrackingModule → AddLeaveModule → AddCalendarModule → AddAttendanceModule → AddAnalyticsModule → AddReportingModule → AddDocumentsModule
 ```

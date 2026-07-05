@@ -1,6 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { PlatformAdminRoute } from '@/components/auth/platform-admin-route';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { AppLayout } from '@/components/layout/app-layout';
+import { PlatformDashboardPage } from '@/pages/admin/platform-dashboard-page';
+import { TenantSummaryPage } from '@/pages/admin/tenant-summary-page';
 import { AttendancePage } from '@/pages/attendance-page';
 import { AuditPage } from '@/pages/audit-page';
 import { DashboardPage } from '@/pages/dashboard-page';
@@ -22,6 +25,7 @@ import { TimesheetApprovalsPage } from '@/pages/time-tracking/timesheets/timeshe
 import { TeamCalendarPage } from '@/pages/calendar/team-calendar-page';
 import { HolidaysPage } from '@/pages/calendar/holidays-page';
 import { GeofencingSettingsPage } from '@/pages/settings/geofencing-settings-page';
+import { CalendarCallbackPage } from '@/pages/settings/calendar-callback-page';
 import { AnalyticsPage } from '@/pages/analytics/analytics-page';
 
 export function App() {
@@ -53,6 +57,11 @@ export function App() {
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="settings/geofencing" element={<GeofencingSettingsPage />} />
+            <Route path="settings/calendar/callback" element={<CalendarCallbackPage />} />
+            <Route element={<PlatformAdminRoute />}>
+              <Route path="admin/dashboard" element={<PlatformDashboardPage />} />
+              <Route path="admin/tenants/:tenantId" element={<TenantSummaryPage />} />
+            </Route>
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Route>

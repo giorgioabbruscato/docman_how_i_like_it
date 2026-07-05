@@ -3,6 +3,7 @@ using HrPortal.AccessControl.Infrastructure.Seeding;
 using HrPortal.Employees.Domain;
 using HrPortal.Tenancy;
 using HrPortal.Tenancy.Domain;
+using HrPortal.Workflows.Infrastructure.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 
@@ -22,6 +23,7 @@ public static class DbInitializer
         var dbContext = scope.ServiceProvider.GetRequiredService<HrPortalDbContext>();
         var tenantContextAccessor = scope.ServiceProvider.GetRequiredService<ITenantContextAccessor>();
         var roleSeeder = scope.ServiceProvider.GetRequiredService<ISystemRoleSeeder>();
+        var workflowSeeder = scope.ServiceProvider.GetRequiredService<IWorkflowSeeder>();
         var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
         if (environment.IsEnvironment("Testing"))
@@ -57,9 +59,10 @@ public static class DbInitializer
             await dbContext.SaveChangesAsync();
         }
 
-        tenantContextAccessor.Set(TenantScopingContext.ForSeeding(demoTenant.Id));
-
         await roleSeeder.SeedAsync(demoTenant.Id);
+
+        tenantContextAccessor.Set(TenantScopingContext.ForSeeding(demoTenant.Id));
+        await workflowSeeder.SeedDefaultsAsync(demoTenant.Id);
 
         var demoEmployee = await dbContext.Set<Employee>()
             .FirstOrDefaultAsync(e => e.TenantId == demoTenant.Id && e.Email == DemoEmployeeEmail);

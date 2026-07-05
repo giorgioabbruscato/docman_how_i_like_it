@@ -77,6 +77,9 @@ export const Permission = {
   ReportGenerateTeam: 'report.generate:team',
   ReportGenerateTenant: 'report.generate:tenant',
 
+  CalendarConnectSelf: 'calendar_connect.manage:self',
+  CalendarSyncManageTenant: 'calendar_sync.manage:tenant',
+
   TenantManageAll: 'tenant.manage:all',
   BillingManageAll: 'billing.manage:all',
   SupportAccessAll: 'support.access:all',

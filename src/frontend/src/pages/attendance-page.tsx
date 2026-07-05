@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchGeofenceZones } from '@/api/geofence';
 import { AttendanceHistory } from '@/components/attendance/attendance-history';
+import { AttendanceLocationMapLazy } from '@/components/attendance/attendance-location-map-lazy';
 import { CheckInButton } from '@/components/attendance/check-in-button';
 import { CheckOutButton } from '@/components/attendance/check-out-button';
 import { GpsStatus } from '@/components/attendance/gps-status';
 import { LiveTimer } from '@/components/attendance/live-timer';
 import { TodaySummary } from '@/components/attendance/today-summary';
 import { WeeklyMonthlyTotals } from '@/components/attendance/weekly-monthly-totals';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorBanner, LoadingSpinner } from '@/components/ui/loading-spinner';
 import { SuccessBanner } from '@/components/ui/success-banner';
 import { useAttendanceDashboard } from '@/hooks/use-attendance';
-import { Permission, hasAnyPermission, hasPermission } from '@/lib/auth-permissions';
+import { Permission, hasAnyPermission, hasPermission, useHasPermission } from '@/lib/auth-permissions';
 import { getApiErrorMessage } from '@/lib/utils';
 import { useAttendanceStore } from '@/stores/attendance-store';
 import { useAuthStore } from '@/stores/auth-store';
@@ -24,6 +28,13 @@ export function AttendancePage() {
   );
   const canCheckIn = hasPermission(permissions, Permission.AttendanceSessionCheckInSelf);
   const canCheckOut = hasPermission(permissions, Permission.AttendanceSessionCheckOutSelf);
+  const canReadGeofence = useHasPermission(Permission.GeofenceReadTenant);
+
+  const { data: geofenceZones } = useQuery({
+    queryKey: ['geofence-zones'],
+    queryFn: fetchGeofenceZones,
+    enabled: canReadGeofence,
+  });
 
   const { gpsStatus, successMessage, setSuccessMessage, probeGps } = useAttendanceStore();
   const { data: dashboard, isLoading, error } = useAttendanceDashboard();
@@ -44,6 +55,8 @@ export function AttendancePage() {
 
   const currentSession = dashboard?.currentSession;
   const hasOpenSession = Boolean(currentSession && !currentSession.checkOut);
+  const hasCheckInLocation =
+    currentSession?.latitudeCheckIn != null && currentSession?.longitudeCheckIn != null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -72,6 +85,22 @@ export function AttendancePage() {
           <TodaySummary dashboard={dashboard} />
 
           {hasOpenSession && currentSession && <LiveTimer session={currentSession} />}
+
+          {hasOpenSession && currentSession && hasCheckInLocation && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Check-in location</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AttendanceLocationMapLazy
+                  checkInLat={currentSession.latitudeCheckIn}
+                  checkInLng={currentSession.longitudeCheckIn}
+                  checkInAt={currentSession.checkIn}
+                  geofenceZones={canReadGeofence ? geofenceZones : undefined}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {canCheckIn && !hasOpenSession && (
             <CheckInButton

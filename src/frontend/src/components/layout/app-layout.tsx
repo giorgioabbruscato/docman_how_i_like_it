@@ -17,6 +17,7 @@ import {
   Timer,
   Users,
   BarChart3,
+  Shield,
 } from 'lucide-react';
 
 interface NavItem {
@@ -135,7 +136,7 @@ const navItems: NavItem[] = [
 ];
 
 export function AppLayout() {
-  const { user, logout, permissions, planFeatures, me } = useAuthStore();
+  const { user, logout, permissions, planFeatures, me, isPlatformAdmin } = useAuthStore();
   const tenantDisplay = me?.tenantSlug ?? import.meta.env.VITE_TENANT_ID ?? 'demo';
 
   const handleLogout = () => {
@@ -144,6 +145,10 @@ export function AppLayout() {
   };
 
   const visibleNavItems = navItems.filter((item) => item.isVisible(permissions, planFeatures));
+
+  const platformAdminItems = isPlatformAdmin
+    ? [{ to: '/admin/dashboard', label: 'Platform Dashboard', icon: Shield }]
+    : [];
 
   return (
     <div className="min-h-screen flex">
@@ -165,6 +170,23 @@ export function AppLayout() {
               {label}
             </Link>
           ))}
+          {platformAdminItems.length > 0 && (
+            <>
+              <div className="pt-4 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Platform Admin
+              </div>
+              {platformAdminItems.map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted"
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </Link>
+              ))}
+            </>
+          )}
         </nav>
       </aside>
 

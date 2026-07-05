@@ -5,7 +5,11 @@ using HrPortal.Leave.Application;
 using HrPortal.Leave.Application.Dtos;
 using HrPortal.Leave.Domain;
 using HrPortal.Notifications;
+using HrPortal.Workflows.Application;
+using HrPortal.Workflows.Application.Dtos;
+using HrPortal.Workflows.Domain;
 using HrPortal.SharedKernel.Persistence;
+using HrPortal.SharedKernel.Results;
 using HrPortal.Tenancy;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -20,6 +24,8 @@ public sealed class LeaveRequestServiceTests
     private readonly Mock<IAuditService> _auditService = new();
     private readonly Mock<INotificationService> _notificationService = new();
     private readonly Mock<INotificationRecipientResolver> _recipientResolver = new();
+    private readonly Mock<IWorkflowEngine> _workflowEngine = new();
+    private readonly Mock<IWorkflowInstanceRepository> _workflowInstanceRepository = new();
     private readonly TenantContext _tenantContext = TenantContext.CreateTenantOnly(Guid.NewGuid(), "demo") with
     {
         UserId = Guid.NewGuid()
@@ -31,12 +37,33 @@ public sealed class LeaveRequestServiceTests
         _service = new LeaveRequestService(
             _repository.Object,
             _employeeLookup.Object,
+            _workflowEngine.Object,
+            _workflowInstanceRepository.Object,
             _unitOfWork.Object,
             _tenantContext,
             _auditService.Object,
             _notificationService.Object,
             _recipientResolver.Object,
             NullLogger<LeaveRequestService>.Instance);
+
+        _workflowEngine
+            .Setup(w => w.StartWorkflowAsync(
+                WorkflowRequestType.Leave,
+                It.IsAny<Guid>(),
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(new WorkflowInstanceDto(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                "Leave",
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                "InProgress",
+                0,
+                "Manager",
+                DateTime.UtcNow,
+                null,
+                [])));
     }
 
     [Fact]
